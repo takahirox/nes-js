@@ -29,6 +29,37 @@ Register.prototype.storeBit = function(bit, value) {
 
 
 
+function Register16bit() {
+  var buffer = new ArrayBuffer(Register16bit._WORD_SIZE);
+  this.uint16 = new Uint16Array(buffer);
+  this.uint16[0] = 0;
+};
+
+Register16bit._WORD_SIZE = 2; // 2 byte
+
+
+Register16bit.prototype.load = function() {
+  return this.uint16[0];
+};
+
+
+Register16bit.prototype.loadBit = function(bit) {
+  return (this.load() >> bit) & 1 ? true : false;
+};
+
+
+Register16bit.prototype.store = function(value) {
+  this.uint16[0] = value;
+};
+
+
+Register16bit.prototype.storeBit = function(bit, value) {
+  value = value ? 1 : 0;
+  this.store(this.load() & ~(1 << bit) | (value << bit));
+};
+
+
+
 function StatusRegister() {
   this.register = new Register();
 };
