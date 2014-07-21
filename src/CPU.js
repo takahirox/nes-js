@@ -86,7 +86,7 @@ CPU._ADDRESSING_RELATIVE              = 12;
 
 // decodes in advance cuz it's much easier than implementing decoder.
 // be careful that some 6502 related documents include some mistakes.
-// TODO: cycle num is necessary?
+// TODO: validation.
 CPU._OP = [];
 CPU._OP[0x00] = {'op': CPU._OP_BRK, 'cycle': 7, 'mode': CPU._ADDRESSING_IMPLIED};
 CPU._OP[0x01] = {'op': CPU._OP_ORA, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
@@ -412,7 +412,14 @@ CPU.prototype._loadMemoryWithAddressingMode = function(op) {
   }
 
   var address = this._getMemoryAddressWithAddressingMode(op);
-  return this.ram.load(address);
+  var value = this.ram.load(address);
+  // expects that relative addressing mode is used only for load.
+  if(op.mode == CPU._ADDRESSING_RELATIVE) {
+    // TODO: confirm if this logic is right.
+    if(value & 0x80)
+      value = value | 0xff00;
+  }
+  return value;
 };
 
 
@@ -574,9 +581,6 @@ CPU.prototype._popStack2Bytes = function() {
 
 CPU.prototype._doBranch = function(op, flag) {
   var result = this._loadMemoryWithAddressingMode(op);
-  // TODO: confirm if this logic is right.
-  if(result & 0x80)
-    result = result | 0xff00;
   if(flag)
     this.pc.store(this.pc.load() + result);
 };

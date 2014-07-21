@@ -113,6 +113,7 @@ Register16bit.prototype.incrementBy2 = function() {
 };
 
 
+
 function StatusRegister() {
   this.register = new Register();
 };
