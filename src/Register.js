@@ -28,6 +28,11 @@ Register.prototype.storeBit = function(bit, value) {
 };
 
 
+Register.prototype.increment = function() {
+  this.store(this.load() + 1);
+};
+
+
 
 function Register16bit() {
   var buffer = new ArrayBuffer(Register16bit._WORD_SIZE);
@@ -58,6 +63,15 @@ Register16bit.prototype.storeBit = function(bit, value) {
   this.store(this.load() & ~(1 << bit) | (value << bit));
 };
 
+
+Register16bit.prototype.increment = function() {
+  this.store(this.load() + 1);
+};
+
+
+Register16bit.prototype.incrementBy2 = function() {
+  this.store(this.load() + 2);
+};
 
 
 function StatusRegister() {

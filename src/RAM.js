@@ -19,7 +19,23 @@ RAM.prototype.load = function(address) {
 };
 
 
+/**
+ * little endian.
+ */
+RAM.prototype.load2Bytes = function(address) {
+  return this.load(address) | (this.load(address + 1) << 8);
+};
+
+
 RAM.prototype.store = function(address, value) {
   this.uint8[address] = value;
 };
 
+
+/**
+ * little endian.
+ */
+RAM.prototype.store2Bytes = function(address, value) {
+  this.store(address,     value);
+  this.store(address + 1, value >> 8);
+};
