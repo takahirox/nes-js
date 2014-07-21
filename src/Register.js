@@ -33,9 +33,27 @@ Register.prototype.increment = function() {
 };
 
 
+Register.prototype.incrementBy2 = function() {
+  this.increment();
+  this.increment();
+};
+
+
+Register.prototype.decrement = function() {
+  this.store(this.load() - 1);
+};
+
+
+Register.prototype.decrementBy2 = function() {
+  this.decrement();
+  this.decrement();
+};
+
+
 
 function Register16bit() {
   var buffer = new ArrayBuffer(Register16bit._WORD_SIZE);
+  this.uint8 = new Uint8Array(buffer);
   this.uint16 = new Uint16Array(buffer);
   this.uint16[0] = 0;
 };
@@ -53,8 +71,28 @@ Register16bit.prototype.loadBit = function(bit) {
 };
 
 
+Register16bit.prototype.loadHigherByte = function() {
+  return this.uint8[0];
+};
+
+
+Register16bit.prototype.loadLowerByte = function() {
+  return this.uint8[1];
+};
+
+
 Register16bit.prototype.store = function(value) {
   this.uint16[0] = value;
+};
+
+
+Register16bit.prototype.storeHigherByte = function(value) {
+  this.uint8[0] = value;
+};
+
+
+Register16bit.prototype.storeLowerByte = function(value) {
+  this.uint8[1] = value;
 };
 
 
@@ -70,7 +108,8 @@ Register16bit.prototype.increment = function() {
 
 
 Register16bit.prototype.incrementBy2 = function() {
-  this.store(this.load() + 2);
+  this.increment();
+  this.increment();
 };
 
 
@@ -85,6 +124,16 @@ StatusRegister._D_BIT = 3;
 StatusRegister._I_BIT = 2;
 StatusRegister._Z_BIT = 1;
 StatusRegister._C_BIT = 0;
+
+
+StatusRegister.prototype.load = function() {
+  return this.register.load();
+};
+
+
+StatusRegister.prototype.store = function(value) {
+  this.register.store(value);
+};
 
 
 StatusRegister.prototype.isN = function() {
