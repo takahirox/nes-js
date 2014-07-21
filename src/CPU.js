@@ -1,5 +1,5 @@
 /**
- * Richo 6502
+ * Ricoh 6502
  */
 function CPU() {
   this.pc = new Register16bit();
