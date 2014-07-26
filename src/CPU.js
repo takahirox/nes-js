@@ -602,7 +602,7 @@ CPU.prototype._operate = function(op) {
       this._updateN(result)
       this._updateZ(result)
       this._updateC(result)
-      if((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
+      if((src1 ^ result) & (src2 ^ result) & 0x80 == 0)
         this.p.setV();
       else
         this.p.clearV();
@@ -924,7 +924,7 @@ CPU.prototype._operate = function(op) {
       this._updateC(result)
       // TODO: implement right overflow logic.
       //       this is just a temporal logic.
-      if((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
+      if((src1 ^ result) & (src2 ^ result) & 0x80 == 0)
         this.p.setV();
       else
         this.p.clearV();

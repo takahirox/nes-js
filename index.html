@@ -1,0 +1,98 @@
+<html>
+<head>
+<script type="text/javascript" src="utility/utility.js"></script>
+<script type="text/javascript" src="src/Register.js"></script>
+<script type="text/javascript" src="src/ROM.js"></script>
+<script type="text/javascript" src="src/RAM.js"></script>
+<script type="text/javascript" src="src/CPU.js"></script>
+<script type="text/javascript" src="src/PPU.js"></script>
+<script type="text/javascript">
+var __romURL = './roms/The Invasion.nes';
+
+function __dragOverHandler(e) {
+  e.preventDefault();
+};
+
+
+// TODO: remove duplicated __putMessage()
+function __dropRomImage(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    __putMessage('loading done.');
+    __dumpHeader(e.target.result);
+  };
+  reader.onerror = function(e) {
+    for(var key in reader.error) {
+      __putMessage(key + '=' + reader.error[key]);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  __putMessage('')
+  __putMessage('loading rom image...')
+};
+
+
+function __loadRom() {
+  var request = new XMLHttpRequest();
+  request.responseType = 'arraybuffer';
+  request.onload = function() {
+    __putMessage('loading done.');
+    __dumpHeader(request.response);
+  };
+  request.onerror = function(e) {
+    __putMessage('failed to load.');
+  };
+  request.open('GET', __romURL, true);
+  request.send(null);
+  __putMessage('')
+  __putMessage('loading rom image...')
+};
+
+
+function __dumpHeader(arrayBuffer) {
+  var rom = new ROM(arrayBuffer);
+  if(rom.isNES()) {
+    __putMessage('this seems iNES format.');
+  } else {
+    __putMessage('this doesn\'t seem iNES format.');
+  }
+  __putMessage('');
+  __putMessage('header dump.');
+  __putMessage('--------');
+  __putMessage(rom.dumpHeader());
+  __putMessage('--------');
+};
+
+
+function __putMessage(str) {
+  var area = document.getElementById('dumpHeader');
+  area.firstChild.appendData(str + '\n');
+  area.scrollTop = area.scrollHeight;
+};
+
+window.addEventListener('drop', __dropRomImage, false);
+window.addEventListener('dragover', __dragOverHandler, false);
+</script>
+</head>
+<body>
+<p>
+<button onclick="__loadRom()">load rom</button>
+push this button or drag and drop your own rom into this window to load rom image.
+</p>
+
+<p>
+<textarea id="dumpHeader" cols="64" rows="32" readonly="readonly"> </textarea>
+</p>
+
+<p>
+Thanks for the public domain NES roms.
+</p>
+<ul>
+<li><a href="http://pdroms.de/category/nintendoentertainmentsystem">http://pdroms.de/category/nintendoentertainmentsystem</a></li>
+<li><a href="http://slydogstudios.org/index.php/1k-series/">http://slydogstudios.org/index.php/1k-series/</a></li>
+</ul>
+
+</body>
+</html>
