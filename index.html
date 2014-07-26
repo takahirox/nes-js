@@ -1,49 +1,98 @@
-<!DOCTYPE html>
 <html>
+<head>
+<script type="text/javascript" src="utility/utility.js"></script>
+<script type="text/javascript" src="src/Register.js"></script>
+<script type="text/javascript" src="src/ROM.js"></script>
+<script type="text/javascript" src="src/RAM.js"></script>
+<script type="text/javascript" src="src/CPU.js"></script>
+<script type="text/javascript" src="src/PPU.js"></script>
+<script type="text/javascript">
+var __romURL = './roms/The Invasion.nes';
 
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Nes-js : " />
+function __dragOverHandler(e) {
+  e.preventDefault();
+};
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Nes-js</title>
-  </head>
+// TODO: remove duplicated __putMessage()
+function __dropRomImage(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    __putMessage('loading done.');
+    __dumpHeader(e.target.result);
+  };
+  reader.onerror = function(e) {
+    for(var key in reader.error) {
+      __putMessage(key + '=' + reader.error[key]);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  __putMessage('')
+  __putMessage('loading rom image...')
+};
 
-  <body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/takahirox/nes-js">View on GitHub</a>
+function __loadRom() {
+  var request = new XMLHttpRequest();
+  request.responseType = 'arraybuffer';
+  request.onload = function() {
+    __putMessage('loading done.');
+    __dumpHeader(request.response);
+  };
+  request.onerror = function(e) {
+    __putMessage('failed to load.');
+  };
+  request.open('GET', __romURL, true);
+  request.send(null);
+  __putMessage('')
+  __putMessage('loading rom image...')
+};
 
-          <h1 id="project_title">Nes-js</h1>
-          <h2 id="project_tagline"></h2>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/takahirox/nes-js/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/takahirox/nes-js/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+function __dumpHeader(arrayBuffer) {
+  var rom = new ROM(arrayBuffer);
+  if(rom.isNES()) {
+    __putMessage('this seems iNES format.');
+  } else {
+    __putMessage('this doesn\'t seem iNES format.');
+  }
+  __putMessage('');
+  __putMessage('header dump.');
+  __putMessage('--------');
+  __putMessage(rom.dumpHeader());
+  __putMessage('--------');
+};
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <p><a href="http://takahirox.github.io/nes-js/index.html">Demo</a></p>
-      </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Nes-js maintained by <a href="https://github.com/takahirox">takahirox</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
+function __putMessage(str) {
+  var area = document.getElementById('dumpHeader');
+  area.firstChild.appendData(str + '\n');
+  area.scrollTop = area.scrollHeight;
+};
 
-    
+window.addEventListener('drop', __dropRomImage, false);
+window.addEventListener('dragover', __dragOverHandler, false);
+</script>
+</head>
+<body>
+<p>
+<button onclick="__loadRom()">load rom</button>
+push this button or drag and drop your own rom into this window to load rom image.
+</p>
 
-  </body>
+<p>
+<textarea id="dumpHeader" cols="64" rows="32" readonly="readonly"> </textarea>
+</p>
+
+<p>
+Thanks for the public domain NES roms.
+</p>
+<ul>
+<li><a href="http://pdroms.de/category/nintendoentertainmentsystem">http://pdroms.de/category/nintendoentertainmentsystem</a></li>
+<li><a href="http://slydogstudios.org/index.php/1k-series/">http://slydogstudios.org/index.php/1k-series/</a></li>
+</ul>
+
+</body>
 </html>
