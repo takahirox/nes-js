@@ -15,8 +15,21 @@ ROM.prototype._init = function(buffer) {
 };
 
 
+ROM.prototype.getCapacity = function() {
+  return this.uint8.length;
+};
+
+
 ROM.prototype.load = function(address) {
   return this.uint8[address];
+};
+
+
+/**
+ * little endian.
+ */
+ROM.prototype.load2Bytes = function(address) {
+  return this.load(address) | (this.load(address + 1) << 8);
 };
 
 
@@ -34,6 +47,53 @@ ROM.prototype.dumpHeader = function() {
   return this.header.dump();
 };
 
+
+/**
+ * TODO: check the logic.
+ */
+ROM.prototype.dump = function() {
+  var buffer = '';
+  var previousIsZeroLine = false;
+  for(var i = ROM._HEADER_SIZE; i < this.uint8.length; i++) {
+    if(i % 0x10 == 0) {
+      if(previousIsZeroLine) {
+        var skipZero = false;
+        while(this._checkNext16BytesIsZero(i+0x10)) {
+          i += 0x10;
+          skipZero = true;
+        }
+        if(skipZero)
+          buffer += '...\n';
+      }
+      buffer += __10to16(i-0x10, 4) + ' ';
+      previousIsZeroLine = true;
+    }
+
+    var value = this.load(i);
+    buffer += __10to16(value, 2, true) + ' ';
+    if(value != 0)
+      previousIsZeroLine = false;
+
+    if(i % 0x10 == 0xf)
+      buffer += '\n';
+  }
+  return buffer;
+};
+
+
+/**
+ * TODO: bad performance.
+ */
+ROM.prototype._checkNext16BytesIsZero = function(offset) {
+  if(offset + 0x10 >= this.uint8.length)
+    return false;
+
+  var sum = 0;
+  for(var i = offset; i < offset + 0x10; i++) {
+    sum += this.load(i);
+  }
+  return sum == 0;
+};
 
 
 function ROMHeader(rom) {
@@ -226,24 +286,34 @@ ROMHeader.prototype.isNES = function() {
 
 ROMHeader.prototype.dump = function() {
   var buffer = '';
+
+  buffer += '0x ';
+  for(var i = 0; i < ROM._HEADER_SIZE; i++) {
+    buffer += __10to16(this.load(i), 2, true) + ' ';
+  }
+  buffer += '\n\n';
+
   buffer += 'Signature: ' + this.getSignature() + '\n';
-  buffer += 'Magic Number: ' + __10to16(this.getMagicNumber()) + '\n';
-  buffer += 'PRG-ROM banks num: ' + __10to16(this.getPRGROMBanksNum()) + '\n';
-  buffer += 'CHR-ROM banks num: ' + __10to16(this.getCHRROMBanksNum()) + '\n';
-  buffer += 'Control1: ' + __10to16(this.getControlByte1()) + '\n';
-  buffer += 'Control2: ' + __10to16(this.getControlByte2()) + '\n';
-  buffer += 'RAM banks num: ' + __10to16(this.getRAMBanksNum()) + '\n';
-  buffer += 'Unused field: ' + __10to16(this.getUnusedField()) + '\n';
+  buffer += 'Magic Number: ' + __10to16(this.getMagicNumber(), 2) + '\n';
+  buffer += 'PRG-ROM banks num: ' +
+              __10to16(this.getPRGROMBanksNum(), 2) + '\n';
+  buffer += 'CHR-ROM banks num: ' +
+              __10to16(this.getCHRROMBanksNum(), 2) + '\n';
+  buffer += 'Control1: ' + __10to16(this.getControlByte1(), 2) + '\n';
+  buffer += 'Control2: ' + __10to16(this.getControlByte2(), 2) + '\n';
+  buffer += 'RAM banks num: ' + __10to16(this.getRAMBanksNum(), 2) + '\n';
+  buffer += 'Unused field: ' + __10to16(this.getUnusedField(), 14) + '\n';
   buffer += '\n';
   buffer += 'In control bytes\n';
   buffer += 'Mirroring type: ' + __10to16(this.getMirroringType()) +
               '(' + this.getMirroringTypeAsStrings() + ')\n';
   buffer += 'Battery-backed RAM: ' +
                __10to16(this.getBatteryBackedRAM()) + '\n';
-  buffer += '512-byte trainer: ' + __10to16(this.get512BytesTrainer()) + '\n';
+  buffer += '512-byte trainer: ' +
+              __10to16(this.get512BytesTrainer()) + '\n';
   buffer += 'Four screen mirroring: ' +
                __10to16(this.getFourScreenMirroring()) + '\n';
-  buffer += 'Mapper number: ' + __10to16(this.getMapperNum()) +
+  buffer += 'Mapper number: ' + __10to16(this.getMapperNum(), 2) +
               '(' + this.getMapperName() + ')';
   return buffer;
 };

@@ -1,88 +1,89 @@
 /**
  * Ricoh 6502
  */
-function CPU() {
+function CPU(ram) {
   this.pc = new Register16bit();
   this.sp = new Register();
   this.a = new Register();
   this.x = new Register();
   this.y = new Register();
   this.p = new StatusRegister();
-  this.ram = new RAM();
+  this.ram = ram;
+  this.pc.store(this.ram.load2Bytes(0xFFFC)); // TODO: temporal
 };
 
-CPU._OP_INV = 0; // Invalid
-CPU._OP_ADC = 1;
-CPU._OP_AND = 2;
-CPU._OP_ASL = 3;
-CPU._OP_BCC = 4;
-CPU._OP_BCS = 5;
-CPU._OP_BEQ = 6;
-CPU._OP_BIT = 7;
-CPU._OP_BMI = 8;
-CPU._OP_BNE = 9;
-CPU._OP_BPL = 10;
-CPU._OP_BRK = 11;
-CPU._OP_BVC = 12;
-CPU._OP_BVS = 13;
-CPU._OP_CLC = 14;
-CPU._OP_CLD = 15;
-CPU._OP_CLI = 16;
-CPU._OP_CLV = 17;
-CPU._OP_CMP = 18;
-CPU._OP_CPX = 19;
-CPU._OP_CPY = 20;
-CPU._OP_DEC = 21;
-CPU._OP_DEX = 22;
-CPU._OP_DEY = 23;
-CPU._OP_EOR = 24;
-CPU._OP_INC = 25;
-CPU._OP_INX = 26;
-CPU._OP_INY = 27;
-CPU._OP_JMP = 28;
-CPU._OP_JSR = 29;
-CPU._OP_LDA = 30;
-CPU._OP_LDX = 31;
-CPU._OP_LDY = 32;
-CPU._OP_LSR = 33;
-CPU._OP_NOP = 34;
-CPU._OP_ORA = 35;
-CPU._OP_PHA = 36;
-CPU._OP_PHP = 37;
-CPU._OP_PLA = 38;
-CPU._OP_PLP = 39;
-CPU._OP_ROL = 40;
-CPU._OP_ROR = 41;
-CPU._OP_RTI = 42;
-CPU._OP_RTS = 43;
-CPU._OP_SBC = 44;
-CPU._OP_SEC = 45;
-CPU._OP_SED = 46;
-CPU._OP_SEI = 47;
-CPU._OP_STA = 48;
-CPU._OP_STX = 49;
-CPU._OP_STY = 50;
-CPU._OP_TAX = 51;
-CPU._OP_TAY = 52;
-CPU._OP_TSX = 53;
-CPU._OP_TXA = 54;
-CPU._OP_TXS = 55;
-CPU._OP_TYA = 56;
+CPU._OP_INV = {'opc':  0, 'name': 'inv'}; // Invalid
+CPU._OP_ADC = {'opc':  1, 'name': 'adc'};
+CPU._OP_AND = {'opc':  2, 'name': 'and'};
+CPU._OP_ASL = {'opc':  3, 'name': 'asl'};
+CPU._OP_BCC = {'opc':  4, 'name': 'bcc'};
+CPU._OP_BCS = {'opc':  5, 'name': 'bcs'};
+CPU._OP_BEQ = {'opc':  6, 'name': 'beq'};
+CPU._OP_BIT = {'opc':  7, 'name': 'bit'};
+CPU._OP_BMI = {'opc':  8, 'name': 'bmi'};
+CPU._OP_BNE = {'opc':  9, 'name': 'bne'};
+CPU._OP_BPL = {'opc': 10, 'name': 'bpl'};
+CPU._OP_BRK = {'opc': 11, 'name': 'brk'};
+CPU._OP_BVC = {'opc': 12, 'name': 'bvc'};
+CPU._OP_BVS = {'opc': 13, 'name': 'bvs'};
+CPU._OP_CLC = {'opc': 14, 'name': 'clc'};
+CPU._OP_CLD = {'opc': 15, 'name': 'cld'};
+CPU._OP_CLI = {'opc': 16, 'name': 'cli'};
+CPU._OP_CLV = {'opc': 17, 'name': 'clv'};
+CPU._OP_CMP = {'opc': 18, 'name': 'cmp'};
+CPU._OP_CPX = {'opc': 19, 'name': 'cpx'};
+CPU._OP_CPY = {'opc': 20, 'name': 'cpy'};
+CPU._OP_DEC = {'opc': 21, 'name': 'dec'};
+CPU._OP_DEX = {'opc': 22, 'name': 'dex'};
+CPU._OP_DEY = {'opc': 23, 'name': 'dey'};
+CPU._OP_EOR = {'opc': 24, 'name': 'eor'};
+CPU._OP_INC = {'opc': 25, 'name': 'inc'};
+CPU._OP_INX = {'opc': 26, 'name': 'inx'};
+CPU._OP_INY = {'opc': 27, 'name': 'iny'};
+CPU._OP_JMP = {'opc': 28, 'name': 'jmp'};
+CPU._OP_JSR = {'opc': 29, 'name': 'jsr'};
+CPU._OP_LDA = {'opc': 30, 'name': 'lda'};
+CPU._OP_LDX = {'opc': 31, 'name': 'ldx'};
+CPU._OP_LDY = {'opc': 32, 'name': 'ldy'};
+CPU._OP_LSR = {'opc': 33, 'name': 'lsr'};
+CPU._OP_NOP = {'opc': 34, 'name': 'nop'};
+CPU._OP_ORA = {'opc': 35, 'name': 'ora'};
+CPU._OP_PHA = {'opc': 36, 'name': 'pha'};
+CPU._OP_PHP = {'opc': 37, 'name': 'php'};
+CPU._OP_PLA = {'opc': 38, 'name': 'pla'};
+CPU._OP_PLP = {'opc': 39, 'name': 'plp'};
+CPU._OP_ROL = {'opc': 40, 'name': 'rol'};
+CPU._OP_ROR = {'opc': 41, 'name': 'ror'};
+CPU._OP_RTI = {'opc': 42, 'name': 'rti'};
+CPU._OP_RTS = {'opc': 43, 'name': 'rts'};
+CPU._OP_SBC = {'opc': 44, 'name': 'sbc'};
+CPU._OP_SEC = {'opc': 45, 'name': 'sec'};
+CPU._OP_SED = {'opc': 46, 'name': 'sed'};
+CPU._OP_SEI = {'opc': 47, 'name': 'sei'};
+CPU._OP_STA = {'opc': 48, 'name': 'sta'};
+CPU._OP_STX = {'opc': 49, 'name': 'stx'};
+CPU._OP_STY = {'opc': 50, 'name': 'sty'};
+CPU._OP_TAX = {'opc': 51, 'name': 'tax'};
+CPU._OP_TAY = {'opc': 52, 'name': 'tay'};
+CPU._OP_TSX = {'opc': 53, 'name': 'tsx'};
+CPU._OP_TXA = {'opc': 54, 'name': 'txa'};
+CPU._OP_TXS = {'opc': 55, 'name': 'txs'};
+CPU._OP_TYA = {'opc': 56, 'name': 'tya'};
 
 // TODO: not fixed yet.
-CPU._ADDRESSING_IMMEDIATE             = 0;
-CPU._ADDRESSING_ABSOLUTE              = 1;
-CPU._ADDRESSING_INDEXED_ABSOLUTE_X    = 2;
-CPU._ADDRESSING_INDEXED_ABSOLUTE_Y    = 3;
-CPU._ADDRESSING_ZERO_PAGE             = 4;
-CPU._ADDRESSING_INDEXED_ZERO_PAGE_X   = 5;
-CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y   = 6;
-CPU._ADDRESSING_IMPLIED               = 7;
-CPU._ADDRESSING_ACCUMULATOR           = 8;
-CPU._ADDRESSING_INDIRECT              = 9;
-CPU._ADDRESSING_INDEXED_INDIRECT_X    = 10;
-CPU._ADDRESSING_INDEXED_INDIRECT_Y    = 11;
-CPU._ADDRESSING_RELATIVE              = 12;
+CPU._ADDRESSING_IMMEDIATE             = {'id':  0, 'pc': 2, 'name': 'immediate'};
+CPU._ADDRESSING_ABSOLUTE              = {'id':  1, 'pc': 3, 'name': 'absolute'};
+CPU._ADDRESSING_INDEXED_ABSOLUTE_X    = {'id':  2, 'pc': 3, 'name': 'indexed_absolute_x'};
+CPU._ADDRESSING_INDEXED_ABSOLUTE_Y    = {'id':  3, 'pc': 3, 'name': 'indexed_absolute_y'};
+CPU._ADDRESSING_ZERO_PAGE             = {'id':  4, 'pc': 2, 'name': 'zero_page'};
+CPU._ADDRESSING_INDEXED_ZERO_PAGE_X   = {'id':  5, 'pc': 2, 'name': 'indexed_zero_page_x'};
+CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y   = {'id':  6, 'pc': 2, 'name': 'indexed_zero_page_y'};
+CPU._ADDRESSING_IMPLIED               = {'id':  7, 'pc': 1, 'name': 'implied'};
+CPU._ADDRESSING_ACCUMULATOR           = {'id':  8, 'pc': 1, 'name': 'accumulator'};
+CPU._ADDRESSING_INDIRECT              = {'id':  9, 'pc': 3, 'name': 'indirect'};
+CPU._ADDRESSING_INDEXED_INDIRECT_X    = {'id': 10, 'pc': 2, 'name': 'indexed_indirect_x'};
+CPU._ADDRESSING_INDEXED_INDIRECT_Y    = {'id': 11, 'pc': 2, 'name': 'indexed_indirect_y'};
+CPU._ADDRESSING_RELATIVE              = {'id': 12, 'pc': 2, 'name': 'relative'};
 
 // decodes in advance cuz it's much easier than implementing decoder.
 // be careful that some 6502 related documents include some mistakes.
@@ -407,14 +408,14 @@ CPU.prototype._interrupt = function(vector) {
 
 
 CPU.prototype._loadMemoryWithAddressingMode = function(op) {
-  if(op.mode == CPU._ADDRESSING_ACCUMULATOR) {
+  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
     return this.a.load();
   }
 
   var address = this._getMemoryAddressWithAddressingMode(op);
   var value = this.ram.load(address);
   // expects that relative addressing mode is used only for load.
-  if(op.mode == CPU._ADDRESSING_RELATIVE) {
+  if(op.mode.id == CPU._ADDRESSING_RELATIVE.id) {
     // TODO: confirm if this logic is right.
     if(value & 0x80)
       value = value | 0xff00;
@@ -424,7 +425,7 @@ CPU.prototype._loadMemoryWithAddressingMode = function(op) {
 
 
 CPU.prototype._storeMemoryWithAddressingMode = function(op, value) {
-  if(op.mode == CPU._ADDRESSING_ACCUMULATOR) {
+  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
     this.a.store(value);
     return;
   }
@@ -438,7 +439,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
   var address;
   var src;
 
-  if(op.mode == CPU._ADDRESSING_ACCUMULATOR) {
+  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
     src = this.a.load();
   } else {
     address = this._getMemoryAddressWithAddressingMode(op);
@@ -447,7 +448,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
 
   var result = func(src);
 
-  if(op.mode == CPU._ADDRESSING_ACCUMULATOR) {
+  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
     this.a.store(result);
   } else {
     this.ram.store(address, result);
@@ -455,54 +456,54 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
 };
 
 
-CPU.prototype._getMemoryAddressWithAdressingMode = function(op) {
+CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
   var address = null;
-  switch(op.mode) {
-    case CPU._ADDRESSING_IMMEDIATE:
-    case CPU._ADDRESSING_RELATIVE:
+  switch(op.mode.id) {
+    case CPU._ADDRESSING_IMMEDIATE.id:
+    case CPU._ADDRESSING_RELATIVE.id:
       address = this.pc.load();
       this.pc.increment();
       break;
 
-    case CPU._ADDRESSING_ABSOLUTE:
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_X:
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y:
+    case CPU._ADDRESSING_ABSOLUTE.id:
+    case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
+    case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
       address = this.ram.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
-      switch(op.mode) {
-        case CPU._ADDRESSING_INDEXED_ABSOLUTE_X:
+      switch(op.mode.id) {
+        case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
           address += this.x.load();
           break;
-        case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y:
+        case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
           address += this.y.load();
           break;
       }
       address = address & 0xffff;
       break;
 
-    case CPU._ADDRESSING_ZERO_PAGE:
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X:
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y:
+    case CPU._ADDRESSING_ZERO_PAGE.id:
+    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
+    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
       address = this.ram.load(this.pc.load());
       this.pc.increment();
-      switch(op.mode) {
-        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X:
+      switch(op.mode.id) {
+        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
         address += this.x.load();
         break;
-        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y:
+        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
         address += this.y.load();
         break;
       }
       address = address & 0xff;
       break;
 
-    case CPU._ADDRESSING_INDIRECT:
+    case CPU._ADDRESSING_INDIRECT.id:
       var tmp = this.ram.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
       address = this.ram.load2Bytes(tmp);
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_X:
+    case CPU._ADDRESSING_INDEXED_INDIRECT_X.id:
       var tmp = this.ram.load(this.pc.load());
       this.pc.increment();
       tmp += this.x.load();
@@ -510,7 +511,7 @@ CPU.prototype._getMemoryAddressWithAdressingMode = function(op) {
       address = this.ram.load2Bytes(tmp);
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_Y:
+    case CPU._ADDRESSING_INDEXED_INDIRECT_Y.id:
       var tmp = this.ram.load(this.pc.load());
       this.pc.increment();
       address = this.ram.load2Bytes(tmp);
@@ -523,6 +524,135 @@ CPU.prototype._getMemoryAddressWithAdressingMode = function(op) {
       break;
   }
   return address;
+};
+
+
+/**
+ * TODO: there is a room to optimize the code.
+ */
+CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc, ramDump) {
+  pc = pc & 0xffff;
+  var buffer = '';
+  switch(op.mode) {
+    case CPU._ADDRESSING_IMMEDIATE:
+      buffer += '#' + __10to16(mem.load(pc), 2);
+      break;
+
+    case CPU._ADDRESSING_RELATIVE:
+      var value = mem.load(pc);
+      if(value & 0x80) {
+        value = -(0x100 - value); // make negative native integer.
+      }
+      buffer += value.toString(10);
+      break;
+
+    case CPU._ADDRESSING_ABSOLUTE:
+      var address = mem.load2Bytes(pc);
+      buffer += __10to16(address, 4);
+      if(ramDump) {
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_ABSOLUTE_X:
+      var address = mem.load2Bytes(pc);
+      buffer += __10to16(address, 4) + ',X ';
+      if(ramDump) {
+        address += this.x.load();
+        address = address & 0xffff;
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y:
+      var address = mem.load2Bytes(pc);
+      buffer += __10to16(address, 4) + ',Y ';
+      if(ramDump) {
+        address += this.y.load();
+        address = address & 0xffff;
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_ZERO_PAGE:
+      var address = mem.load(pc);
+      buffer += __10to16(address, 2);
+      if(ramDump) {
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X:
+      var address = mem.load(pc);
+      buffer += __10to16(address, 2) + ',X ';
+      if(ramDump) {
+        address += this.x.load();
+        address = address & 0xff;
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y:
+      var address = mem.load(pc);
+      buffer += __10to16(address, 2) + ',Y ';
+      if(ramDump) {
+        address += this.y.load();
+        address = address & 0xff;
+        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDIRECT:
+      var address = mem.load2Bytes(pc);
+      buffer += __10to16(address, 4);
+      if(ramDump) {
+        var address2 = mem.load2Bytes(address);
+        buffer += '(';
+        buffer += __10to16(address2, 4);
+        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_INDIRECT_X:
+      var address = mem.load(pc);
+      buffer += '(' + __10to16(address, 2) + ',X) ';
+      if(ramDump) {
+        address += this.x.load();
+        address = address & 0xffff;
+        var address2 = mem.load2Bytes(address);
+        buffer += '(';
+        buffer += __10to16(address2, 4);
+        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_INDEXED_INDIRECT_Y:
+      var address = mem.load(pc);
+      buffer += '(' + __10to16(address, 2) + '),Y ';
+      if(ramDump) {
+        var address2 = mem.load2Bytes(address);
+        address2 += this.y.load();
+        address2 = address2 & 0xffff;
+        buffer += '(';
+        buffer += __10to16(address2, 4);
+        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += ')';
+      }
+      break;
+
+    case CPU._ADDRESSING_ACCUMULATOR:
+      if(ramDump) {
+        buffer += 'A(' + __10to16(this.a.load(), 2) + ')';
+      }
+      break;
+
+    default:
+      // TODO: throw Exception?
+      break;
+  }
+  return buffer;
 };
 
 
@@ -592,8 +722,8 @@ CPU.prototype._doBranch = function(op, flag) {
  *       and can lead GC which could affect the performance.
  */
 CPU.prototype._operate = function(op) {
-  switch(op.op) {
-    case CPU._OP_ADC:
+  switch(op.op.opc) {
+    case CPU._OP_ADC.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var c = this.p.isC() ? 1 : 0;
@@ -608,7 +738,7 @@ CPU.prototype._operate = function(op) {
         this.p.clearV();
       break;
 
-    case CPU._OP_AND:
+    case CPU._OP_AND.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 & src2;
@@ -617,7 +747,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_ASL:
+    case CPU._OP_ASL.opc:
       var self = this;
       var func = function(src) {
         var result = src << 1;
@@ -629,20 +759,20 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_BCC:
+    case CPU._OP_BCC.opc:
       this._doBranch(op, !this.p.isC());
       break;
 
-    case CPU._OP_BCS:
+    case CPU._OP_BCS.opc:
       this._doBranch(op, this.p.isC());
       break;
 
-    case CPU._OP_BEQ:
+    case CPU._OP_BEQ.opc:
       this._doBranch(op, this.p.isZ());
       break;
 
     // TODO: check logic.
-    case CPU._OP_BIT:
+    case CPU._OP_BIT.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 & src2;
@@ -654,20 +784,20 @@ CPU.prototype._operate = function(op) {
         this.p.setV();
       break;
 
-    case CPU._OP_BMI:
+    case CPU._OP_BMI.opc:
       this._doBranch(op, this.p.isN());
       break;
 
-    case CPU._OP_BNE:
+    case CPU._OP_BNE.opc:
       this._doBranch(op, !this.p.isZ());
       break;
 
-    case CPU._OP_BPL:
+    case CPU._OP_BPL.opc:
       this._doBranch(op, !this.p.isN());
       break;
 
     // TODO: check logic.
-    case CPU._OP_BRK:
+    case CPU._OP_BRK.opc:
       this.pc.increment();
       this._pushStack2Bytes(this.pc.load());
       this.p.setB();
@@ -677,43 +807,43 @@ CPU.prototype._operate = function(op) {
       this.pc.store(this.ram.load2Bytes(0xfffe));
       break;
 
-    case CPU._OP_BVC:
+    case CPU._OP_BVC.opc:
       this._doBranch(op, !this.p.isV());
       break;
 
-    case CPU._OP_BVS:
+    case CPU._OP_BVS.opc:
       this._doBranch(op, this.p.isV());
       break;
 
-    case CPU._OP_CLC:
+    case CPU._OP_CLC.opc:
       this.p.clearC();
       break;
 
-    case CPU._OP_CLD:
+    case CPU._OP_CLD.opc:
       this.p.clearD();
       break;
 
-    case CPU._OP_CLI:
+    case CPU._OP_CLI.opc:
       this.p.clearI();
       break;
 
-    case CPU._OP_CLV:
+    case CPU._OP_CLV.opc:
       this.p.clearV();
       break;
 
     // TODO: separate?
-    case CPU._OP_CMP:
-    case CPU._OP_CPX:
-    case CPU._OP_CPY:
+    case CPU._OP_CMP.opc:
+    case CPU._OP_CPX.opc:
+    case CPU._OP_CPY.opc:
       var src1;
-      switch(op.mode) {
-        case CPU._OP_CMP:
+      switch(op.op.opc) {
+        case CPU._OP_CMP.opc:
           src1 = this.a.load();
           break;
-        case CPU._OP_CPX:
+        case CPU._OP_CPX.opc:
           src1 = this.x.load();
           break;
-        case CPU._OP_CPY:
+        case CPU._OP_CPY.opc:
           src1 = this.y.load();
           break;
       }
@@ -724,7 +854,7 @@ CPU.prototype._operate = function(op) {
       this._updateC(result);
       break;
 
-    case CPU._OP_DEC:
+    case CPU._OP_DEC.opc:
       var self = this;
       var func = function(src) {
         var result = src - 1;
@@ -735,14 +865,14 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_DEX:
-    case CPU._OP_DEY:
+    case CPU._OP_DEX.opc:
+    case CPU._OP_DEY.opc:
       var reg;
-      switch(op.mode) {
-        case CPU._OP_DEX:
+      switch(op.op.opc) {
+        case CPU._OP_DEX.opc:
           reg = this.x;
           break;
-        case CPU._OP_DEY:
+        case CPU._OP_DEY.opc:
           reg = this.y;
           break;
       }
@@ -753,7 +883,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_EOR:
+    case CPU._OP_EOR.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 ^ src2;
@@ -762,7 +892,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_INC:
+    case CPU._OP_INC.opc:
       var self = this;
       var func = function(src) {
         var result = src + 1;
@@ -774,14 +904,14 @@ CPU.prototype._operate = function(op) {
       break;
       break;
 
-    case CPU._OP_INX:
-    case CPU._OP_INY:
+    case CPU._OP_INX.opc:
+    case CPU._OP_INY.opc:
       var reg;
-      switch(op.mode) {
-        case CPU._OP_INX:
+      switch(op.op.opc) {
+        case CPU._OP_INX.opc:
           reg = this.x;
           break;
-        case CPU._OP_INY:
+        case CPU._OP_INY.opc:
           reg = this.y;
           break;
       }
@@ -793,25 +923,25 @@ CPU.prototype._operate = function(op) {
       break;
       break;
 
-    case CPU._OP_JMP:
+    case CPU._OP_JMP.opc:
       break;
 
-    case CPU._OP_JSR:
+    case CPU._OP_JSR.opc:
       break;
 
-    case CPU._OP_LDA:
-    case CPU._OP_LDX:
-    case CPU._OP_LDY:
+    case CPU._OP_LDA.opc:
+    case CPU._OP_LDX.opc:
+    case CPU._OP_LDY.opc:
       var result = this._loadMemoryWithAddressingMode(op);
       var reg;
-      switch(op.op) {
-        case CPU._OP_LDA:
+      switch(op.op.opc) {
+        case CPU._OP_LDA.opc:
           reg = this.a;
           break;
-        case CPU._OP_LDX:
+        case CPU._OP_LDX.opc:
           reg = this.x;
           break;
-        case CPU._OP_LDY:
+        case CPU._OP_LDY.opc:
           reg = this.y;
           break;
       }
@@ -820,7 +950,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_LSR:
+    case CPU._OP_LSR.opc:
       var self = this;
       var func = function(src) {
         var result = src >> 1;
@@ -835,10 +965,10 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_NOP:
+    case CPU._OP_NOP.opc:
       break;
 
-    case CPU._OP_ORA:
+    case CPU._OP_ORA.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 | src2;
@@ -847,32 +977,32 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_PHA:
-    case CPU._OP_PHP:
+    case CPU._OP_PHA.opc:
+    case CPU._OP_PHP.opc:
       var reg;
-      switch(op.op) {
-        case CPU._OP_PHA:
+      switch(op.op.opc) {
+        case CPU._OP_PHA.opc:
           reg = this.a;
           break;
-        case CPU._OP_PHP:
+        case CPU._OP_PHP.opc:
           reg = this.p;
           break;
       }
       this._pushStack(reg.load());
       break;
 
-    case CPU._OP_PLA:
+    case CPU._OP_PLA.opc:
       var result = this._popStack();
       this.a.store(result);
       this._updateN(result);
       this._updateZ(result);
       break;
 
-    case CPU._OP_PLP:
+    case CPU._OP_PLP.opc:
       this.p.store(this._popStack());
       break;
 
-    case CPU._OP_ROL:
+    case CPU._OP_ROL.opc:
       var self = this;
       var func = function(src) {
         var c = self.p.isC() ? 1 : 0;
@@ -885,7 +1015,7 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_ROR:
+    case CPU._OP_ROR.opc:
       var self = this;
       var func = function(src) {
         var c = self.p.isC() ? 0x80 : 0x00;
@@ -902,18 +1032,18 @@ CPU.prototype._operate = function(op) {
       break;
 
     // TODO: check logic.
-    case CPU._OP_RTI:
+    case CPU._OP_RTI.opc:
       this.p.store(this._popStack());
       this.pc.store(this._popStack2Bytes());
       break;
 
     // TODO: check logic.
-    case CPU._OP_RTS:
+    case CPU._OP_RTS.opc:
       this.pc.store(this._popStack2Bytes());
       this.pc.increment();
       break;
 
-    case CPU._OP_SBC:
+    case CPU._OP_SBC.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var c = this.p.isC() ? 1 : 0;
@@ -930,66 +1060,66 @@ CPU.prototype._operate = function(op) {
         this.p.clearV();
       break;
 
-    case CPU._OP_SEC:
+    case CPU._OP_SEC.opc:
       this.p.setC();
       break;
 
-    case CPU._OP_SED:
+    case CPU._OP_SED.opc:
       this.p.setD();
       break;
 
-    case CPU._OP_SEI:
+    case CPU._OP_SEI.opc:
       this.p.setI();
       break;
 
-    case CPU._OP_STA:
-    case CPU._OP_STX:
-    case CPU._OP_STY:
+    case CPU._OP_STA.opc:
+    case CPU._OP_STX.opc:
+    case CPU._OP_STY.opc:
       var reg;
-      switch(op.op) {
-        case CPU._OP_STA:
+      switch(op.op.opc) {
+        case CPU._OP_STA.opc:
           reg = this.a;
           break;
-        case CPU._OP_STX:
+        case CPU._OP_STX.opc:
           reg = this.x;
           break;
-        case CPU._OP_STY:
+        case CPU._OP_STY.opc:
           reg = this.y;
           break;
       }
-      this._storeMemoryWithAddressingMode(reg.load());
+      this._storeMemoryWithAddressingMode(op, reg.load());
       break;
 
-    case CPU._OP_TAX:
-    case CPU._OP_TAY:
-    case CPU._OP_TSX:
-    case CPU._OP_TXA:
-    case CPU._OP_TXS:
-    case CPU._OP_TYA:
+    case CPU._OP_TAX.opc:
+    case CPU._OP_TAY.opc:
+    case CPU._OP_TSX.opc:
+    case CPU._OP_TXA.opc:
+    case CPU._OP_TXS.opc:
+    case CPU._OP_TYA.opc:
       var srcReg;
       var desReg;
-      switch(op.op) {
-        case CPU._OP_TAX:
+      switch(op.op.opc) {
+        case CPU._OP_TAX.opc:
           srcReg = this.a;
           desReg = this.x;
           break;
-        case CPU._OP_TAY:
+        case CPU._OP_TAY.opc:
           srcReg = this.a;
           desReg = this.y;
           break;
-        case CPU._OP_TSX:
+        case CPU._OP_TSX.opc:
           srcReg = this.sp;
           desReg = this.x;
           break;
-        case CPU._OP_TXA:
+        case CPU._OP_TXA.opc:
           srcReg = this.x;
           desReg = this.a;
           break;
-        case CPU._OP_TXS:
+        case CPU._OP_TXS.opc:
           srcReg = this.x;
           desReg = this.sp;
           break;
-        case CPU._OP_TYA:
+        case CPU._OP_TYA.opc:
           srcReg = this.y;
           desReg = this.a;
           break;
@@ -1006,3 +1136,83 @@ CPU.prototype._operate = function(op) {
   }
 };
 
+
+/**
+ * this method is in CPU class to use Addressing Mode.
+ */
+CPU.prototype.disassembleROM = function() {
+  var buffer = '';
+  var rom = this.ram.rom;
+  var pc = ROM._HEADER_SIZE;
+  var previousIsZero = false;
+  var skipZero = false;
+  while(pc < rom.getCapacity()) {
+    var str = '';
+    var opc = rom.load(pc);
+    var op = this._decode(opc);
+
+    if(previousIsZero && opc == 0 && rom.load((pc+1)&0xffff) == 0) {
+      pc += 1;
+      skipZero = true;
+      continue;
+    }
+
+    if(skipZero)
+      buffer += '...\n';
+    skipZero = false;
+
+    str += __10to16(pc - ROM._HEADER_SIZE, 4) + ' ';
+    str += __10to16(opc, 2) + ' ';
+    str += op.op.name + ' ';
+    str += this._dumpMemoryAddressingMode(op,
+                                          rom,
+                                          pc + 1,
+                                          false)
+             + ' ';
+
+    while(str.length < 30) {
+      str += ' ' ;
+    }
+
+    if(op.mode) {
+      str += op.mode.name;
+      pc += op.mode.pc;
+    } else {
+      pc += 1;
+    }
+
+    buffer += str + '\n';
+    previousIsZero = opc == 0;
+  }
+  return buffer;
+};
+
+
+// TODO: temporal
+CPU.prototype.dump = function() {
+  var buffer = '';
+  var opc = this.ram.load(this.pc.load());
+  var op = this._decode(opc);
+
+  buffer += 'p:'  + this.p.dump()  + ' ';
+  buffer += 'pc:' + this.pc.dump() + '(' + __10to16(opc, 2) + ')' + ' ';
+  buffer += 'sp:' + this.sp.dump() + ' ';
+  buffer += 'a:'  + this.a.dump()  + ' ';
+  buffer += 'x:'  + this.x.dump()  + ' ';
+  buffer += 'y:'  + this.y.dump()  + ' ';
+
+  buffer += op.op.name + ' ' +
+              this._dumpMemoryAddressingMode(op,
+                                             this.ram,
+                                             this.pc.load() + 1,
+                                             true)
+              + ' ';
+
+  while(buffer.length < 90) {
+    buffer += ' ' ;
+  }
+
+  buffer += op.mode.name;
+
+  return buffer;
+};

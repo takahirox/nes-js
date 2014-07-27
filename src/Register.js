@@ -50,6 +50,11 @@ Register.prototype.decrementBy2 = function() {
 };
 
 
+Register.prototype.dump = function() {
+  return __10to16(this.load(), 2);
+};
+
+
 
 function Register16bit() {
   var buffer = new ArrayBuffer(Register16bit._WORD_SIZE);
@@ -110,6 +115,11 @@ Register16bit.prototype.increment = function() {
 Register16bit.prototype.incrementBy2 = function() {
   this.increment();
   this.increment();
+};
+
+
+Register16bit.prototype.dump = function() {
+  return __10to16(this.load(), 4);
 };
 
 
@@ -239,4 +249,20 @@ StatusRegister.prototype.setC = function() {
 
 StatusRegister.prototype.clearC = function() {
   this.register.storeBit(StatusRegister._C_BIT, 0);
+};
+
+
+StatusRegister.prototype.dump = function() {
+  var buffer = '';
+  buffer += this.register.dump();
+  buffer += '(';
+  buffer += this.isN() ? 'N' : '-';
+  buffer += this.isV() ? 'V' : '-';
+  buffer += this.isB() ? 'B' : '-';
+  buffer += this.isD() ? 'D' : '-';
+  buffer += this.isI() ? 'I' : '-';
+  buffer += this.isZ() ? 'Z' : '-';
+  buffer += this.isC() ? 'C' : '-';
+  buffer += ')';
+  return buffer;
 };

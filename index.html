@@ -21,7 +21,7 @@ function __dropRomImage(e) {
   var reader = new FileReader();
   reader.onload = function(e) {
     __putMessage('loading done.');
-    __dumpHeader(e.target.result);
+    __dump(e.target.result);
   };
   reader.onerror = function(e) {
     for(var key in reader.error) {
@@ -39,7 +39,7 @@ function __loadRom() {
   request.responseType = 'arraybuffer';
   request.onload = function() {
     __putMessage('loading done.');
-    __dumpHeader(request.response);
+    __dump(request.response);
   };
   request.onerror = function(e) {
     __putMessage('failed to load.');
@@ -51,7 +51,7 @@ function __loadRom() {
 };
 
 
-function __dumpHeader(arrayBuffer) {
+function __dump(arrayBuffer) {
   var rom = new ROM(arrayBuffer);
   if(rom.isNES()) {
     __putMessage('this seems iNES format.');
@@ -63,13 +63,39 @@ function __dumpHeader(arrayBuffer) {
   __putMessage('--------');
   __putMessage(rom.dumpHeader());
   __putMessage('--------');
+
+
+  if(! rom.isNES())
+    return;
+
+  // TODO: temporal
+  var ram = new RAM();
+  ram.setROM(rom);
+  var cpu = new CPU(ram);
+
+  __putMessage('');
+  __putMessage('all dump.');
+  __putMessage(rom.dump());
+
+  __putMessage('');
+  __putMessage('disassemble.');
+  __putMessage(cpu.disassembleROM());
+
+  __putMessage('');
+  __putMessage('0x100 cycles run.');
+  __putMessage(__10to16(0, 4) + ' ' + cpu.dump());
+
+  for(var i = 0; i < 0x100; i++) {
+    cpu.runCycle();
+    __putMessage(__10to16(i, 4) + ' ' + cpu.dump());
+  }
 };
 
 
 function __putMessage(str) {
   var area = document.getElementById('dumpHeader');
   area.firstChild.appendData(str + '\n');
-  area.scrollTop = area.scrollHeight;
+//  area.scrollTop = area.scrollHeight;
 };
 
 window.addEventListener('drop', __dropRomImage, false);
@@ -83,7 +109,7 @@ push this button or drag and drop your own rom into this window to load rom imag
 </p>
 
 <p>
-<textarea id="dumpHeader" cols="64" rows="32" readonly="readonly"> </textarea>
+<textarea id="dumpHeader" cols="128" rows="32" readonly="readonly"> </textarea>
 </p>
 
 <p>
