@@ -20,8 +20,15 @@ ROM.prototype.getCapacity = function() {
 };
 
 
+ROM.prototype._map = function(address) {
+  if(address >= 0x4000)
+    address -= 0x4000;
+  return address;
+};
+
+
 ROM.prototype.load = function(address) {
-  return this.uint8[address];
+  return this.uint8[this._map(address)];
 };
 
 
@@ -33,8 +40,11 @@ ROM.prototype.load2Bytes = function(address) {
 };
 
 
+/**
+ * not expected to use.
+ */
 ROM.prototype.store = function(address, value) {
-  this.uint8[address] = value;
+  this.uint8[this._map(address)] = value;
 };
 
 
