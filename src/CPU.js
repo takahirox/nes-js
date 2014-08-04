@@ -946,15 +946,15 @@ CPU.prototype._operate = function(op) {
 
     // TODO: check the logic.
     case CPU._OP_JMP.opc:
-      var address = this._loadMemoryWithAddressingMode(op);
+      var address = this._getMemoryAddressWithAddressingMode(op);
       this.pc.store(address);
       break;
 
     // TODO: check the logic.
     case CPU._OP_JSR.opc:
-      this.pc.decrement();
+      this.pc.incrementBy2();
       this._pushStack2Bytes(this.pc.load());
-      var address = this._loadMemoryWithAddressingMode(op);
+      var address = this._getMemoryAddressWithAddressingMode(op);
       this.pc.store(address);
       break;
 

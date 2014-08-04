@@ -37,7 +37,7 @@ NES.prototype.run = function() {
     this._runCycle();
     __putMessage(__10to16(i, 6) + ' ' + this.cpu.dump());
   }
-
+/*
   for(var j = 0; j < 0x100; j++) {
     this.cpu.interrupt(CPU._INTERRUPT_NMI);
     for(var i = 0; i < 0x100; i++) {
@@ -45,7 +45,7 @@ NES.prototype.run = function() {
 //      __putMessage(__10to16(i, 6) + ' ' + this.cpu.dump());
     }
   }
-
+*/
   __putMessage('');
   __putMessage('VRAM dump.');
   __putMessage(this.ppu.vram.dump());
