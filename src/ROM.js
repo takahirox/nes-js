@@ -1,22 +1,14 @@
 function ROM(arrayBuffer) {
-  this.buffer = null;
-  this.uint8 = null;
-  this.header = null;
-  this._init(arrayBuffer);
+  this.parent = GenericMemory;
+  this.parent.call(this, arrayBuffer);
+  this.header = new ROMHeader(this);
 };
+__inherit(ROM, GenericMemory);
 
 ROM._HEADER_SIZE = 16; // 16bytes
 
 
-ROM.prototype._init = function(buffer) {
-  this.buffer = buffer;
-  this.uint8 = new Uint8Array(buffer);
-  this.header = new ROMHeader(this);
-};
-
-
-ROM.prototype.getCapacity = function() {
-  return this.uint8.length;
+ROM.prototype._init = function() {
 };
 
 
@@ -24,27 +16,6 @@ ROM.prototype._map = function(address) {
   if(address >= 0x4000)
     address -= 0x4000;
   return address;
-};
-
-
-ROM.prototype.load = function(address) {
-  return this.uint8[this._map(address)];
-};
-
-
-/**
- * little endian.
- */
-ROM.prototype.load2Bytes = function(address) {
-  return this.load(address) | (this.load(address + 1) << 8);
-};
-
-
-/**
- * not expected to use.
- */
-ROM.prototype.store = function(address, value) {
-  this.uint8[this._map(address)] = value;
 };
 
 
@@ -58,52 +29,10 @@ ROM.prototype.dumpHeader = function() {
 };
 
 
-/**
- * TODO: check the logic.
- */
-ROM.prototype.dump = function() {
-  var buffer = '';
-  var previousIsZeroLine = false;
-  for(var i = ROM._HEADER_SIZE; i < this.uint8.length; i++) {
-    if(i % 0x10 == 0) {
-      if(previousIsZeroLine) {
-        var skipZero = false;
-        while(this._checkNext16BytesIsZero(i+0x10)) {
-          i += 0x10;
-          skipZero = true;
-        }
-        if(skipZero)
-          buffer += '...\n';
-      }
-      buffer += __10to16(i-0x10, 4) + ' ';
-      previousIsZeroLine = true;
-    }
-
-    var value = this.load(i);
-    buffer += __10to16(value, 2, true) + ' ';
-    if(value != 0)
-      previousIsZeroLine = false;
-
-    if(i % 0x10 == 0xf)
-      buffer += '\n';
-  }
-  return buffer;
+ROM.prototype._getStartDumpAddress = function() {
+  return ROM._HEADER_SIZE;
 };
 
-
-/**
- * TODO: bad performance.
- */
-ROM.prototype._checkNext16BytesIsZero = function(offset) {
-  if(offset + 0x10 >= this.uint8.length)
-    return false;
-
-  var sum = 0;
-  for(var i = offset; i < offset + 0x10; i++) {
-    sum += this.load(i);
-  }
-  return sum == 0;
-};
 
 
 function ROMHeader(rom) {

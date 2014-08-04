@@ -140,7 +140,46 @@ Register16bit.prototype.incrementBy2 = function() {
 };
 
 
+Register16bit.prototype.decrement = function() {
+  this.store(this.load() - 1);
+};
+
+
 Register16bit.prototype.dump = function() {
   return __10to16(this.load(), 4);
 };
+
+
+
+/**
+ * A class uses this class should be careful not to occur infinite loop.
+ */
+function RegisterWithCallback(readCallback, writeCallback) {
+  this.parent = Register;
+  this.parent.call(this);
+  this.readCallback = readCallback;
+  this.writeCallback = writeCallback;
+};
+__inherit(RegisterWithCallback, Register);
+
+
+/**
+ * callback is called BEFORE the parent load method.
+ */
+RegisterWithCallback.prototype.load = function(skip) {
+  if(! skip && this.readCallback)
+    this.readCallback();
+  return this.parent.prototype.load.call(this);
+};
+
+
+/**
+ * callback is called AFTER the parent load method.
+ */
+RegisterWithCallback.prototype.store = function(value, skip) {
+  this.parent.prototype.store.call(this, value);
+  if(! skip && this.writeCallback)
+    this.writeCallback();
+};
+
 

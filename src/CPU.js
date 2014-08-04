@@ -1,5 +1,6 @@
 /**
  * Ricoh 6502
+ * TODO: consider if setROM method is necessary.
  */
 function CPU(ram, ppu) {
   this.pc = new Register16bit();
@@ -11,9 +12,17 @@ function CPU(ram, ppu) {
   this.ram = ram;
 
  // TODO: temporal
-  this.mem = new CPUMemoryController(this, ppu, ram, ram.rom);
-  this.pc.store(this.mem.load2Bytes(0xFFFC));
+  this.mem = new CPUMemoryController(this, ppu, ram);
 };
+
+CPU._INTERRUPT_NMI = 0;
+CPU._INTERRUPT_RESET = 1;
+CPU._INTERRUPT_IRQ = 2;
+
+CPU._INTERRUPT_HANDLER_ADDRESSES = [];
+CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_NMI] = 0xFFFA;
+CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_RESET] = 0xFFFC;
+CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_IRQ] = 0xFFFE;
 
 CPU._OP_INV = {'opc':  0, 'name': 'inv'}; // Invalid
 CPU._OP_ADC = {'opc':  1, 'name': 'adc'};
@@ -381,6 +390,14 @@ CPU._OP[0xFE] = {'op': CPU._OP_INC, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_
 CPU._OP[0xFF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
 
 
+CPU.prototype.setROM = function(rom) {
+  this.rom = rom;
+  this.mem.setROM(rom);
+  // TODO: temporal
+  this._jumpToInterruptHandler(CPU._INTERRUPT_RESET);
+};
+
+
 CPU.prototype._fetch = function() {
   var opc = this.mem.load(this.pc.load());
   this.pc.increment();
@@ -403,10 +420,16 @@ CPU.prototype.runCycle = function() {
 /**
  * TODO: not fixed yet.
  */
-CPU.prototype._interrupt = function(vector) {
+CPU.prototype.interrupt = function(type) {
   this._pushStack2Bytes(this.pc.load());
   this._pushStack(this.p.load());
   this.p.setI();
+  this._jumpToInterruptHandler(type);
+};
+
+
+CPU.prototype._jumpToInterruptHandler = function(type) {
+  this.pc.store(this.mem.load2Bytes(CPU._INTERRUPT_HANDLER_ADDRESSES[type]));
 };
 
 
@@ -532,6 +555,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
 
 /**
  * TODO: there is a room to optimize the code.
+ * TODO: add callback prevention for registers.
  */
 CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc, ramDump) {
   pc = pc & 0xffff;
@@ -801,13 +825,9 @@ CPU.prototype._operate = function(op) {
 
     // TODO: check logic.
     case CPU._OP_BRK.opc:
-      this.pc.increment();
-      this._pushStack2Bytes(this.pc.load());
+      this.pc.decrement(); // necessary?
       this.p.setB();
-      this._pushStack(this.p.load());
-      this.p.setI();
-      // TODO: remove magic number.
-      this.pc.store(this.mem.load2Bytes(0xfffe));
+      this.interrupt(CPU._INTERRUPT_IRQ);
       break;
 
     case CPU._OP_BVC.opc:
@@ -905,7 +925,6 @@ CPU.prototype._operate = function(op) {
       };
       this._updateMemoryWithAddressingMode(op, func);
       break;
-      break;
 
     case CPU._OP_INX.opc:
     case CPU._OP_INY.opc:
@@ -924,12 +943,19 @@ CPU.prototype._operate = function(op) {
       this._updateN(result);
       this._updateZ(result);
       break;
-      break;
 
+    // TODO: check the logic.
     case CPU._OP_JMP.opc:
+      var address = this._loadMemoryWithAddressingMode(op);
+      this.pc.store(address);
       break;
 
+    // TODO: check the logic.
     case CPU._OP_JSR.opc:
+      this.pc.decrement();
+      this._pushStack2Bytes(this.pc.load());
+      var address = this._loadMemoryWithAddressingMode(op);
+      this.pc.store(address);
       break;
 
     case CPU._OP_LDA.opc:
@@ -1222,15 +1248,20 @@ CPU.prototype.dump = function() {
 
 
 
-function CPUMemoryController(cpu, ppu, ram, rom) {
+function CPUMemoryController(cpu, ppu, ram) {
   this.cpu = cpu;
   this.ppu = ppu;
   this.ram = ram;
-  this.rom = rom;
+  this.rom = null;
 };
 
 // This is used to avoid memory allocation.
 CPUMemoryController._CONTAINER = {'target': null, 'addr': null};
+
+
+CPUMemoryController.prototype.setROM = function(rom) {
+  this.rom = rom;
+};
 
 
 /**
@@ -1317,6 +1348,7 @@ CPUMemoryController.prototype._map = function(address) {
       case 0x4013:
         break;
       case 0x4014:
+        target = this.ppu.sprDMA;
         break;
       case 0x4015:
         break;
@@ -1342,7 +1374,10 @@ CPUMemoryController.prototype._map = function(address) {
         break;
     }
     addr = null;
-    target = new Register(); // TODO: temporal.
+    // TODO: temporal.
+    if(target == null)
+      target = new Register();
+      target.store(0xff);
   } else if(address >= 0x8000 && address < 0x10000) {
     target = this.rom;
     // this address translation might should be done by ROM Memory mapper.
@@ -1361,6 +1396,7 @@ CPUMemoryController.prototype._map = function(address) {
 CPUMemoryController.prototype.load = function(address) {
   var map = this._map(address);
   if(map.addr == null) {
+    console.log(__10to16(address));
     return map.target.load();
   } else {
     return map.target.load(map.addr);
@@ -1382,6 +1418,7 @@ CPUMemoryController.prototype.load2Bytes = function(address) {
 CPUMemoryController.prototype.store = function(address, value) {
   var map = this._map(address);
   if(map.addr == null) {
+    console.log(__10to16(address) + ' ' + __10to16(value));
     return map.target.store(value);
   } else {
     return map.target.store(map.addr, value);

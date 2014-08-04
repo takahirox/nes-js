@@ -3,10 +3,13 @@
 <script type="text/javascript" src="utility/utility.js"></script>
 <script type="text/javascript" src="utility/Inherit.js"></script>
 <script type="text/javascript" src="src/Register.js"></script>
+<script type="text/javascript" src="src/GenericMemory.js"></script>
 <script type="text/javascript" src="src/ROM.js"></script>
 <script type="text/javascript" src="src/RAM.js"></script>
 <script type="text/javascript" src="src/CPU.js"></script>
+<script type="text/javascript" src="src/VRAM.js"></script>
 <script type="text/javascript" src="src/PPU.js"></script>
+<script type="text/javascript" src="src/NES.js"></script>
 <script type="text/javascript">
 var __romURL = './roms/The Invasion.nes';
 
@@ -22,7 +25,7 @@ function __dropRomImage(e) {
   var reader = new FileReader();
   reader.onload = function(e) {
     __putMessage('loading done.');
-    __dump(e.target.result);
+    __run(e.target.result);
   };
   reader.onerror = function(e) {
     for(var key in reader.error) {
@@ -40,7 +43,7 @@ function __loadRom() {
   request.responseType = 'arraybuffer';
   request.onload = function() {
     __putMessage('loading done.');
-    __dump(request.response);
+    __run(request.response);
   };
   request.onerror = function(e) {
     __putMessage('failed to load.');
@@ -52,7 +55,7 @@ function __loadRom() {
 };
 
 
-function __dump(arrayBuffer) {
+function __run(arrayBuffer) {
   var rom = new ROM(arrayBuffer);
   if(rom.isNES()) {
     __putMessage('this seems iNES format.');
@@ -70,33 +73,10 @@ function __dump(arrayBuffer) {
     return;
 
   // TODO: temporal
-  var ram = new RAM();
-  ram.setROM(rom);
-  var ppu = new PPU();
-  var cpu = new CPU(ram, ppu);
-
-  __putMessage('');
-  __putMessage('all dump.');
-  __putMessage(rom.dump());
-
-  __putMessage('');
-  __putMessage('disassemble.');
-  __putMessage(cpu.disassembleROM());
-
-  var cycles = 0x31000;
-  __putMessage('');
-  __putMessage(__10to16(cycles) + ' cycles run.');
-  __putMessage(__10to16(0, 6) + ' ' + cpu.dump());
-
-  for(var i = 0; i < cycles-0x100; i++) {
-    cpu.runCycle();
-//    __putMessage(__10to16(i, 6) + ' ' + cpu.dump());
-  }
-
-  for(var i = cycles-0x100; i < cycles; i++) {
-    cpu.runCycle();
-    __putMessage(__10to16(i, 6) + ' ' + cpu.dump());
-  }
+  var nes = new NES();
+  nes.setROM(rom);
+  nes.run();
+  return;
 };
 
 
