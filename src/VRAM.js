@@ -8,4 +8,3 @@ function VRAM() {
 __inherit(VRAM, GenericMemory);
 
 VRAM._CAPACITY = 64 * 1024; // 64KB
-

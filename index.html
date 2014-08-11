@@ -8,10 +8,12 @@
 <script type="text/javascript" src="src/RAM.js"></script>
 <script type="text/javascript" src="src/CPU.js"></script>
 <script type="text/javascript" src="src/VRAM.js"></script>
+<script type="text/javascript" src="src/SPRRAM.js"></script>
 <script type="text/javascript" src="src/PPU.js"></script>
 <script type="text/javascript" src="src/NES.js"></script>
+<script type="text/javascript" src="src/Display.js"></script>
 <script type="text/javascript">
-var __romURL = './roms/The Invasion.nes';
+var __romURL = './roms/nestest.nes';
 
 function __dragOverHandler(e) {
   e.preventDefault();
@@ -75,7 +77,13 @@ function __run(arrayBuffer) {
   // TODO: temporal
   var nes = new NES();
   nes.setROM(rom);
+
+  var canvas = document.getElementById('mainCanvas');
+  var display = new Display(canvas, nes);
+
   nes.run();
+  display.update();
+
   return;
 };
 
@@ -94,6 +102,10 @@ window.addEventListener('dragover', __dragOverHandler, false);
 <p>
 <button onclick="__loadRom()">load rom</button>
 push this button or drag and drop your own rom into this window to load rom image.
+</p>
+
+<p>
+<canvas id="mainCanvas" width="256" height="240"></canvas>
 </p>
 
 <p>

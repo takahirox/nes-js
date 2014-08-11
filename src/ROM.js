@@ -1,7 +1,12 @@
+/**
+ * TODO: make cartridge class?
+ */
 function ROM(arrayBuffer) {
   this.parent = GenericMemory;
   this.parent.call(this, arrayBuffer);
   this.header = new ROMHeader(this);
+  this.chrrom = null;
+  this._initCHRROM();
 };
 __inherit(ROM, GenericMemory);
 
@@ -12,15 +17,42 @@ ROM.prototype._init = function() {
 };
 
 
+/**
+ * TODO: temporal. for NROM with CHRROM.
+ */
+ROM.prototype._initCHRROM = function() {
+  if(this.hasCHRROM()) {
+    var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();
+    this.chrrom = new CHRROM(capacity);
+    for(var i = 0; i < capacity; i++) {
+      var value = this.loadWithoutMapping(i + 0x4000 + ROM._HEADER_SIZE);
+      this.chrrom.storeWithoutMapping(i, value);
+    }
+  }
+};
+
+
+/**
+ * TODO: temporal. for NROM.
+ */
 ROM.prototype._map = function(address) {
   if(address >= 0x4000)
     address -= 0x4000;
+  address += ROM._HEADER_SIZE;
   return address;
 };
 
 
 ROM.prototype.isNES = function() {
   return this.header.isNES();
+};
+
+
+/**
+ * TODO: temporal. for NROM.
+ */
+ROM.prototype.hasCHRROM = function() {
+  return this.header.getCHRROMBanksNum() > 0;
 };
 
 
@@ -31,6 +63,14 @@ ROM.prototype.dumpHeader = function() {
 
 ROM.prototype._getStartDumpAddress = function() {
   return ROM._HEADER_SIZE;
+};
+
+
+/**
+ * TODO: temporal. for NROM.
+ */
+ROM.prototype._getEndDumpAddress = function() {
+  return 0x4000 + ROM._HEADER_SIZE;
 };
 
 
@@ -100,7 +140,7 @@ ROMHeader._MAPPERS[4] = {'name': 'MMC3'};
 
 
 ROMHeader.prototype.load = function(address) {
-  return this.rom.load(address);
+  return this.rom.loadWithoutMapping(address);
 };
 
 
@@ -256,4 +296,12 @@ ROMHeader.prototype.dump = function() {
               '(' + this.getMapperName() + ')';
   return buffer;
 };
+
+
+
+function CHRROM(capacity) {
+  this.parent = GenericMemory;
+  this.parent.call(this, capacity);
+};
+__inherit(CHRROM, GenericMemory);
 

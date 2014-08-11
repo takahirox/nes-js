@@ -2,17 +2,15 @@
  * Ricoh 6502
  * TODO: consider if setROM method is necessary.
  */
-function CPU(ram, ppu) {
+function CPU() {
   this.pc = new Register16bit();
   this.sp = new Register();
   this.a = new Register();
   this.x = new Register();
   this.y = new Register();
   this.p = new CPUStatusRegister();
-  this.ram = ram;
-
- // TODO: temporal
-  this.mem = new CPUMemoryController(this, ppu, ram);
+  this.ram = new RAM();
+  this.mem = null; // initialized by initMemoryController()
 };
 
 CPU._INTERRUPT_NMI = 0;
@@ -390,16 +388,40 @@ CPU._OP[0xFE] = {'op': CPU._OP_INC, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_
 CPU._OP[0xFF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
 
 
+CPU.prototype.initMemoryController = function(ppu) {
+  this.mem = new CPUMemoryController(this, ppu);
+};
+
+
 CPU.prototype.setROM = function(rom) {
-  this.rom = rom;
   this.mem.setROM(rom);
   // TODO: temporal
   this._jumpToInterruptHandler(CPU._INTERRUPT_RESET);
 };
 
 
+CPU.prototype.load = function(address) {
+  return this.mem.load(address);
+};
+
+
+CPU.prototype.load2Bytes = function(address) {
+  return this.mem.load2Bytes(address);
+};
+
+
+CPU.prototype.store = function(address, value) {
+  this.mem.store(address, value);
+};
+
+
+CPU.prototype.store2Bytes = function(address, value) {
+  this.mem.store2Bytes(address, value);
+};
+
+
 CPU.prototype._fetch = function() {
-  var opc = this.mem.load(this.pc.load());
+  var opc = this.load(this.pc.load());
   this.pc.increment();
   return opc;
 };
@@ -429,7 +451,7 @@ CPU.prototype.interrupt = function(type) {
 
 
 CPU.prototype._jumpToInterruptHandler = function(type) {
-  this.pc.store(this.mem.load2Bytes(CPU._INTERRUPT_HANDLER_ADDRESSES[type]));
+  this.pc.store(this.load2Bytes(CPU._INTERRUPT_HANDLER_ADDRESSES[type]));
 };
 
 
@@ -439,7 +461,7 @@ CPU.prototype._loadMemoryWithAddressingMode = function(op) {
   }
 
   var address = this._getMemoryAddressWithAddressingMode(op);
-  var value = this.mem.load(address);
+  var value = this.load(address);
   // expects that relative addressing mode is used only for load.
   if(op.mode.id == CPU._ADDRESSING_RELATIVE.id) {
     // TODO: confirm if this logic is right.
@@ -457,7 +479,7 @@ CPU.prototype._storeMemoryWithAddressingMode = function(op, value) {
   }
 
   var address = this._getMemoryAddressWithAddressingMode(op);
-  this.mem.store(address, value);
+  this.store(address, value);
 };
 
 
@@ -469,7 +491,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
     src = this.a.load();
   } else {
     address = this._getMemoryAddressWithAddressingMode(op);
-    src = this.mem.load(address);
+    src = this.load(address);
   }
 
   var result = func(src);
@@ -477,7 +499,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
   if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
     this.a.store(result);
   } else {
-    this.mem.store(address, result);
+    this.store(address, result);
   }
 };
 
@@ -494,7 +516,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
     case CPU._ADDRESSING_ABSOLUTE.id:
     case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
     case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
-      address = this.mem.load2Bytes(this.pc.load());
+      address = this.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
       switch(op.mode.id) {
         case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
@@ -510,7 +532,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
     case CPU._ADDRESSING_ZERO_PAGE.id:
     case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
     case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
-      address = this.mem.load(this.pc.load());
+      address = this.load(this.pc.load());
       this.pc.increment();
       switch(op.mode.id) {
         case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
@@ -524,23 +546,23 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
       break;
 
     case CPU._ADDRESSING_INDIRECT.id:
-      var tmp = this.mem.load2Bytes(this.pc.load());
+      var tmp = this.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
-      address = this.mem.load2Bytes(tmp);
+      address = this.load2Bytes(tmp);
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_X.id:
-      var tmp = this.mem.load(this.pc.load());
+      var tmp = this.load(this.pc.load());
       this.pc.increment();
       tmp += this.x.load();
       tmp = tmp & 0xff;
-      address = this.mem.load2Bytes(tmp);
+      address = this.load2Bytes(tmp);
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_Y.id:
-      var tmp = this.mem.load(this.pc.load());
+      var tmp = this.load(this.pc.load());
       this.pc.increment();
-      address = this.mem.load2Bytes(tmp);
+      address = this.load2Bytes(tmp);
       address += this.y.load();
       address = address & 0xffff;
       break;
@@ -556,17 +578,19 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
 /**
  * TODO: there is a room to optimize the code.
  * TODO: add callback prevention for registers.
+ * @param mem CPUMemoryController or ROM
  */
-CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc, ramDump) {
-  pc = pc & 0xffff;
+CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
   var buffer = '';
+  var ramDump = (mem instanceof CPUMemoryController) ? true : false;
+
   switch(op.mode) {
     case CPU._ADDRESSING_IMMEDIATE:
-      buffer += '#' + __10to16(mem.load(pc), 2);
+      buffer += '#' + __10to16(mem.load(pc, true), 2);
       break;
 
     case CPU._ADDRESSING_RELATIVE:
-      var value = mem.load(pc);
+      var value = mem.load(pc, true);
       if(value & 0x80) {
         value = -(0x100 - value); // make negative native integer.
       }
@@ -574,97 +598,97 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc, ramDump) {
       break;
 
     case CPU._ADDRESSING_ABSOLUTE:
-      var address = mem.load2Bytes(pc);
+      var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4);
       if(ramDump) {
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_ABSOLUTE_X:
-      var address = mem.load2Bytes(pc);
+      var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4) + ',X ';
       if(ramDump) {
         address += this.x.load();
         address = address & 0xffff;
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y:
-      var address = mem.load2Bytes(pc);
+      var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4) + ',Y ';
       if(ramDump) {
         address += this.y.load();
         address = address & 0xffff;
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_ZERO_PAGE:
-      var address = mem.load(pc);
+      var address = mem.load(pc, true);
       buffer += __10to16(address, 2);
       if(ramDump) {
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X:
-      var address = mem.load(pc);
+      var address = mem.load(pc, true);
       buffer += __10to16(address, 2) + ',X ';
       if(ramDump) {
         address += this.x.load();
         address = address & 0xff;
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y:
-      var address = mem.load(pc);
+      var address = mem.load(pc, true);
       buffer += __10to16(address, 2) + ',Y ';
       if(ramDump) {
         address += this.y.load();
         address = address & 0xff;
-        buffer += '(' + __10to16(mem.load(address), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
       }
       break;
 
     case CPU._ADDRESSING_INDIRECT:
-      var address = mem.load2Bytes(pc);
+      var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4);
       if(ramDump) {
-        var address2 = mem.load2Bytes(address);
+        var address2 = mem.load2Bytes(address, true);
         buffer += '(';
         buffer += __10to16(address2, 4);
-        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
         buffer += ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_X:
-      var address = mem.load(pc);
+      var address = mem.load(pc, true);
       buffer += '(' + __10to16(address, 2) + ',X) ';
       if(ramDump) {
         address += this.x.load();
         address = address & 0xffff;
-        var address2 = mem.load2Bytes(address);
+        var address2 = mem.load2Bytes(address, true);
         buffer += '(';
         buffer += __10to16(address2, 4);
-        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
         buffer += ')';
       }
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_Y:
-      var address = mem.load(pc);
+      var address = mem.load(pc, true);
       buffer += '(' + __10to16(address, 2) + '),Y ';
       if(ramDump) {
-        var address2 = mem.load2Bytes(address);
+        var address2 = mem.load2Bytes(address, true);
         address2 += this.y.load();
         address2 = address2 & 0xffff;
         buffer += '(';
         buffer += __10to16(address2, 4);
-        buffer += '(' + __10to16(mem.load(address2), 2) + ')';
+        buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
         buffer += ')';
       }
       break;
@@ -713,26 +737,26 @@ CPU.prototype._getStackAddress = function() {
 
 
 CPU.prototype._pushStack = function(value) {
-  this.mem.store(this._getStackAddress(), value);
+  this.store(this._getStackAddress(), value);
   this.sp.decrement();
 };
 
 
 CPU.prototype._pushStack2Bytes = function(value) {
-  this.mem.store2Bytes(this._getStackAddress(), value);
+  this.store2Bytes(this._getStackAddress(), value);
   this.sp.decrementBy2();
 };
 
 
 CPU.prototype._popStack = function() {
   this.sp.increment();
-  return this.mem.load(this._getStackAddress());
+  return this.load(this._getStackAddress());
 };
 
 
 CPU.prototype._popStack2Bytes = function() {
   this.sp.incrementBy2();
-  return this.mem.load2Bytes(this._getStackAddress());
+  return this.load2Bytes(this._getStackAddress());
 };
 
 
@@ -825,7 +849,7 @@ CPU.prototype._operate = function(op) {
 
     // TODO: check logic.
     case CPU._OP_BRK.opc:
-      this.pc.decrement(); // necessary?
+      this.pc.increment(); // necessary?
       this.p.setB();
       this.interrupt(CPU._INTERRUPT_IRQ);
       break;
@@ -952,9 +976,8 @@ CPU.prototype._operate = function(op) {
 
     // TODO: check the logic.
     case CPU._OP_JSR.opc:
-      this.pc.incrementBy2();
-      this._pushStack2Bytes(this.pc.load());
       var address = this._getMemoryAddressWithAddressingMode(op);
+      this._pushStack2Bytes(this.pc.load());
       this.pc.store(address);
       break;
 
@@ -1069,7 +1092,6 @@ CPU.prototype._operate = function(op) {
     // TODO: check logic.
     case CPU._OP_RTS.opc:
       this.pc.store(this._popStack2Bytes());
-      this.pc.increment();
       break;
 
     case CPU._OP_SBC.opc:
@@ -1167,20 +1189,23 @@ CPU.prototype._operate = function(op) {
 
 
 /**
- * this method is in CPU class to use Addressing Mode.
+ * this method is in this class to use Addressing Mode.
+ * TODO: temporal.
  */
 CPU.prototype.disassembleROM = function() {
   var buffer = '';
-  var rom = this.ram.rom;
+  var rom = this.mem.rom;
   var pc = ROM._HEADER_SIZE;
   var previousIsZero = false;
   var skipZero = false;
-  while(pc < rom.getCapacity()) {
+
+  // TODO: temporal
+  while(pc < 0x4010) {
     var str = '';
-    var opc = rom.load(pc);
+    var opc = rom.loadWithoutMapping(pc);
     var op = this._decode(opc);
 
-    if(previousIsZero && opc == 0 && rom.load((pc+1)&0xffff) == 0) {
+    if(previousIsZero && opc == 0 && rom.loadWithoutMapping((pc+1)&0xffff) == 0) {
       pc += 1;
       skipZero = true;
       continue;
@@ -1195,8 +1220,7 @@ CPU.prototype.disassembleROM = function() {
     str += op.op.name + ' ';
     str += this._dumpMemoryAddressingMode(op,
                                           rom,
-                                          pc + 1,
-                                          false)
+                                          (pc + 1) & 0xffff)
              + ' ';
 
     while(str.length < 30) {
@@ -1220,7 +1244,7 @@ CPU.prototype.disassembleROM = function() {
 // TODO: temporal
 CPU.prototype.dump = function() {
   var buffer = '';
-  var opc = this.mem.load(this.pc.load());
+  var opc = this.load(this.pc.load());
   var op = this._decode(opc);
 
   buffer += 'p:'  + this.p.dump()  + ' ';
@@ -1233,8 +1257,7 @@ CPU.prototype.dump = function() {
   buffer += op.op.name + ' ' +
               this._dumpMemoryAddressingMode(op,
                                              this.mem,
-                                             this.pc.load() + 1,
-                                             true)
+                                             (this.pc.load() + 1) & 0xffff)
               + ' ';
 
   while(buffer.length < 90) {
@@ -1248,20 +1271,17 @@ CPU.prototype.dump = function() {
 
 
 
-function CPUMemoryController(cpu, ppu, ram) {
+function CPUMemoryController(cpu, ppu) {
+  this.parent = ProcessorMemoryController;
+  this.parent.call(this);
   this.cpu = cpu;
   this.ppu = ppu;
-  this.ram = ram;
-  this.rom = null;
+  this.ram = cpu.ram;
 };
+__inherit(CPUMemoryController, ProcessorMemoryController);
 
 // This is used to avoid memory allocation.
 CPUMemoryController._CONTAINER = {'target': null, 'addr': null};
-
-
-CPUMemoryController.prototype.setROM = function(rom) {
-  this.rom = rom;
-};
 
 
 /**
@@ -1377,11 +1397,10 @@ CPUMemoryController.prototype._map = function(address) {
     // TODO: temporal.
     if(target == null)
       target = new Register();
-      target.store(0xff);
   } else if(address >= 0x8000 && address < 0x10000) {
     target = this.rom;
     // this address translation might should be done by ROM Memory mapper.
-    addr = address - 0x8000 + 0x10;
+    addr = address - 0x8000;
   }
 
   var result = CPUMemoryController._CONTAINER;
@@ -1390,48 +1409,6 @@ CPUMemoryController.prototype._map = function(address) {
 
   return result;
 
-};
-
-
-CPUMemoryController.prototype.load = function(address) {
-  var map = this._map(address);
-  if(map.addr == null) {
-    console.log(__10to16(address));
-    return map.target.load();
-  } else {
-    return map.target.load(map.addr);
-  }
-};
-
-
-/**
- * little endian.
- */
-CPUMemoryController.prototype.load2Bytes = function(address) {
-  return this.load(address) | (this.load(address+1) << 8);
-};
-
-
-/**
- * TODO: implement mirroring.
- */
-CPUMemoryController.prototype.store = function(address, value) {
-  var map = this._map(address);
-  if(map.addr == null) {
-    console.log(__10to16(address) + ' ' + __10to16(value));
-    return map.target.store(value);
-  } else {
-    return map.target.store(map.addr, value);
-  }
-};
-
-
-/**
- * little endian.
- */
-CPUMemoryController.prototype.store2Bytes = function(address, value) {
-  this.store(address,     value);
-  this.store(address + 1, value >> 8);
 };
 
 

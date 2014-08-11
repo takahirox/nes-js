@@ -49,6 +49,17 @@ GenericMemory.prototype.load2Bytes = function(address) {
 };
 
 
+GenericMemory.prototype.loadWithoutMapping = function(address) {
+  return this.uint8[address];
+};
+
+
+GenericMemory.prototype.load2BytesWithoutMapping = function(address) {
+  return this.loadWithoutMapping(address) |
+           (this.loadWithoutMapping(address + 1) << 8);
+};
+
+
 GenericMemory.prototype.store = function(address, value) {
   this.uint8[this._map(address)] = value;
 };
@@ -65,6 +76,17 @@ GenericMemory.prototype.store2Bytes = function(address, value) {
 };
 
 
+GenericMemory.prototype.storeWithoutMapping = function(address, value) {
+  this.uint8[address] = value;
+};
+
+
+GenericMemory.prototype.store2BytesWithoutMapping = function(address, value) {
+  this.storeWithoutMapping(address,   value);
+  this.storeWithoutMapping(address+1, value >> 8);
+};
+
+
 /**
  * TODO: check the logic.
  */
@@ -72,7 +94,8 @@ GenericMemory.prototype.dump = function() {
   var buffer = '';
   var previousIsZeroLine = false;
   var offset = this._getStartDumpAddress();
-  for(var i = offset; i < this.capacity; i++) {
+  var end = this._getEndDumpAddress();
+  for(var i = offset; i < end; i++) {
     if(i % 0x10 == 0) {
       if(previousIsZeroLine) {
         var skipZero = false;
@@ -87,7 +110,7 @@ GenericMemory.prototype.dump = function() {
       previousIsZeroLine = true;
     }
 
-    var value = this.load(i);
+    var value = this._loadForDump(i);
     buffer += __10to16(value, 2, true) + ' ';
     if(value != 0)
       previousIsZeroLine = false;
@@ -99,8 +122,18 @@ GenericMemory.prototype.dump = function() {
 };
 
 
+GenericMemory.prototype._loadForDump = function(address) {
+  return this.loadWithoutMapping(address);
+};
+
+
 GenericMemory.prototype._getStartDumpAddress = function() {
   return 0;
+};
+
+
+GenericMemory.prototype._getEndDumpAddress = function() {
+  return this.capacity;
 };
 
 
@@ -109,12 +142,81 @@ GenericMemory.prototype._getStartDumpAddress = function() {
  * TODO: check the logic.
  */
 GenericMemory.prototype._checkNext16BytesIsZero = function(offset) {
-  if(offset + 0x10 >= this.capacity)
+  if(offset + 0x10 >= this._getEndDumpAddress())
     return false;
 
   var sum = 0;
   for(var i = offset; i < offset + 0x10; i++) {
-    sum += this.load(i);
+    sum += this._loadForDump(i);
   }
   return sum == 0;
 };
+
+
+
+function ProcessorMemoryController() {
+  this.rom = null;
+};
+
+
+ProcessorMemoryController.prototype.setROM = function(rom) {
+  this.rom = rom;
+};
+
+
+/**
+ * Child class must override this method.
+ * TODO: consider return parameter.
+ */
+ProcessorMemoryController.prototype._map = function(address) {
+  return new {'target': null, 'addr': null};
+};
+
+
+ProcessorMemoryController.prototype.load =
+    function(address, preventCallback) {
+  var map = this._map(address);
+  if(map.addr == null) {
+//    console.log(__10to16(address));
+    return map.target.load(preventCallback);
+  } else {
+    return map.target.load(map.addr);
+  }
+};
+
+
+/**
+ * little endian.
+ */
+ProcessorMemoryController.prototype.load2Bytes =
+    function(address, preventCallback) {
+  return this.load(address, preventCallback) |
+            (this.load(address+1, preventCallback) << 8);
+};
+
+
+/**
+ * TODO: implement mirroring.
+ */
+ProcessorMemoryController.prototype.store =
+    function(address, value, preventCallback) {
+  var map = this._map(address);
+  if(map.addr == null) {
+//    console.log(__10to16(address) + ' ' + __10to16(value));
+    return map.target.store(value, preventCallback);
+  } else {
+    return map.target.store(map.addr, value);
+  }
+};
+
+
+/**
+ * little endian.
+ */
+ProcessorMemoryController.prototype.store2Bytes =
+    function(address, value, preventCallback) {
+  this.store(address,     value,      preventCallback);
+  this.store(address + 1, value >> 8, preventCallback);
+};
+
+
