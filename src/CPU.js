@@ -11,6 +11,7 @@ function CPU() {
   this.p = new CPUStatusRegister();
   this.ram = new RAM();
   this.mem = null; // initialized by initMemoryController()
+  this.pad1 = null; // set by setJoypad1()
 };
 
 CPU._INTERRUPT_NMI = 0;
@@ -388,8 +389,8 @@ CPU._OP[0xFE] = {'op': CPU._OP_INC, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_
 CPU._OP[0xFF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
 
 
-CPU.prototype.initMemoryController = function(ppu) {
-  this.mem = new CPUMemoryController(this, ppu);
+CPU.prototype.initMemoryController = function(ppu, pad1) {
+  this.mem = new CPUMemoryController(this, ppu, pad1);
 };
 
 
@@ -443,6 +444,9 @@ CPU.prototype.runCycle = function() {
  * TODO: not fixed yet.
  */
 CPU.prototype.interrupt = function(type) {
+  if(type == CPU._INTERRUPT_IRQ && this.p.isI()) {
+    return;
+  }
   this._pushStack2Bytes(this.pc.load());
   this._pushStack(this.p.load());
   this.p.setI();
@@ -783,7 +787,7 @@ CPU.prototype._operate = function(op) {
       this._updateN(result)
       this._updateZ(result)
       this._updateC(result)
-      if((src1 ^ result) & (src2 ^ result) & 0x80 == 0)
+      if(((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
         this.p.setV();
       else
         this.p.clearV();
@@ -829,7 +833,7 @@ CPU.prototype._operate = function(op) {
       var result = src1 & src2;
       this._updateN(src2);
       this._updateZ(result);
-      if(src2 & 0x40 == 0)
+      if((src2 & 0x40) == 0)
         this.p.clearV();
       else
         this.p.setV();
@@ -1008,7 +1012,7 @@ CPU.prototype._operate = function(op) {
         var result = src >> 1;
         self.p.clearN();
         self._updateZ(result);
-        if(src & 1 == 0)
+        if((src & 1) == 0)
           self.p.clearC();
         else
           self.p.setC();
@@ -1074,7 +1078,7 @@ CPU.prototype._operate = function(op) {
         var result = (src >> 1) | c;
         self._updateN(result);
         self._updateZ(result);
-        if(src & 1 == 0)
+        if((src & 1) == 0)
           self.p.clearC();
         else
           self.p.setC();
@@ -1105,7 +1109,7 @@ CPU.prototype._operate = function(op) {
       this._updateC(result)
       // TODO: implement right overflow logic.
       //       this is just a temporal logic.
-      if((src1 ^ result) & (src2 ^ result) & 0x80 == 0)
+      if(((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
         this.p.setV();
       else
         this.p.clearV();
@@ -1271,11 +1275,12 @@ CPU.prototype.dump = function() {
 
 
 
-function CPUMemoryController(cpu, ppu) {
+function CPUMemoryController(cpu, ppu, pad1) {
   this.parent = ProcessorMemoryController;
   this.parent.call(this);
   this.cpu = cpu;
   this.ppu = ppu;
+  this.pad1 = pad1;
   this.ram = cpu.ram;
 };
 __inherit(CPUMemoryController, ProcessorMemoryController);
@@ -1373,6 +1378,7 @@ CPUMemoryController.prototype._map = function(address) {
       case 0x4015:
         break;
       case 0x4016:
+        target = this.pad1.register;
         break;
       case 0x4017:
         break;
@@ -1395,8 +1401,9 @@ CPUMemoryController.prototype._map = function(address) {
     }
     addr = null;
     // TODO: temporal.
-    if(target == null)
+    if(target == null) {
       target = new Register();
+    }
   } else if(address >= 0x8000 && address < 0x10000) {
     target = this.rom;
     // this address translation might should be done by ROM Memory mapper.

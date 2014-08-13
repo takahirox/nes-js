@@ -1,14 +1,27 @@
 function NES() {
   this.ppu = new PPU();
   this.cpu = new CPU(this.ppu);
+  this.pad1 = new Joypad();
 
-  this.cpu.initMemoryController(this.ppu);
+  this.rom = null;
+
+  this.cpu.initMemoryController(this.ppu, this.pad1);
   this.ppu.initMemoryController(this.cpu);
 
   this.cycle = 0;
 };
 
-NES._VBLANK_CYCLE = 0x10000; // TODO: temporal
+// TODO: temporal
+NES._PAD_BUTTON_TABLE = {
+  13: Joypad._BUTTON_START,
+  32: Joypad._BUTTON_SELECT,
+  37: Joypad._BUTTON_LEFT,
+  38: Joypad._BUTTON_UP,
+  39: Joypad._BUTTON_RIGHT,
+  40: Joypad._BUTTON_DOWN,
+  88: Joypad._BUTTON_B,
+  90: Joypad._BUTTON_A
+};
 
 
 NES.prototype.setROM = function(rom) {
@@ -18,41 +31,37 @@ NES.prototype.setROM = function(rom) {
 };
 
 
+NES.prototype.setDisplay = function(display) {
+  this.ppu.setDisplay(display);
+};
+
+
 NES.prototype.run = function() {
-
-  __putMessage('');
-  __putMessage('rom dump.');
-  __putMessage(this.rom.dump());
-
-  __putMessage('');
-  __putMessage('disassemble.');
-  __putMessage(this.cpu.disassembleROM());
-  this.cpu.interrupt(CPU._INTERRUPT_RESET);
-
-  var cycles = 0x50000;
-  __putMessage('');
-  __putMessage(__10to16(cycles) + ' cycles run.');
-  __putMessage(__10to16(0, 6) + ' ' + this.cpu.dump());
-
+  var cycles = 0x7454;
   for(var i = 0; i < cycles; i++) {
     this._runCycle();
-    if(i > cycles - 0x100)
-      __putMessage(__10to16(i, 6) + ' ' + this.cpu.dump());
-/*
-    if(i % NES._VBLANK_CYCLE == 0) {
-      this.ppu.setVBlank();
-      this.cpu.interrupt(CPU._INTERRUPT_NMI);
-    }
-*/
   }
-
-  __putMessage('');
-  __putMessage(this.ppu.dump());
-
+  setTimeout(this.run.bind(this), 0);
 };
 
 
 NES.prototype._runCycle = function() {
   this.cpu.runCycle();
   this.ppu.runCycle();
+  this.ppu.runCycle();
+  this.ppu.runCycle();
+};
+
+
+NES.prototype.handleKeyDown = function(e) {
+  if(NES._PAD_BUTTON_TABLE[e.keyCode] != undefined)
+    this.pad1.pushButton(NES._PAD_BUTTON_TABLE[e.keyCode]);
+  e.preventDefault();
+};
+
+
+NES.prototype.handleKeyUp = function(e) {
+  if(NES._PAD_BUTTON_TABLE[e.keyCode] != undefined)
+    this.pad1.releaseButton(NES._PAD_BUTTON_TABLE[e.keyCode]);
+  e.preventDefault();
 };

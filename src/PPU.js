@@ -2,7 +2,9 @@
  * Ricoh 2C02
  */
 function PPU() {
+  this.count = 0;
   this.cpu = null;
+  this.display = null;
   this.ctrl1 = new PPUControl1Register();
   this.ctrl2 = new PPUControl2Register();
   this.sr = new PPUStatusRegister( // Status Register
@@ -34,6 +36,8 @@ function PPU() {
   this.higherVRAMAddress = 0;
   this.VRAMAddressCount = 0;
 };
+
+PPU._VBLANK_CYCLE = parseInt(341 * 262 / 3); // TODO: temporal
 
 PPU._PALETTE = [];
 PPU._PALETTE[0x00] = [0x75, 0x75, 0x75];
@@ -102,7 +106,11 @@ PPU._PALETTE[0x3E] = [0x00, 0x00, 0x00];
 PPU._PALETTE[0x3F] = [0x00, 0x00, 0x00];
 
 
+/**
+ * TODO: make explicit setCPU method?
+ */
 PPU.prototype.initMemoryController = function(cpu) {
+  this.cpu = cpu;
   this.ram = cpu.ram;
   this.mem = new PPUMemoryController(this);
   // TODO: temporal
@@ -112,6 +120,11 @@ PPU.prototype.initMemoryController = function(cpu) {
 
 PPU.prototype.setROM = function(rom) {
   this.mem.setROM(rom);
+};
+
+
+PPU.prototype.setDisplay = function(display) {
+  this.display = display;
 };
 
 
@@ -129,7 +142,14 @@ PPU.prototype.store = function(address, value) {
  * TODO: not implemented yet.
  */
 PPU.prototype.runCycle = function() {
-
+  if(this.count != 0 && this.count % PPU._VBLANK_CYCLE == 0) {
+    if(this.ctrl1.isVBlank()) {
+      this.setVBlank();
+      this.display.update();
+      this.cpu.interrupt(CPU._INTERRUPT_NMI);
+    }
+  }
+  this.count++;
 };
 
 
@@ -273,6 +293,17 @@ PPU.prototype._getPaletteIndex = function(index) {
 
 PPU.prototype.dump = function() {
   var buffer = '';
+
+  buffer += 'ctrl1: ' + this.ctrl1.dump() + '\n';
+  buffer += 'ctrl2: ' + this.ctrl2.dump() + '\n';
+  buffer += 'status: ' + this.sr.dump() + '\n';
+  buffer += 'SPR addr: ' + this.sprAddr.dump() + '\n';
+  buffer += 'SPR IO: ' + this.sprIO.dump() + '\n';
+  buffer += 'VRAM ADDR1: ' + this.vRAMAddr1.dump() + '\n';
+  buffer += 'VRAM ADDR2: ' + this.vRAMAddr2.dump() + '\n';
+  buffer += 'VRAM IO: ' + this.vRAMIO.dump() + '\n';
+  buffer += 'SRP DMA: ' + this.sprDMA.dump() + '\n';
+  buffer += '\n';
 
   buffer += 'VRAM dump.\n';
   buffer += this.dumpVRAM();
