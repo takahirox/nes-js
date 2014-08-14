@@ -49,6 +49,17 @@ GenericMemory.prototype.load2Bytes = function(address) {
 };
 
 
+/**
+ * little endian.
+ * TODO: implement overlap?
+ * TODO: move this method to the caller side?
+ */
+GenericMemory.prototype.load2BytesFromZeropage = function(address) {
+  return this.load(address & 0xff) |
+           (this.load((address+1) & 0xff) << 8);
+};
+
+
 GenericMemory.prototype.loadWithoutMapping = function(address) {
   return this.uint8[address];
 };
@@ -73,6 +84,17 @@ GenericMemory.prototype.store = function(address, value) {
 GenericMemory.prototype.store2Bytes = function(address, value) {
   this.store(address,   value);
   this.store(address+1, value >> 8);
+};
+
+
+/**
+ * little endian.
+ * TODO: implement overlap?
+ * TODO: move this method to the caller side?
+ */
+GenericMemory.prototype.store2BytesToZeropage = function(address, value) {
+  this.store((address&0xff),   value);
+  this.store((address&0xff)+1, value >> 8);
 };
 
 
@@ -191,7 +213,23 @@ ProcessorMemoryController.prototype.load =
 ProcessorMemoryController.prototype.load2Bytes =
     function(address, preventCallback) {
   return this.load(address, preventCallback) |
-            (this.load(address+1, preventCallback) << 8);
+            (this.load((address+1)&0xffff, preventCallback) << 8);
+};
+
+
+ProcessorMemoryController.prototype.load2BytesFromZeropage =
+    function(address, preventCallback) {
+  return this.load(address&0xff, preventCallback) |
+            (this.load((address+1)&0xff, preventCallback) << 8);
+};
+
+
+ProcessorMemoryController.prototype.load2BytesInPage =
+    function(address, preventCallback) {
+  var addr1 = address;
+  var addr2 = (address & 0xff00) | (address+1 & 0xff);
+  return this.load(addr1, preventCallback) |
+            (this.load(addr2, preventCallback) << 8);
 };
 
 
@@ -215,8 +253,16 @@ ProcessorMemoryController.prototype.store =
  */
 ProcessorMemoryController.prototype.store2Bytes =
     function(address, value, preventCallback) {
-  this.store(address,     value,      preventCallback);
-  this.store(address + 1, value >> 8, preventCallback);
+  this.store(address,          value,      preventCallback);
+  this.store((address+1)&0xffff, value >> 8, preventCallback);
 };
 
 
+/**
+ * little endian.
+ */
+ProcessorMemoryController.prototype.store2BytesToZeropage =
+    function(address, value, preventCallback) {
+  this.store(address&0xff,     value,      preventCallback);
+  this.store((address+1)&0xff, value >> 8, preventCallback);
+};

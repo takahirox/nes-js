@@ -37,9 +37,11 @@ NES.prototype.setDisplay = function(display) {
 
 
 NES.prototype.run = function() {
-  var cycles = 0x7454;
+  var cycles = 0x8990;
+//  __putMessage(this.cpu.dump());
   for(var i = 0; i < cycles; i++) {
     this._runCycle();
+//    __putMessage(this.cpu.dump());
   }
   setTimeout(this.run.bind(this), 0);
 };

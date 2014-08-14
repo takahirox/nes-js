@@ -90,7 +90,7 @@ function __run(arrayBuffer) {
 
   __nes = nes; // for debug on console.
 
-
+/*
   __putMessage('');
   __putMessage('rom dump.');
   __putMessage(nes.rom.dump());
@@ -102,6 +102,11 @@ function __run(arrayBuffer) {
 
   __putMessage('');
   __putMessage(nes.ppu.dump());
+*/
+  nes.cpu.interrupt(CPU._INTERRUPT_RESET);
+//  nes.cpu.pc.store(0xc000);
+  nes.cpu.p.store(0x34);
+  nes.cpu.sp.store(0xFD);
 
   nes.run();
   return;

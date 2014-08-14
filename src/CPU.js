@@ -411,6 +411,16 @@ CPU.prototype.load2Bytes = function(address) {
 };
 
 
+CPU.prototype.load2BytesFromZeropage = function(address) {
+  return this.mem.load2BytesFromZeropage(address);
+};
+
+
+CPU.prototype.load2BytesInPage = function(address) {
+  return this.mem.load2BytesInPage(address);
+};
+
+
 CPU.prototype.store = function(address, value) {
   this.mem.store(address, value);
 };
@@ -552,7 +562,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
     case CPU._ADDRESSING_INDIRECT.id:
       var tmp = this.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
-      address = this.load2Bytes(tmp);
+      address = this.load2BytesInPage(tmp);
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_X.id:
@@ -566,7 +576,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
     case CPU._ADDRESSING_INDEXED_INDIRECT_Y.id:
       var tmp = this.load(this.pc.load());
       this.pc.increment();
-      address = this.load2Bytes(tmp);
+      address = this.load2BytesFromZeropage(tmp);
       address += this.y.load();
       address = address & 0xffff;
       break;
@@ -687,7 +697,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       var address = mem.load(pc, true);
       buffer += '(' + __10to16(address, 2) + '),Y ';
       if(ramDump) {
-        var address2 = mem.load2Bytes(address, true);
+        var address2 = mem.load2BytesFromZeropage(address, true);
         address2 += this.y.load();
         address2 = address2 & 0xffff;
         buffer += '(';
@@ -747,8 +757,10 @@ CPU.prototype._pushStack = function(value) {
 
 
 CPU.prototype._pushStack2Bytes = function(value) {
-  this.store2Bytes(this._getStackAddress(), value);
-  this.sp.decrementBy2();
+  this.store(this._getStackAddress(), (value >> 8) & 0xff);
+  this.sp.decrement();
+  this.store(this._getStackAddress(), value & 0xff);
+  this.sp.decrement();
 };
 
 
@@ -759,8 +771,10 @@ CPU.prototype._popStack = function() {
 
 
 CPU.prototype._popStack2Bytes = function() {
-  this.sp.incrementBy2();
-  return this.load2Bytes(this._getStackAddress());
+  this.sp.increment();
+  var value = this.load(this._getStackAddress());
+  this.sp.increment();
+  return (this.load(this._getStackAddress()) << 8) | value;
 };
 
 
@@ -787,7 +801,7 @@ CPU.prototype._operate = function(op) {
       this._updateN(result)
       this._updateZ(result)
       this._updateC(result)
-      if(((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
+      if(!((src1 ^ src2) & 0x80) && ((src2 ^ result) & 0x80))
         this.p.setV();
       else
         this.p.clearV();
@@ -902,7 +916,10 @@ CPU.prototype._operate = function(op) {
       var result = src1 - src2;
       this._updateN(result);
       this._updateZ(result);
-      this._updateC(result);
+      if(src1 >= src2)
+        this.p.setC();
+      else
+        this.p.clearC();
       break;
 
     case CPU._OP_DEC.opc:
@@ -981,6 +998,7 @@ CPU.prototype._operate = function(op) {
     // TODO: check the logic.
     case CPU._OP_JSR.opc:
       var address = this._getMemoryAddressWithAddressingMode(op);
+      this.pc.decrement();
       this._pushStack2Bytes(this.pc.load());
       this.pc.store(address);
       break;
@@ -1095,21 +1113,25 @@ CPU.prototype._operate = function(op) {
 
     // TODO: check logic.
     case CPU._OP_RTS.opc:
-      this.pc.store(this._popStack2Bytes());
+      this.pc.store(this._popStack2Bytes() + 1);
       break;
 
     case CPU._OP_SBC.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
-      var c = this.p.isC() ? 1 : 0;
+      var c = this.p.isC() ? 0 : 1;
       var result = src1 - src2 - c;
       this.a.store(result);
       this._updateN(result)
       this._updateZ(result)
-      this._updateC(result)
+      // TODO: check if this logic is right.
+      if(src1 >= src2 + c) 
+        this.p.setC();
+      else
+        this.p.clearC();
       // TODO: implement right overflow logic.
       //       this is just a temporal logic.
-      if(((src1 ^ result) & (src2 ^ result) & 0x80) == 0)
+      if(((src1 ^ result) & 0x80) && ((src1 ^ src2) & 0x80))
         this.p.setV();
       else
         this.p.clearV();
@@ -1181,8 +1203,10 @@ CPU.prototype._operate = function(op) {
       }
       var result = srcReg.load();
       desReg.store(result);
-      this._updateN(result);
-      this._updateZ(result);
+      if(op.op.opc != CPU._OP_TXS.opc) {
+        this._updateN(result);
+        this._updateZ(result);
+      }
       break;
 
     default:
@@ -1404,6 +1428,12 @@ CPUMemoryController.prototype._map = function(address) {
     if(target == null) {
       target = new Register();
     }
+  } else if(address >= 0x4020 && address < 0x6000) {
+    target = this.ram;
+    addr = address;
+  } else if(address >= 0x6000 && address < 0x8000) {
+    target = this.ram;
+    addr = address;
   } else if(address >= 0x8000 && address < 0x10000) {
     target = this.rom;
     // this address translation might should be done by ROM Memory mapper.

@@ -14,18 +14,6 @@ Display._PIXEL_SIZE = 2;
 
 Display.prototype.update = function() {
   this.ctx.clearRect(0, 0, this.width, this.height);
-/*
-  for(var i = 0; i < Display._WIDTH; i++) {
-    for(var j = 0; j < Display._HEIGHT; j++) {
-      var color = this.nes.ppu.getPixelRGB(i, j);
-      this.ctx.fillStyle = this._getRGBForCanvas2D(color);
-      this.ctx.fillRect(i * Display._PIXEL_SIZE,
-                        j * Display._PIXEL_SIZE,
-                        Display._PIXEL_SIZE,
-                        Display._PIXEL_SIZE);
-    }
-  }
-*/
   var data = this.ctx.createImageData(this.width, this.height);
   var pos = 0;
   for(var i = 0; i < Display._HEIGHT; i++) {
