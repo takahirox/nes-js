@@ -193,11 +193,32 @@ function __pushResumeButton() {
 };
 
 
+/**
+ * TODO: temporal
+ */
+function __pushPadButton(key) {
+  if(! __nes)
+    return;
+  __nes.pad1.pushButton(parseInt(key.split('_')[1]));
+};
+
+
+/**
+ * TODO: temporal
+ */
+function __releasePadButton(key) {
+  if(! __nes)
+    return;
+  __nes.pad1.releaseButton(parseInt(key.split('_')[1]));
+};
+
+
 function __putMessage(str) {
   var area = document.getElementById('dump');
   area.firstChild.appendData(str + '\n');
   area.scrollTop = area.scrollHeight;
 };
+
 
 window.addEventListener('drop', __dropRomImage, false);
 window.addEventListener('dragover', __dragOverHandler, false);
@@ -213,6 +234,45 @@ push this button or drag and drop your own rom into this window to load rom imag
 <canvas id="mainCanvas" width="256" height="240"></canvas>
 </p>
 
+<div>
+<table>
+<tr>
+ <td></td>
+ <td><button id="pad1_4" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">U</button></td>
+ <td></td>
+ <td></td>
+ <td></td>
+ <td></td>
+ <td></td>
+</tr>
+<tr>
+ <td><button id="pad1_6" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">L</button></td>
+ <td></td>
+ <td><button id="pad1_7" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">R</button></td>
+ <td></td>
+ <td></td>
+ <td></td>
+ <td></td>
+<tr>
+<tr>
+ <td></td>
+ <td><button id="pad1_5" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">D</button></td>
+ <td></td>
+ <td><button id="pad1_2" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">SELECT</button></td>
+ <td><button id="pad1_3" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">START</button></td>
+ <td><button id="pad1_0" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">A</button></td>
+ <td><button id="pad1_1" onmousedown="__pushPadButton(this.id)"
+              onclick="__releasePadButton(this.id)">B</button></td>
+<tr>
+</table>
+</div>
 
 <p>
 <div>
