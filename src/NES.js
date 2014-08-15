@@ -9,7 +9,14 @@ function NES() {
   this.ppu.initMemoryController(this.cpu);
 
   this.cycle = 0;
+
+  this.state = NES._STATE_POWER_OFF;
 };
+
+NES._STATE_POWER_OFF = 0;
+NES._STATE_RUN       = 1;
+NES._STATE_STOP      = 2;
+
 
 // TODO: temporal
 NES._PAD_BUTTON_TABLE = {
@@ -36,14 +43,38 @@ NES.prototype.setDisplay = function(display) {
 };
 
 
+NES.prototype.setInstructionDumpFlag = function(flag) {
+  this.dumpInstructions = flag;
+};
+
+
+NES.prototype.bootup = function() {
+  this.cpu.p.store(0x34);
+  this.cpu.sp.store(0xFD);
+  this.cpu.interrupt(CPU._INTERRUPT_RESET);
+//  nes.cpu.pc.store(0xc000);
+  this.state = NES._STATE_RUN;
+};
+
+
+NES.prototype.stop = function() {
+  this.state = NES._STATE_STOP;
+};
+
+
+NES.prototype.resume = function() {
+  this.state = NES._STATE_RUN;
+  this.run();
+};
+
+
 NES.prototype.run = function() {
-  var cycles = 0x8990;
-//  __putMessage(this.cpu.dump());
+  var cycles = 0x9000; // TODO: temporal
   for(var i = 0; i < cycles; i++) {
     this._runCycle();
-//    __putMessage(this.cpu.dump());
   }
-  setTimeout(this.run.bind(this), 0);
+  if(this.state == NES._STATE_RUN)
+    setTimeout(this.run.bind(this), 0);
 };
 
 
@@ -52,6 +83,13 @@ NES.prototype._runCycle = function() {
   this.ppu.runCycle();
   this.ppu.runCycle();
   this.ppu.runCycle();
+};
+
+
+NES.prototype.runStep = function() {
+  if(this.state != NES._STATE_STOP)
+    return;
+  this._runCycle();
 };
 
 
@@ -66,4 +104,41 @@ NES.prototype.handleKeyUp = function(e) {
   if(NES._PAD_BUTTON_TABLE[e.keyCode] != undefined)
     this.pad1.releaseButton(NES._PAD_BUTTON_TABLE[e.keyCode]);
   e.preventDefault();
+};
+
+
+NES.prototype.dumpCPU = function() {
+  return this.cpu.dump();
+};
+
+
+NES.prototype.dumpRAM = function() {
+  return this.cpu.dumpRAM();
+};
+
+
+NES.prototype.dumpROM = function() {
+  var buffer = '';
+  buffer += this.rom.dumpHeader();
+  buffer += '\n';
+  buffer += this.rom.dump();
+  buffer += '\n';
+  buffer += this.cpu.disassembleROM();
+  buffer += '\n';
+  return buffer;
+};
+
+
+NES.prototype.dumpPPU = function() {
+  return this.ppu.dump();
+};
+
+
+NES.prototype.dumpVRAM = function() {
+  return this.ppu.dumpVRAM();
+};
+
+
+NES.prototype.dumpSPRRAM = function() {
+  return this.ppu.dumpSPRRAM();
 };

@@ -56,6 +56,59 @@ function __loadRom() {
   request.send(null);
   __putMessage('')
   __putMessage('loading rom image...')
+  __ROMloaded();
+};
+
+
+function __init() {
+  document.getElementById('loadROMButton').disabled = false;
+  document.getElementById('dumpROMButton').disabled = true;
+  document.getElementById('dumpRegButton').disabled = true;
+  document.getElementById('dumpRAMButton').disabled = true;
+  document.getElementById('dumpVRAMButton').disabled = true;
+  document.getElementById('dumpSPRRAMButton').disabled = true;
+  document.getElementById('stopButton').disabled = true;
+  document.getElementById('stepButton').disabled = true;
+  document.getElementById('resumeButton').disabled = true;
+};
+
+
+function __ROMloaded() {
+  document.getElementById('loadROMButton').disabled = true;
+  document.getElementById('dumpROMButton').disabled = true;
+  document.getElementById('dumpRegButton').disabled = true;
+  document.getElementById('dumpRAMButton').disabled = true;
+  document.getElementById('dumpVRAMButton').disabled = true;
+  document.getElementById('dumpSPRRAMButton').disabled = true;
+  document.getElementById('stopButton').disabled = true;
+  document.getElementById('stepButton').disabled = true;
+  document.getElementById('resumeButton').disabled = true;
+};
+
+
+function __NESran() {
+  document.getElementById('loadROMButton').disabled = true;
+  document.getElementById('dumpROMButton').disabled = true;
+  document.getElementById('dumpRegButton').disabled = true;
+  document.getElementById('dumpRAMButton').disabled = true;
+  document.getElementById('dumpVRAMButton').disabled = true;
+  document.getElementById('dumpSPRRAMButton').disabled = true;
+  document.getElementById('stopButton').disabled = false;
+  document.getElementById('stepButton').disabled = true;
+  document.getElementById('resumeButton').disabled = true;
+};
+
+
+function __NESstopped() {
+  document.getElementById('loadROMButton').disabled = true;
+  document.getElementById('dumpROMButton').disabled = false;
+  document.getElementById('dumpRegButton').disabled = false;
+  document.getElementById('dumpRAMButton').disabled = false;
+  document.getElementById('dumpVRAMButton').disabled = false;
+  document.getElementById('dumpSPRRAMButton').disabled = false;
+  document.getElementById('stopButton').disabled = true;
+  document.getElementById('stepButton').disabled = false;
+  document.getElementById('resumeButton').disabled = false;
 };
 
 
@@ -66,12 +119,6 @@ function __run(arrayBuffer) {
   } else {
     __putMessage('this doesn\'t seem iNES format.');
   }
-  __putMessage('');
-  __putMessage('header dump.');
-  __putMessage('--------');
-  __putMessage(rom.dumpHeader());
-  __putMessage('--------');
-
 
   if(! rom.isNES())
     return;
@@ -90,42 +137,75 @@ function __run(arrayBuffer) {
 
   __nes = nes; // for debug on console.
 
-/*
-  __putMessage('');
-  __putMessage('rom dump.');
-  __putMessage(nes.rom.dump());
+  __putMessage('bootup.');
+  nes.bootup();
 
-  __putMessage('');
-  __putMessage('disassemble.');
-  __putMessage(nes.cpu.disassembleROM());
-  nes.cpu.interrupt(CPU._INTERRUPT_RESET);
-
-  __putMessage('');
-  __putMessage(nes.ppu.dump());
-*/
-  nes.cpu.interrupt(CPU._INTERRUPT_RESET);
-//  nes.cpu.pc.store(0xc000);
-  nes.cpu.p.store(0x34);
-  nes.cpu.sp.store(0xFD);
-
+  __putMessage('runs.');
+  __NESran();
   nes.run();
+
   return;
+};
+
+function __pushDumpROM() {
+  __putMessage(__nes.dumpROM());
+};
+
+
+function __pushDumpReg() {
+  __putMessage(__nes.dumpCPU());
+  __putMessage(__nes.dumpPPU());
+};
+
+
+function __pushDumpRAM() {
+  __putMessage(__nes.dumpRAM());
+};
+
+
+function __pushDumpVRAM() {
+  __putMessage(__nes.dumpVRAM());
+};
+
+
+function __pushDumpSPRRAM() {
+  __putMessage(__nes.dumpSPRRAM());
+};
+
+
+function __pushStopButton() {
+  __nes.stop();
+  __putMessage('stopped.');
+  __NESstopped();
+};
+
+
+function __pushStepButton() {
+  __nes.runStep();
+  __putMessage(__nes.dumpCPU());
+};
+
+
+function __pushResumeButton() {
+  __nes.resume();
+  __putMessage('resumed.');
+  __NESran();
 };
 
 
 function __putMessage(str) {
-  var area = document.getElementById('dumpHeader');
+  var area = document.getElementById('dump');
   area.firstChild.appendData(str + '\n');
-//  area.scrollTop = area.scrollHeight;
+  area.scrollTop = area.scrollHeight;
 };
 
 window.addEventListener('drop', __dropRomImage, false);
 window.addEventListener('dragover', __dragOverHandler, false);
 </script>
 </head>
-<body>
+<body onload="__init()">
 <p>
-<button onclick="__loadRom()">load rom</button>
+<button id="loadROMButton" onclick="__loadRom()">load rom</button>
 push this button or drag and drop your own rom into this window to load rom image.
 </p>
 
@@ -133,8 +213,19 @@ push this button or drag and drop your own rom into this window to load rom imag
 <canvas id="mainCanvas" width="256" height="240"></canvas>
 </p>
 
+
 <p>
-<textarea id="dumpHeader" cols="128" rows="32" readonly="readonly"> </textarea>
+<div>
+<button id="dumpROMButton" onclick="__pushDumpROM()">dump ROM</button>
+<button id="dumpRegButton" onclick="__pushDumpReg()">dump CPU/PPU reg</button>
+<button id="dumpRAMButton" onclick="__pushDumpRAM()">dump CPU RAM</button>
+<button id="dumpVRAMButton" onclick="__pushDumpVRAM()">dump PPU VRAM</button>
+<button id="dumpSPRRAMButton" onclick="__pushDumpSPRRAM()">dump PPU SPRRAM</button>
+<button id="stopButton" onclick="__pushStopButton()">stop</button>
+<button id="stepButton" onclick="__pushStepButton()">step</button>
+<button id="resumeButton" onclick="__pushResumeButton()">resume</button>
+</div>
+<textarea id="dump" cols="128" rows="16" readonly="readonly"> </textarea>
 </p>
 
 <p>

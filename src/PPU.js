@@ -305,14 +305,6 @@ PPU.prototype.dump = function() {
   buffer += 'SRP DMA: ' + this.sprDMA.dump() + '\n';
   buffer += '\n';
 
-  buffer += 'VRAM dump.\n';
-  buffer += this.dumpVRAM();
-
-  buffer += '\n';
-
-  buffer += 'SPRRAM dump.\n';
-  buffer += this.dumpSPRRAM();
-
   return buffer;
 };
 

@@ -1298,6 +1298,11 @@ CPU.prototype.dump = function() {
 };
 
 
+CPU.prototype.dumpRAM = function() {
+  return this.ram.dump();
+};
+
+
 
 function CPUMemoryController(cpu, ppu, pad1) {
   this.parent = ProcessorMemoryController;
