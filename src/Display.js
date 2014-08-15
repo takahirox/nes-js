@@ -15,7 +15,7 @@ Display._PIXEL_SIZE = 2;
 Display.prototype.update = function() {
   this.ctx.clearRect(0, 0, this.width, this.height);
   var data = this.ctx.createImageData(this.width, this.height);
-  var pos = 0;
+  this.nes.ppu.initSprites();
   for(var i = 0; i < Display._HEIGHT; i++) {
     for(var j = 0; j < Display._WIDTH; j++) {
       var color = this.nes.ppu.getPixelRGB(j, i);

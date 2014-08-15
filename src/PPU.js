@@ -30,6 +30,12 @@ function PPU() {
   this.vram = new VRAM();
   this.sprram = new SPRRAM();
 
+  // TODO: temporal
+  this.sprites = [];
+  this.sprites.length = 64;
+  this.spritesMap = [];
+  this.spritesMap.length = 256 * 240;
+
   this.ram = null;
   this.mem = null; // initialized by initMemoryController
 
@@ -234,7 +240,80 @@ PPU.prototype.setVBlank = function() {
 /**
  * TODO: temporal
  */
+PPU.prototype.initSprites = function() {
+  this.spritesMap.length = 0;
+  this.spritesMap.length = 256*240;
+
+  for(var i = 0; i < 64; i++) {
+    var b0 = this.sprram.load(i*4+0);
+    var b1 = this.sprram.load(i*4+1);
+    var b2 = this.sprram.load(i*4+2);
+    var b3 = this.sprram.load(i*4+3);
+    var s = new Sprite(b0, b1, b2, b3);
+    this.sprites[i] = s;
+
+    var bx = s.getXPosition();
+    var by = s.getYPosition();
+    for(var j = 0; j < 8; j++) {
+      for(var k = 0; k < 8; k++) {
+        var x = bx + k;
+        var y = by + j;
+        if(x >= 256 || y >= 240)
+          continue
+        var si = y*256 + x;
+        var ptIndex = s.getTileIndex();
+        var lsb = this._getPatternTableElement(ptIndex, x, y);
+        var msb = s.getPalletNum();
+        var pIndex = (msb << 2) | lsb;
+        var c = PPU._PALETTE[this._getPaletteIndex(pIndex)];
+        this.spritesMap[si] = c;
+      }
+    }
+  }
+
+};
+
+
+/**
+ * TODO: temporal
+ */
 PPU.prototype.getPixelRGB = function(x, y) {
+/*
+  var c = this._getSpritePixelRGB(x, y);
+  if(c)
+    return c;
+*/
+  var si = y*256 + x;
+  if(this.spritesMap[si])
+    return this.spritesMap[si];
+  return this._getBackgroundPixelRGB(x, y);
+};
+
+
+/**
+ * TODO: temporal. too bad and too slow. can cause heavy GC.
+ */
+PPU.prototype._getSpritePixelRGB = function(x, y) {
+  for(var i = 0; i < 64; i++) {
+    var b0 = this.sprram.load(i*4+0);
+    var b1 = this.sprram.load(i*4+1);
+    var b2 = this.sprram.load(i*4+2);
+    var b3 = this.sprram.load(i*4+3);
+    var s = new Sprite(b0, b1, b2, b3);
+    if(x >= s.getXPosition() && x < s.getXPosition() + 8 &&
+       y >= s.getYPosition() && y < s.getYPosition() + 8) {
+      var ptIndex = s.getTileIndex();
+      var lsb = this._getPatternTableElement(ptIndex, x, y);
+      var msb = s.getPalletNum();
+      var pIndex = (msb << 2) | lsb;
+      return PPU._PALETTE[this._getPaletteIndex(pIndex)];
+    }
+  }
+  return null;
+};
+
+
+PPU.prototype._getBackgroundPixelRGB = function(x, y) {
   var msb = this._getAttributeTableEntry(x, y);
   var ptIndex = this._getNameTableEntry(x, y);
   var lsb = this._getPatternTableElement(ptIndex, x, y);
@@ -472,4 +551,48 @@ PPUStatusRegister._VBLANK_BIT_BIT = 7;
 PPUStatusRegister._SPRITE_ZERO_HIT_BIT = 6;
 PPUStatusRegister._SCANLINE_SPRITE_COUNT_BIT = 5;
 PPUStatusRegister._IGNORE_VRAM_WRITE_BIT = 4;
+
+
+
+function Sprite(byte0, byte1, byte2, byte3) {
+  this.byte0 = byte0;
+  this.byte1 = byte1;
+  this.byte2 = byte2;
+  this.byte3 = byte3;
+};
+
+
+Sprite.prototype.getYPosition = function() {
+  return this.byte0 - 1;
+};
+
+
+Sprite.prototype.getXPosition = function() {
+  return this.byte3;
+};
+
+
+Sprite.prototype.getTileIndex = function() {
+  return this.byte1;
+};
+
+
+Sprite.prototype.getPalletNum = function() {
+  return this.byte2 & 0x3;
+};
+
+
+Sprite.prototype.getPriority = function() {
+  return (this.byte2 >> 5) & 1;
+};
+
+
+Sprite.prototype.doFlipHorizontally = function() {
+  return ((this.byte2 >> 6) & 1) ? true : false;
+};
+
+
+Sprite.prototype.doFlipVertically = function() {
+  return ((this.byte2 >> 7) & 1) ? true : false;
+};
 

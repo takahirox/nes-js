@@ -14,7 +14,6 @@
 <script type="text/javascript" src="src/NES.js"></script>
 <script type="text/javascript" src="src/Display.js"></script>
 <script type="text/javascript">
-var __romURL = './roms/nestest.nes';
 var __nes;
 
 function __dragOverHandler(e) {
@@ -43,6 +42,7 @@ function __dropRomImage(e) {
 
 
 function __loadRom() {
+  var url = document.getElementById('romList').selectedOptions[0].value;
   var request = new XMLHttpRequest();
   request.responseType = 'arraybuffer';
   request.onload = function() {
@@ -52,7 +52,7 @@ function __loadRom() {
   request.onerror = function(e) {
     __putMessage('failed to load.');
   };
-  request.open('GET', __romURL, true);
+  request.open('GET', url, true);
   request.send(null);
   __putMessage('')
   __putMessage('loading rom image...')
@@ -226,6 +226,11 @@ window.addEventListener('dragover', __dragOverHandler, false);
 </head>
 <body onload="__init()">
 <p>
+<select id="romList">
+<option value="./roms/nestest.nes">nestest</option>
+<option value="./roms/pong1k.nes">pong1k</option>
+<option value="./roms/The Invasion.nes">The Invasion</option>
+</select>
 <button id="loadROMButton" onclick="__loadRom()">load rom</button>
 push this button or drag and drop your own rom into this window to load rom image.
 </p>
