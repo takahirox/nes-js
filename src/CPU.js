@@ -110,7 +110,7 @@ CPU._OP[0x06] = {'op': CPU._OP_ASL, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAG
 CPU._OP[0x07] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
 
 CPU._OP[0x08] = {'op': CPU._OP_PHP, 'cycle': 3, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x09] = {'op': CPU._OP_ORA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
+CPU._OP[0x09] = {'op': CPU._OP_ORA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
 CPU._OP[0x0A] = {'op': CPU._OP_ASL, 'cycle': 2, 'mode': CPU._ADDRESSING_ACCUMULATOR};
 CPU._OP[0x0B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
 CPU._OP[0x0C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
@@ -570,7 +570,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
       this.pc.increment();
       tmp += this.x.load();
       tmp = tmp & 0xff;
-      address = this.load2Bytes(tmp);
+      address = this.load2BytesFromZeropage(tmp);
       break;
 
     case CPU._ADDRESSING_INDEXED_INDIRECT_Y.id:
