@@ -69,7 +69,7 @@ NES.prototype.resume = function() {
 
 
 NES.prototype.run = function() {
-  var cycles = 0x9000; // TODO: temporal
+  var cycles = 341*262; // TODO: temporal
   for(var i = 0; i < cycles; i++) {
     this._runCycle();
   }

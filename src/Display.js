@@ -10,7 +10,7 @@ function Display(canvas, nes) {
 
 Display._WIDTH = 256;
 Display._HEIGHT = 240;
-Display._PIXEL_SIZE = 2;
+Display._PIXEL_SIZE = 1;
 
 Display.prototype.update = function() {
   this.ctx.clearRect(0, 0, this.width, this.height);

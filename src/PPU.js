@@ -3,6 +3,9 @@
  */
 function PPU() {
   this.count = 0;
+  this.scanLine = 0;
+  this.cycle = 0;
+
   this.cpu = null;
   this.display = null;
   this.ctrl1 = new PPUControl1Register();
@@ -148,14 +151,22 @@ PPU.prototype.store = function(address, value) {
  * TODO: not implemented yet.
  */
 PPU.prototype.runCycle = function() {
-  if(this.count != 0 && this.count % PPU._VBLANK_CYCLE == 0) {
+  if(this.cycle == 1 && this.scanLine == 241) {
     if(this.ctrl1.isVBlank()) {
       this.setVBlank();
       this.display.update();
       this.cpu.interrupt(CPU._INTERRUPT_NMI);
     }
   }
-  this.count++;
+
+  this.cycle++;
+  if(this.cycle > 340) {
+    this.cycle = 0;
+    this.scanLine++;
+    if(this.scanLine > 261) {
+      this.scanLine = 0;
+    }
+  }
 };
 
 
