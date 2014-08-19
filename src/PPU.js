@@ -152,11 +152,15 @@ PPU.prototype.store = function(address, value) {
  */
 PPU.prototype.runCycle = function() {
   if(this.cycle == 1 && this.scanLine == 241) {
+    this.setVBlank();
+    this.display.update();
     if(this.ctrl1.isVBlank()) {
-      this.setVBlank();
-      this.display.update();
       this.cpu.interrupt(CPU._INTERRUPT_NMI);
     }
+  }
+
+  if(this.cycle == 1 && this.scanLine == 261) {
+    this.clearVBlank();
   }
 
   this.cycle++;
@@ -245,6 +249,14 @@ PPU.prototype._SPRRAMDMAWriteCallback = function() {
  */
 PPU.prototype.setVBlank = function() {
   this.sr.store(this.sr.load(true) | 0x80, true);
+};
+
+
+/**
+ * TODO: temporal
+ */
+PPU.prototype.clearVBlank = function() {
+  this.sr.store(this.sr.load(true) & 0x7f, true);
 };
 
 

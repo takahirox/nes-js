@@ -7,6 +7,7 @@ function ROM(arrayBuffer) {
   this.header = new ROMHeader(this);
   this.chrrom = null;
   this._initCHRROM();
+  this.mapper = this._generateMapper();
 };
 __inherit(ROM, GenericMemory);
 
@@ -32,14 +33,30 @@ ROM.prototype._initCHRROM = function() {
 };
 
 
-/**
- * TODO: temporal. for NROM.
- */
 ROM.prototype._map = function(address) {
-  if(address >= 0x4000)
-    address -= 0x4000;
-  address += ROM._HEADER_SIZE;
-  return address;
+  return this.mapper.map(address) + ROM._HEADER_SIZE;
+};
+
+
+/**
+ * TODO: temporal. add description later.
+ */
+ROM.prototype.store = function(address, value) {
+  this.mapper.store(address, value);
+};
+
+
+/**
+ * TODO: temporal
+ */
+ROM.prototype._generateMapper = function() {
+  switch(this.header.getMapperNum()) {
+    case 2:
+      return new UNROMMapper(this);
+
+    default:
+      return new NROMMapper(this);
+  }
 };
 
 
@@ -305,3 +322,56 @@ function CHRROM(capacity) {
 };
 __inherit(CHRROM, GenericMemory);
 
+
+
+function ROMMapper(rom) {
+  this.rom = rom;
+};
+
+
+ROMMapper.prototype.map = function(address) {
+  return this.address;
+};
+
+
+ROMMapper.prototype.store = function(address, value) {
+};
+
+
+
+function NROMMapper(rom) {
+  this.parent = ROMMapper;
+  this.parent.call(this, rom);
+};
+__inherit(NROMMapper, ROMMapper);
+
+
+NROMMapper.prototype.map = function(address) {
+  if(address >= 0x4000)
+    address -= 0x4000;
+  return address;
+};
+
+
+
+function UNROMMapper(rom) {
+  this.parent = ROMMapper;
+  this.parent.call(this, rom);
+  this.reg = new Register();
+};
+__inherit(UNROMMapper, ROMMapper);
+
+
+/**
+ * TODO: temporal
+ */
+UNROMMapper.prototype.map = function(address) {
+  var bank = (address < 0x4000) ? this.reg.load() : 7;
+  var offset = address & 0x3fff;
+  return 1024 * 16 * bank + offset;
+};
+
+
+UNROMMapper.prototype.store = function(address, value) {
+  this.reg.store(value & 0x7);
+};

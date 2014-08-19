@@ -1059,6 +1059,9 @@ CPU.prototype._operate = function(op) {
           reg = this.a;
           break;
         case CPU._OP_PHP.opc:
+          // TODO: check this logic. when to clear?
+          this.p.setA();
+          this.p.setB();
           reg = this.p;
           break;
       }
@@ -1463,6 +1466,7 @@ __inherit(CPUStatusRegister, Register);
 
 CPUStatusRegister._N_BIT = 7;
 CPUStatusRegister._V_BIT = 6;
+CPUStatusRegister._A_BIT = 5;  // TODO: temporal name
 CPUStatusRegister._B_BIT = 4;
 CPUStatusRegister._D_BIT = 3;
 CPUStatusRegister._I_BIT = 2;
@@ -1497,6 +1501,21 @@ CPUStatusRegister.prototype.setV = function() {
 
 CPUStatusRegister.prototype.clearV = function() {
   this.storeBit(CPUStatusRegister._V_BIT, 0);
+};
+
+
+CPUStatusRegister.prototype.isA = function() {
+  return this.loadBit(CPUStatusRegister._A_BIT);
+};
+
+
+CPUStatusRegister.prototype.setA = function() {
+  this.storeBit(CPUStatusRegister._A_BIT, 1);
+};
+
+
+CPUStatusRegister.prototype.clearA = function() {
+  this.storeBit(CPUStatusRegister._A_BIT, 0);
 };
 
 
