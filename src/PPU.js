@@ -285,7 +285,7 @@ PPU.prototype.initSprites = function() {
           continue
         var si = y*256 + x;
         var ptIndex = s.getTileIndex();
-        var lsb = this._getPatternTableElement(ptIndex, x, y);
+        var lsb = this._getPatternTableElement(ptIndex, x, y, true);
         var msb = s.getPalletNum();
         var pIndex = (msb << 2) | lsb;
         var c = PPU._PALETTE[this._getPaletteIndex(pIndex)];
@@ -326,7 +326,7 @@ PPU.prototype._getSpritePixelRGB = function(x, y) {
     if(x >= s.getXPosition() && x < s.getXPosition() + 8 &&
        y >= s.getYPosition() && y < s.getYPosition() + 8) {
       var ptIndex = s.getTileIndex();
-      var lsb = this._getPatternTableElement(ptIndex, x, y);
+      var lsb = this._getPatternTableElement(ptIndex, x, y, true);
       var msb = s.getPalletNum();
       var pIndex = (msb << 2) | lsb;
       return PPU._PALETTE[this._getPaletteIndex(pIndex)];
@@ -339,7 +339,7 @@ PPU.prototype._getSpritePixelRGB = function(x, y) {
 PPU.prototype._getBackgroundPixelRGB = function(x, y) {
   var msb = this._getAttributeTableEntry(x, y);
   var ptIndex = this._getNameTableEntry(x, y);
-  var lsb = this._getPatternTableElement(ptIndex, x, y);
+  var lsb = this._getPatternTableElement(ptIndex, x, y, false);
   var pIndex = (msb << 2) | lsb;
   return PPU._PALETTE[this._getPaletteIndex(pIndex)];
 };
@@ -356,7 +356,7 @@ PPU.prototype._getAttributeTableEntry = function(x, y) {
   var rightleft = (x % 8) > 3 ? 1 : 0; // right, left
   var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                // topright, topleft
-  var byte = this.load(0x23C0 + index);
+  var byte = this.load(this._getNameTableAddress() + 0x3C0 + index);
   return (byte >> (position * 2)) & 0x3;
 };
 
@@ -368,18 +368,37 @@ PPU.prototype._getNameTableEntry = function(x, y) {
   var ax = parseInt(x / 8);
   var ay = parseInt(y / 8);
   var index = ay * 32 + ax;
-  return this.load(0x2000 + index);
+
+  return this.load(this._getNameTableAddress() + index);
+};
+
+
+PPU.prototype._getNameTableAddress = function() {
+  switch(this.ctrl1.getNameTableAddress()) {
+    case 0:
+      return 0x2000;
+    case 1:
+      return 0x2400;
+    case 2:
+      return 0x2800;
+    default:
+      return 0x2C00;
+  }
 };
 
 
 /**
  * TODO: temporal
  */
-PPU.prototype._getPatternTableElement = function(index, x, y) {
+PPU.prototype._getPatternTableElement = function(index, x, y, isSprite) {
   var ax = x % 8;
   var ay = y % 8;
-  var a = this.load(index * 0x10 + ay);
-  var b = this.load(index * 0x10 + 0x8 + ay);
+  var tableNum = isSprite
+                   ? (this.ctrl1.getSpritesPatternTableNum() ? 1 : 0)
+                   : (this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0);
+  var offset = tableNum * 0x1000;
+  var a = this.load(offset + index * 0x10 + ay);
+  var b = this.load(offset + index * 0x10 + 0x8 + ay);
   return ((a >> (7-ax)) & 1) |
            (((b >> (7-ax)) & 1) << 1);
 };
@@ -543,6 +562,23 @@ PPUControl1Register.prototype.setVBlank = function() {
 
 PPUControl1Register.prototype.clearVBlank = function() {
   this.storeBit(PPUControl1Register._NMI_VBLANK_BIT, 0);
+};
+
+
+PPUControl1Register.prototype.getBackgroundPatternTableNum = function() {
+  return this.loadBit(PPUControl1Register._BACKGROUND_PATTERN_TABLE_BIT);
+};
+
+
+PPUControl1Register.prototype.getSpritesPatternTableNum = function() {
+  return this.loadBit(PPUControl1Register._SPRITES_PATTERN_TABLE_BIT);
+};
+
+
+PPUControl1Register.prototype.getNameTableAddress = function() {
+  return this.loadPartialBits(
+           PPUControl1Register._NAME_TABLE_ADDRESS_BIT,
+           PPUControl1Register._NAME_TABLE_ADDRESS_BITS_MASK);
 };
 
 
