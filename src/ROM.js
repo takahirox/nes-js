@@ -347,7 +347,7 @@ __inherit(NROMMapper, ROMMapper);
 
 
 NROMMapper.prototype.map = function(address) {
-  if(address >= 0x4000)
+  if(this.rom.header.getPRGROMBanksNum() == 1 && address >= 0x4000)
     address -= 0x4000;
   return address;
 };

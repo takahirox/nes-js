@@ -286,9 +286,10 @@ PPU.prototype.initSprites = function() {
     var b2 = this.sprram.load(i*4+2);
     var b3 = this.sprram.load(i*4+3);
     var s = new Sprite(b0, b1, b2, b3);
-    this.sprites[i] = s;
-    if(s.getPriority())
+    if(!s.doDisplay() || s.getPriority())
       continue;
+
+    this.sprites[i] = s;
     var bx = s.getXPosition();
     var by = s.getYPosition();
     for(var j = 0; j < 8; j++) {
@@ -648,6 +649,11 @@ function Sprite(byte0, byte1, byte2, byte3) {
   this.byte1 = byte1;
   this.byte2 = byte2;
   this.byte3 = byte3;
+};
+
+
+Sprite.prototype.doDisplay = function() {
+  return this.byte0 < 0xEF;
 };
 
 
