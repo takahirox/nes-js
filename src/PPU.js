@@ -222,7 +222,6 @@ PPU.prototype._VRAMIOReadCallback = function() {
 
 
 PPU.prototype._VRAMIOWriteCallback = function() {
-//  console.log(__10to16(this._getVRAMAddress()) + ':' + __10to16(this.vRAMIO.load(true)));
   this.mem.store(this._getVRAMAddress(), this.vRAMIO.load(true));
   this.VRAMAddressCount2 = 0;
   this._incrementVRAMAddress();
@@ -288,22 +287,27 @@ PPU.prototype.initSprites = function() {
     var b3 = this.sprram.load(i*4+3);
     var s = new Sprite(b0, b1, b2, b3);
     this.sprites[i] = s;
-
+    if(s.getPriority())
+      continue;
     var bx = s.getXPosition();
     var by = s.getYPosition();
     for(var j = 0; j < 8; j++) {
       for(var k = 0; k < 8; k++) {
+        var cx = s.doFlipHorizontally() ? 7-k : k;
+        var cy = s.doFlipVertically() ? 7-j : j;
         var x = bx + k;
         var y = by + j;
         if(x >= 256 || y >= 240)
           continue
         var si = y*256 + x;
         var ptIndex = s.getTileIndex();
-        var lsb = this._getPatternTableElement(ptIndex, x, y, true);
-        var msb = s.getPalletNum();
-        var pIndex = (msb << 2) | lsb;
-        var c = PPU._PALETTE[this._getPaletteIndex(pIndex)];
-        this.spritesMap[si] = c;
+        var lsb = this._getPatternTableElement(ptIndex, cx, cy, true);
+        if(lsb != 0) {
+          var msb = s.getPalletNum();
+          var pIndex = (msb << 2) | lsb;
+          var c = PPU._PALETTE[this._getSpritePaletteIndex(pIndex)];
+          this.spritesMap[si] = c;
+        }
       }
     }
   }
@@ -367,15 +371,15 @@ PPU.prototype._getBackgroundPixelRGB = function(x, y) {
  * TODO: temporal
  */
 PPU.prototype._getAttributeTableEntry = function(x, y) {
-  var ax = parseInt((x%256)/8);
-  var ay = parseInt(y/8);
+  var ax = parseInt((x%256)/32);
+  var ay = parseInt(y/32);
   var index = ay * 8 + ax;
-  var topbottom = (y % 8) > 3 ? 1 : 0; // bottom, top
-  var rightleft = (x % 8) > 3 ? 1 : 0; // right, left
+  var topbottom = (y % 32) > 15 ? 1 : 0; // bottom, top
+  var rightleft = (x % 32) > 15 ? 1 : 0; // right, left
   var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                // topright, topleft
-  var byte = this.load(this._getNameTableAddress(x) + 0x3C0 + index);
-  return (byte >> (position * 2)) & 0x3;
+  var b = this.load(this._getNameTableAddress(x) + 0x3C0 + index);
+  return (b >> (position * 2)) & 0x3;
 };
 
 
@@ -427,6 +431,14 @@ PPU.prototype._getPatternTableElement = function(index, x, y, isSprite) {
  */
 PPU.prototype._getPaletteIndex = function(index) {
   return this.load(0x3F00 + index);
+};
+
+
+/**
+ * TODO: temporal
+ */
+PPU.prototype._getSpritePaletteIndex = function(index) {
+  return this.load(0x3F10 + index);
 };
 
 
