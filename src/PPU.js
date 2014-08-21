@@ -5,6 +5,7 @@ function PPU() {
   this.count = 0;
   this.scanLine = 0;
   this.cycle = 0;
+  this.xScroll = 0;
 
   this.cpu = null;
   this.display = null;
@@ -19,7 +20,9 @@ function PPU() {
   this.sprIO = new RegisterWithCallback(
                      null,
                      this._SPRRAMIOWriteCallback.bind(this));
-  this.vRAMAddr1 = new Register();
+  this.vRAMAddr1 = new RegisterWithCallback(
+                         null,
+                         this._VRAMAddress1WriteCallback.bind(this));
   this.vRAMAddr2 = new RegisterWithCallback(
                          null,
                          this._VRAMAddress2WriteCallback.bind(this));
@@ -43,7 +46,8 @@ function PPU() {
   this.mem = null; // initialized by initMemoryController
 
   this.higherVRAMAddress = 0;
-  this.VRAMAddressCount = 0;
+  this.VRAMAddressCount1 = 0;
+  this.VRAMAddressCount2 = 0;
 };
 
 PPU._VBLANK_CYCLE = parseInt(341 * 262 / 3); // TODO: temporal
@@ -174,12 +178,22 @@ PPU.prototype.runCycle = function() {
 };
 
 
-PPU.prototype._VRAMAddress2WriteCallback = function() {
-  if(this.VRAMAddressCount == 0) {
-    this.higherVRAMAddress = this.vRAMAddr2.load(true);
-    this.VRAMAddressCount = 1;
+PPU.prototype._VRAMAddress1WriteCallback = function() {
+  if(this.VRAMAddressCount1 == 0) {
+    this.xScroll = this.vRAMAddr1.load(true);
+    this.VRAMAddressCount1 = 1;
   } else {
-    this.VRAMAddressCount = 0;
+    this.VRAMAddressCount1 = 0;
+  }
+};
+
+
+PPU.prototype._VRAMAddress2WriteCallback = function() {
+  if(this.VRAMAddressCount2 == 0) {
+    this.higherVRAMAddress = this.vRAMAddr2.load(true);
+    this.VRAMAddressCount2 = 1;
+  } else {
+    this.VRAMAddressCount2 = 0;
   }
 };
 
@@ -202,7 +216,7 @@ PPU.prototype._incrementVRAMAddress = function() {
 
 PPU.prototype._VRAMIOReadCallback = function() {
   this.vRAMIO.store(this.mem.load(this._getVRAMAddress()), true);
-  this.VRAMAddressCount = 0;
+  this.VRAMAddressCount2 = 0;
   this._incrementVRAMAddress();
 };
 
@@ -210,7 +224,7 @@ PPU.prototype._VRAMIOReadCallback = function() {
 PPU.prototype._VRAMIOWriteCallback = function() {
 //  console.log(__10to16(this._getVRAMAddress()) + ':' + __10to16(this.vRAMIO.load(true)));
   this.mem.store(this._getVRAMAddress(), this.vRAMIO.load(true));
-  this.VRAMAddressCount = 0;
+  this.VRAMAddressCount2 = 0;
   this._incrementVRAMAddress();
 };
 
@@ -336,7 +350,11 @@ PPU.prototype._getSpritePixelRGB = function(x, y) {
 };
 
 
+/**
+ * TODO: temporal
+ */
 PPU.prototype._getBackgroundPixelRGB = function(x, y) {
+  x += this.xScroll;
   var msb = this._getAttributeTableEntry(x, y);
   var ptIndex = this._getNameTableEntry(x, y);
   var lsb = this._getPatternTableElement(ptIndex, x, y, false);
@@ -349,14 +367,14 @@ PPU.prototype._getBackgroundPixelRGB = function(x, y) {
  * TODO: temporal
  */
 PPU.prototype._getAttributeTableEntry = function(x, y) {
-  var ax = parseInt(x/8);
+  var ax = parseInt((x%256)/8);
   var ay = parseInt(y/8);
   var index = ay * 8 + ax;
   var topbottom = (y % 8) > 3 ? 1 : 0; // bottom, top
   var rightleft = (x % 8) > 3 ? 1 : 0; // right, left
   var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                // topright, topleft
-  var byte = this.load(this._getNameTableAddress() + 0x3C0 + index);
+  var byte = this.load(this._getNameTableAddress(x) + 0x3C0 + index);
   return (byte >> (position * 2)) & 0x3;
 };
 
@@ -365,24 +383,24 @@ PPU.prototype._getAttributeTableEntry = function(x, y) {
  * TODO: temporal
  */
 PPU.prototype._getNameTableEntry = function(x, y) {
-  var ax = parseInt(x / 8);
+  var ax = parseInt((x%256) / 8);
   var ay = parseInt(y / 8);
   var index = ay * 32 + ax;
 
-  return this.load(this._getNameTableAddress() + index);
+  return this.load(this._getNameTableAddress(x) + index);
 };
 
 
-PPU.prototype._getNameTableAddress = function() {
+PPU.prototype._getNameTableAddress = function(x) {
   switch(this.ctrl1.getNameTableAddress()) {
     case 0:
-      return 0x2000;
+      return x < 256 ? 0x2000 : 0x2400;
     case 1:
-      return 0x2400;
+      return x < 256 ? 0x2400 : 0x2000;
     case 2:
-      return 0x2800;
+      return x < 256 ? 0x2800 : 0x2C00;
     default:
-      return 0x2C00;
+      return x < 256 ? 0x2C00 : 0x2800;
   }
 };
 
