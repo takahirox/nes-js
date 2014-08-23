@@ -72,6 +72,14 @@ Register.prototype.decrementBy2 = function() {
 };
 
 
+Register.prototype.lshift = function(value) {
+//  value = value ? 1 : 0;
+  var returnValue = this.loadBit(7);
+  this.store((this.load() << 1) | value);
+  return returnValue;
+};
+
+
 Register.prototype.dump = function() {
   return __10to16(this.load(), 2);
 };
@@ -94,17 +102,17 @@ Register16bit.prototype.load = function() {
 
 
 Register16bit.prototype.loadBit = function(bit) {
-  return (this.load() >> bit) & 1 ? true : false;
+  return (this.load() >> bit) & 1;
 };
 
 
 Register16bit.prototype.loadHigherByte = function() {
-  return this.uint8[0];
+  return this.uint8[1];
 };
 
 
 Register16bit.prototype.loadLowerByte = function() {
-  return this.uint8[1];
+  return this.uint8[0];
 };
 
 
@@ -114,12 +122,12 @@ Register16bit.prototype.store = function(value) {
 
 
 Register16bit.prototype.storeHigherByte = function(value) {
-  this.uint8[0] = value;
+  this.uint8[1] = value;
 };
 
 
 Register16bit.prototype.storeLowerByte = function(value) {
-  this.uint8[1] = value;
+  this.uint8[0] = value;
 };
 
 
@@ -145,6 +153,20 @@ Register16bit.prototype.decrement = function() {
 };
 
 
+Register16bit.prototype.lshift = function(value) {
+//  Note: comment out for performance.
+/*
+  value = value ? 1 : 0;
+  var returnValue = this.loadBit(15);
+  this.store((this.load() << 1) | value);
+  return returnValue;
+*/
+  var data = this.load();
+  this.store((data << 1) | value);
+  return data >> 15;
+};
+
+
 Register16bit.prototype.dump = function() {
   return __10to16(this.load(), 4);
 };
@@ -165,6 +187,7 @@ __inherit(RegisterWithCallback, Register);
 
 /**
  * callback is called BEFORE the parent load method.
+ * TODO: prevent callback if it's called from inside the class?
  */
 RegisterWithCallback.prototype.load = function(skip) {
   if(! skip && this.readCallback)
@@ -175,6 +198,7 @@ RegisterWithCallback.prototype.load = function(skip) {
 
 /**
  * callback is called AFTER the parent load method.
+ * TODO: prevent callback if it's called from inside the class?
  */
 RegisterWithCallback.prototype.store = function(value, skip) {
   this.parent.prototype.store.call(this, value);

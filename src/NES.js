@@ -8,9 +8,13 @@ function NES() {
   this.cpu.initMemoryController(this.ppu, this.pad1);
   this.ppu.initMemoryController(this.cpu);
 
-  this.cycle = 0;
+  this.count = 0;
 
   this.state = NES._STATE_POWER_OFF;
+
+  this.fpsDiv = document.getElementById('fps');
+  this.oldDate = Date.now();
+
 };
 
 NES._STATE_POWER_OFF = 0;
@@ -69,7 +73,15 @@ NES.prototype.resume = function() {
 
 
 NES.prototype.run = function() {
-  var cycles = 341*262; // TODO: temporal
+  if(this.count % 60 == 0) {
+    var newDate = Date.now();
+    var fps = parseInt((60*1000) / (newDate - this.oldDate));
+    this.fpsDiv.innerText = fps;
+    this.oldDate = newDate;
+  }
+  this.count++;
+
+  var cycles = 341*262/3; // TODO: temporal
   for(var i = 0; i < cycles; i++) {
     this._runCycle();
   }
