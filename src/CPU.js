@@ -12,6 +12,7 @@ function CPU() {
   this.ram = new RAM();
   this.mem = null; // initialized by initMemoryController()
   this.pad1 = null; // set by setJoypad1()
+  this.handling = 0;
 };
 
 CPU._INTERRUPT_NMI = 0;
@@ -444,9 +445,13 @@ CPU.prototype._decode = function(opc) {
 
 
 CPU.prototype.runCycle = function() {
-  var opc = this._fetch();
-  var op = this._decode(opc);
-  this._operate(op);
+  if(this.handling <= 0) {
+    var opc = this._fetch();
+    var op = this._decode(opc);
+    this._operate(op);
+    this.handling = op.cycle;
+  }
+  this.handling--;
 };
 
 

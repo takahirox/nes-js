@@ -209,7 +209,7 @@ PPU.prototype._shiftRegisters = function() {
     return;
 
   if((this.cycle >= 1 && this.cycle <= 256) ||
-     (this.cycle >= 321 && this.cycle <= 336)) {
+     (this.cycle >= 329 && this.cycle <= 336)) {
     this.ptL.lshift(0);
     this.ptH.lshift(0);
     this.atL.lshift(0);
@@ -218,6 +218,9 @@ PPU.prototype._shiftRegisters = function() {
 };
 
 
+/**
+ * TODO: temporal impl
+ */
 PPU.prototype._fetch = function() {
   // TODO: temporal
   if(this.scanLine == 0 && this.cycle == 0)
@@ -227,7 +230,9 @@ PPU.prototype._fetch = function() {
   if(this.scanLine >= 240 && this.scanLine <= 260)
     return;
 
-  if((this.cycle >= 257 && this.cycle <= 320) || this.cycle >= 337)
+  if(this.cycle == 0 || 
+     (this.cycle >= 257 && this.cycle <= 320) ||
+     this.cycle >= 337)
     return;
 
   switch(this.cycle % 8) {
