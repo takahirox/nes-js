@@ -210,15 +210,17 @@ PPU.prototype.runCycle = function() {
  * TODO: remove magic numbers.
  */
 PPU.prototype._renderPixel = function() {
-  if(this.scanLine >= 0 && this.scanLine <= 239) {
-    if(this.cycle >= 1 && this.cycle <= 256) {
-      var x = this.cycle-1;
-      var y = this.scanLine;
-      var c = (this.spritesMap[x] !== PPU._PALETTE[0x40])
-                ? this.spritesMap[x] : this._getBGPixel();
-      this.display.renderPixel(x, y, c);
-    }
-  }
+  if(this.scanLine >= 240)
+    return;
+
+  if(this.cycle == 0 || this.cycle >= 257)
+    return;
+
+  var x = this.cycle-1;
+  var y = this.scanLine;
+  var c = (this.spritesMap[x] !== PPU._PALETTE[0x40])
+            ? this.spritesMap[x] : this._getBGPixel();
+  this.display.renderPixel(x, y, c);
 };
 
 

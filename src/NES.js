@@ -87,7 +87,6 @@ NES.prototype.run = function() {
     this.cpu._runCycle();
   }
 */
-
   var cycles = 341*262/3/10; // TODO: temporal
   for(var i = 0; i < cycles; i++) {
     this.cpu.runCycle();
