@@ -129,7 +129,7 @@ function __run(arrayBuffer) {
   var nes = new NES();
   nes.setROM(rom);
 
-  var display = new Display(canvas, nes);
+  var display = new Display(canvas);
   nes.setDisplay(display);
 
   window.onkeydown = nes.handleKeyDown.bind(nes);

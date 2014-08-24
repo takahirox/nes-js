@@ -1,6 +1,5 @@
-function Display(canvas, nes) {
+function Display(canvas) {
   this.cvs = canvas;
-  this.nes = nes;
   this.ctx = canvas.getContext('2d');
 
   this.width = this.cvs.width = Display._WIDTH;

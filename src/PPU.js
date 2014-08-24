@@ -210,10 +210,8 @@ PPU.prototype.runCycle = function() {
  * TODO: remove magic numbers.
  */
 PPU.prototype._renderPixel = function() {
-  if(this.scanLine >= 240)
-    return;
-
-  if(this.cycle == 0 || this.cycle >= 257)
+  // Note: this comparison order is for performance.
+  if(this.cycle >= 257 || this.scanLine >= 240 || this.cycle == 0)
     return;
 
   var x = this.cycle-1;
@@ -276,38 +274,39 @@ PPU.prototype._initForFetch = function() {
 /**
  * TODO: temporal impl
  * TODO: optimize...?
+ * Note: this comparison order is for performance.
  */
 PPU.prototype._fetch = function() {
-  // TODO: temporal
-  if(this.scanLine == 0 && this.cycle == 0) {
-    this._initForFetch();
-    this._initSpritesForFrame();
-    this._initBGPalette();
-    this._initSPPalette();
-  }
+  if(this.cycle % 8 != 0)
+    return;
 
-  if((this.scanLine >= 0 && this.scanLine <= 239) && this.cycle == 0)
-    this._initSpritesForScanLine(this.scanLine);
+  if(this.cycle == 0) {
+    if(this.scanLine == 0) {
+      this._initForFetch();
+      this._initSpritesForFrame();
+      this._initBGPalette();
+      this._initSPPalette();
+    }
+    if(this.scanLine >= 0 && this.scanLine <= 239)
+      this._initSpritesForScanLine(this.scanLine);
+    return;
+  }
 
   if(this.scanLine >= 240 && this.scanLine <= 260)
     return;
 
-  if(this.cycle == 0 || 
-     (this.cycle >= 257 && this.cycle <= 320) ||
+  if((this.cycle >= 257 && this.cycle <= 320) ||
      this.cycle >= 337)
     return;
 
-  switch(this.cycle % 8) {
-    case 0:
-      this._fetchNameTable();
-      this._fetchAttributeTable();
-      this._fetchPatternTable();
-//      this._fetchPatternTableLowByte();
-//      this._fetchPatternTableHighByte();
-      break;
-    default:
-      break;
+  this._fetchNameTable();
+  this._fetchAttributeTable();
+  this._fetchPatternTable();
+//  this._fetchPatternTableLowByte();
+//  this._fetchPatternTableHighByte();
+
 /*
+  switch(this.cycle % 8) {
     case 1:
       this._fetchNameTable();
       break;
@@ -322,8 +321,9 @@ PPU.prototype._fetch = function() {
       break;
     default:
       break;
-*/
   }
+*/
+
 };
 
 
@@ -442,16 +442,16 @@ PPU.prototype._fetchPatternTableHighByte = function() {
 
 
 PPU.prototype._countCycle = function() {
-  if(this.cycle == 1 && this.scanLine == 241) {
-    this.setVBlank();
-    this.display.updateScreen();
-    if(this.ctrl1.isVBlank()) {
-      this.cpu.interrupt(CPU._INTERRUPT_NMI);
+  if(this.cycle == 1) {
+    if(this.scanLine == 241) {
+      this.setVBlank();
+      this.display.updateScreen();
+      if(this.ctrl1.isVBlank()) {
+        this.cpu.interrupt(CPU._INTERRUPT_NMI);
+      }
+    } else if(this.scanLine == 261) {
+      this.clearVBlank();
     }
-  }
-
-  if(this.cycle == 1 && this.scanLine == 261) {
-    this.clearVBlank();
   }
 
   this.cycle++;
