@@ -198,7 +198,7 @@ ProcessorMemoryController.prototype._map = function(address) {
 ProcessorMemoryController.prototype.load =
     function(address, preventCallback) {
   var map = this._map(address);
-  if(map.addr == null) {
+  if(map.addr === null) {
 //    console.log(__10to16(address));
     return map.target.load(preventCallback);
   } else {
@@ -239,7 +239,7 @@ ProcessorMemoryController.prototype.load2BytesInPage =
 ProcessorMemoryController.prototype.store =
     function(address, value, preventCallback) {
   var map = this._map(address);
-  if(map.addr == null) {
+  if(map.addr === null) {
 //    console.log(__10to16(address) + ' ' + __10to16(value));
     return map.target.store(value, preventCallback);
   } else {

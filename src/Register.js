@@ -179,8 +179,8 @@ Register16bit.prototype.dump = function() {
 function RegisterWithCallback(readCallback, writeCallback) {
   this.parent = Register;
   this.parent.call(this);
-  this.readCallback = readCallback;
-  this.writeCallback = writeCallback;
+  this.readCallback = readCallback ? readCallback : null;
+  this.writeCallback = writeCallback ? writeCallback : null;
 };
 __inherit(RegisterWithCallback, Register);
 
@@ -190,7 +190,8 @@ __inherit(RegisterWithCallback, Register);
  * TODO: prevent callback if it's called from inside the class?
  */
 RegisterWithCallback.prototype.load = function(skip) {
-  if(! skip && this.readCallback)
+  if((skip === false || skip === null || skip === void 0) &&
+      this.readCallback !== null)
     this.readCallback();
   return this.parent.prototype.load.call(this);
 };
@@ -202,7 +203,8 @@ RegisterWithCallback.prototype.load = function(skip) {
  */
 RegisterWithCallback.prototype.store = function(value, skip) {
   this.parent.prototype.store.call(this, value);
-  if(! skip && this.writeCallback)
+  if((skip === false || skip === null || skip === void 0) &&
+      this.writeCallback !== null)
     this.writeCallback();
 };
 
