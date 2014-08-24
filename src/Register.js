@@ -167,6 +167,11 @@ Register16bit.prototype.lshift = function(value) {
 };
 
 
+Register16bit.prototype.lshift8bits = function() {
+  this.storeHigherByte(this.loadLowerByte());
+};
+
+
 Register16bit.prototype.dump = function() {
   return __10to16(this.load(), 4);
 };

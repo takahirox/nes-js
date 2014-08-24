@@ -243,10 +243,21 @@ PPU.prototype._shiftRegisters = function() {
 
   if((this.cycle >= 1 && this.cycle <= 256) ||
      (this.cycle >= 329 && this.cycle <= 336)) {
+    // Note: for the performance.
+    this.xScrollOffset--;
+    if(this.cycle % 8 == 0) {
+      this.xScrollOffset = 15 - (this.xScroll % 8);
+      this.ptL.lshift8bits();
+      this.ptH.lshift8bits();
+      this.atL.lshift8bits();
+      this.atH.lshift8bits();
+    }
+/*
     this.ptL.lshift(0);
     this.ptH.lshift(0);
     this.atL.lshift(0);
     this.atH.lshift(0);
+*/
   }
 };
 
