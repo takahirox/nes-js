@@ -43,6 +43,10 @@ function PPU() {
   this.ptL = new Register16bit();
   this.ptH = new Register16bit();
 
+  this.xScrollOffset = 0;
+  this.fetchedX = 0;
+  this.fetchedY = 0;
+
   // TODO: temporal
   this.sprites = [];
   this.sprites.length = 64;
@@ -55,6 +59,12 @@ function PPU() {
   this.higherVRAMAddress = 0;
   this.VRAMAddressCount1 = 0;
   this.VRAMAddressCount2 = 0;
+
+  // TODO: temporal
+  this.bgPalette = [];
+  this.bgPalette.length = 16;
+  this.spPalette = [];
+  this.spPalette.length = 16;
 };
 
 PPU._MAX_SCANLINE = 262;
@@ -125,6 +135,8 @@ PPU._PALETTE[0x3C] = [0x9F, 0xFF, 0xF3];
 PPU._PALETTE[0x3D] = [0x00, 0x00, 0x00];
 PPU._PALETTE[0x3E] = [0x00, 0x00, 0x00];
 PPU._PALETTE[0x3F] = [0x00, 0x00, 0x00];
+PPU._PALETTE[0x40] = [0x00, 0x00, 0x00]; // for null
+
 
 
 /**
@@ -160,10 +172,34 @@ PPU.prototype.store = function(address, value) {
 
 
 /**
- * TODO: not implemented yet.
+ * TODO: temporal imple.
+ */
+PPU.prototype.run3Cycles = function() {
+/*
+  this.runCycle();
+  this.runCycle();
+  this.runCycle();
+*/
+  this._renderPixel();
+  this._shiftRegisters();
+  this._fetch();
+  this._countCycle();
+  this._renderPixel();
+  this._shiftRegisters();
+  this._fetch();
+  this._countCycle();
+  this._renderPixel();
+  this._shiftRegisters();
+  this._fetch();
+  this._countCycle();
+};
+
+
+/**
+ * TODO: temporal imple.
  */
 PPU.prototype.runCycle = function() {
-  this._render();
+  this._renderPixel();
   this._shiftRegisters();
   this._fetch();
   this._countCycle();
@@ -173,30 +209,28 @@ PPU.prototype.runCycle = function() {
 /**
  * TODO: remove magic numbers.
  */
-PPU.prototype._render = function() {
+PPU.prototype._renderPixel = function() {
   if(this.scanLine >= 0 && this.scanLine <= 239) {
     if(this.cycle >= 1 && this.cycle <= 256) {
-      this._renderPixel(this.cycle-1, this.scanLine);
+      var x = this.cycle-1;
+      var y = this.scanLine;
+      var c = (this.spritesMap[x] !== PPU._PALETTE[0x40])
+                ? this.spritesMap[x] : this._getBGPixel();
+      this.display.renderPixel(x, y, c);
     }
   }
 };
 
 
 /**
- * TODO: remove magic numbers.
+ * TODO: optimize more because this is one of the most heavy functions.
  */
-PPU.prototype._renderPixel = function(x, y) {
-  var c = (this.spritesMap[x] !== 0) ? this.spritesMap[x] : this._getBGPixel();
-  this.display.renderPixel(x, y, c);
-};
-
-
 PPU.prototype._getBGPixel = function() {
-  var offset = 15 - (this.xScroll % 8);
+  var offset = this.xScrollOffset; // Note: calculate in advance for the performance.
   var lsb = (this.ptH.loadBit(offset) << 1) | this.ptL.loadBit(offset);
   var msb = (this.atH.loadBit(offset) << 1) | this.atL.loadBit(offset);
   var pIndex = (msb << 2) | lsb;
-  return PPU._PALETTE[this._getPaletteIndex(pIndex)];
+  return this.bgPalette[pIndex];
 };
 
 
@@ -218,13 +252,26 @@ PPU.prototype._shiftRegisters = function() {
 
 
 /**
+ * TODO: temporal
+ * Note: for performance.
+ */
+PPU.prototype._initForFetch = function() {
+  this.xScrollOffset = 15 - (this.xScroll % 8);
+};
+
+
+/**
  * TODO: temporal impl
  * TODO: optimize...?
  */
 PPU.prototype._fetch = function() {
   // TODO: temporal
-  if(this.scanLine == 0 && this.cycle == 0)
+  if(this.scanLine == 0 && this.cycle == 0) {
+    this._initForFetch();
     this._initSpritesForFrame();
+    this._initBGPalette();
+    this._initSPPalette();
+  }
 
   if((this.scanLine >= 0 && this.scanLine <= 239) && this.cycle == 0)
     this._initSpritesForScanLine(this.scanLine);
@@ -241,8 +288,9 @@ PPU.prototype._fetch = function() {
     case 0:
       this._fetchNameTable();
       this._fetchAttributeTable();
-      this._fetchPatternTableLowByte();
-      this._fetchPatternTableHighByte();
+      this._fetchPatternTable();
+//      this._fetchPatternTableLowByte();
+//      this._fetchPatternTableHighByte();
       break;
     default:
       break;
@@ -330,8 +378,8 @@ PPU.prototype._fetchAttributeTable = function() {
   var index = (tileY % 8) * 8 + (tileX % 8);
   var b = this.load(this._fetchNameTableAddress(x, y) + 0x3C0 + index);
 
-  var topbottom = (y % 32) > 15 ? 1 : 0; // bottom, top
-  var rightleft = (x % 32) > 15 ? 1 : 0; // right, left
+  var topbottom = (y % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
+  var rightleft = (x % 32) >> 4; // (x % 32) > 15 ? 1 : 0; // right, left
   var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                // topright, topleft
   var value = (b >> (position * 2)) & 0x3;
@@ -344,8 +392,9 @@ PPU.prototype._fetchAttributeTable = function() {
 
 /**
  * TODO: remove magic numbers?
+ * Note: update lower and higher byte at a time.
  */
-PPU.prototype._fetchPatternTableLowByte = function() {
+PPU.prototype._fetchPatternTable = function() {
   var y = this._getFetchedY() % 8;
   var index = this.nt.load();
   var tableNum = this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0;
@@ -355,6 +404,21 @@ PPU.prototype._fetchPatternTableLowByte = function() {
 };
 
 
+/**
+ * TODO: remove magic numbers?
+ */
+PPU.prototype._fetchPatternTableLowByte = function() {
+  var y = this._getFetchedY() % 8;
+  var index = this.nt.load();
+  var tableNum = this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0;
+  var offset = tableNum * 0x1000;
+  this.ptL.storeLowerByte(this.load(offset + index * 0x10 + y));
+};
+
+
+/**
+ * TODO: remove magic numbers?
+ */
 PPU.prototype._fetchPatternTableHighByte = function() {
   var y = this._getFetchedY() % 8;
   var index = this.nt.load();
@@ -502,12 +566,26 @@ PPU.prototype._initSpritesForFrame = function() {
 };
 
 
+PPU.prototype._initBGPalette = function() {
+  for(var i = 0; i < 16; i++) {
+    this.bgPalette[i] = PPU._PALETTE[this._getPaletteIndex(i)];
+  }
+};
+
+
+PPU.prototype._initSPPalette = function() {
+  for(var i = 0; i < 16; i++) {
+    this.spPalette[i] = PPU._PALETTE[this._getSpritePaletteIndex(i)];
+  }
+};
+
+
 /**
  * TODO: temporal
  */
 PPU.prototype._initSpritesForScanLine = function(ay) {
   for(var i = 0; i < 256; i++)
-    this.spritesMap[i] = 0;
+    this.spritesMap[i] = PPU._PALETTE[0x40];
 
   for(var i = 0; i < this.sprites.length; i++) {
     var s = this.sprites[i];
@@ -530,7 +608,7 @@ PPU.prototype._initSpritesForScanLine = function(ay) {
       if(lsb != 0) {
         var msb = s.getPalletNum();
         var pIndex = (msb << 2) | lsb;
-        var c = PPU._PALETTE[this._getSpritePaletteIndex(pIndex)];
+        var c = this.spPalette[pIndex];
         this.spritesMap[x] = c;
       }
     }

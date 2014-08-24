@@ -81,10 +81,37 @@ NES.prototype.run = function() {
   }
   this.count++;
 
+/*
   var cycles = 341*262/3; // TODO: temporal
   for(var i = 0; i < cycles; i++) {
-    this._runCycle();
+    this.cpu._runCycle();
   }
+*/
+
+  var cycles = 341*262/3/10; // TODO: temporal
+  for(var i = 0; i < cycles; i++) {
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+    this.cpu.runCycle();
+    this.ppu.run3Cycles();
+  }
+
   if(this.state == NES._STATE_RUN)
     requestAnimationFrame(this.run.bind(this));
 //    setTimeout(this.run.bind(this), 0);
@@ -93,9 +120,7 @@ NES.prototype.run = function() {
 
 NES.prototype._runCycle = function() {
   this.cpu.runCycle();
-  this.ppu.runCycle();
-  this.ppu.runCycle();
-  this.ppu.runCycle();
+  this.ppu.run3Cycles();
 };
 
 
