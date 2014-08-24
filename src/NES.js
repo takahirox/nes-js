@@ -86,7 +86,8 @@ NES.prototype.run = function() {
     this._runCycle();
   }
   if(this.state == NES._STATE_RUN)
-    setTimeout(this.run.bind(this), 0);
+    requestAnimationFrame(this.run.bind(this));
+//    setTimeout(this.run.bind(this), 0);
 };
 
 

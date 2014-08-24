@@ -47,7 +47,7 @@ function PPU() {
   this.sprites = [];
   this.sprites.length = 64;
   this.spritesMap = [];
-  this.spritesMap.length = 256 * 240;
+  this.spritesMap.length = 256;
 
   this.ram = null;
   this.mem = null; // initialized by initMemoryController
@@ -186,8 +186,7 @@ PPU.prototype._render = function() {
  * TODO: remove magic numbers.
  */
 PPU.prototype._renderPixel = function(x, y) {
-  var si = y*256 + x;
-  var c = (this.spritesMap[si]) ? this.spritesMap[si] : this._getBGPixel();
+  var c = (this.spritesMap[x] !== 0) ? this.spritesMap[x] : this._getBGPixel();
   this.display.renderPixel(x, y, c);
 };
 
@@ -220,13 +219,16 @@ PPU.prototype._shiftRegisters = function() {
 
 /**
  * TODO: temporal impl
+ * TODO: optimize...?
  */
 PPU.prototype._fetch = function() {
   // TODO: temporal
   if(this.scanLine == 0 && this.cycle == 0)
-    this._initSprites();
+    this._initSpritesForFrame();
 
-  // TODO: optimize...?
+  if((this.scanLine >= 0 && this.scanLine <= 239) && this.cycle == 0)
+    this._initSpritesForScanLine(this.scanLine);
+
   if(this.scanLine >= 240 && this.scanLine <= 260)
     return;
 
@@ -349,6 +351,7 @@ PPU.prototype._fetchPatternTableLowByte = function() {
   var tableNum = this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0;
   var offset = tableNum * 0x1000;
   this.ptL.storeLowerByte(this.load(offset + index * 0x10 + y));
+  this.ptH.storeLowerByte(this.load(offset + index * 0x10 + 0x8 + y));
 };
 
 
@@ -364,7 +367,6 @@ PPU.prototype._fetchPatternTableHighByte = function() {
 PPU.prototype._countCycle = function() {
   if(this.cycle == 1 && this.scanLine == 241) {
     this.setVBlank();
-//    this.display.update();
     this.display.updateScreen();
     if(this.ctrl1.isVBlank()) {
       this.cpu.interrupt(CPU._INTERRUPT_NMI);
@@ -481,13 +483,12 @@ PPU.prototype.clearVBlank = function() {
 };
 
 
+
 /**
  * TODO: temporal
  */
-PPU.prototype._initSprites = function() {
-  this.spritesMap.length = 0;
-  this.spritesMap.length = 256*240;
-
+PPU.prototype._initSpritesForFrame = function() {
+  this.sprites.length = 0;
   for(var i = 0; i < 64; i++) {
     var b0 = this.sprram.load(i*4+0);
     var b1 = this.sprram.load(i*4+1);
@@ -496,27 +497,41 @@ PPU.prototype._initSprites = function() {
     var s = new Sprite(b0, b1, b2, b3);
     if(!s.doDisplay() || s.getPriority())
       continue;
+    this.sprites.push(s);
+  }
+};
 
-    this.sprites[i] = s;
+
+/**
+ * TODO: temporal
+ */
+PPU.prototype._initSpritesForScanLine = function(ay) {
+  for(var i = 0; i < 256; i++)
+    this.spritesMap[i] = 0;
+
+  for(var i = 0; i < this.sprites.length; i++) {
+    var s = this.sprites[i];
+    if(! s.inY(ay))
+      continue;
+
+//    this.sprites[i] = s;
     var bx = s.getXPosition();
     var by = s.getYPosition();
-    for(var j = 0; j < 8; j++) {
-      for(var k = 0; k < 8; k++) {
-        var cx = s.doFlipHorizontally() ? 7-k : k;
-        var cy = s.doFlipVertically() ? 7-j : j;
-        var x = bx + k;
-        var y = by + j;
-        if(x >= 256 || y >= 240)
-          continue
-        var si = y*256 + x;
-        var ptIndex = s.getTileIndex();
-        var lsb = this._getPatternTableElement(ptIndex, cx, cy, true);
-        if(lsb != 0) {
-          var msb = s.getPalletNum();
-          var pIndex = (msb << 2) | lsb;
-          var c = PPU._PALETTE[this._getSpritePaletteIndex(pIndex)];
-          this.spritesMap[si] = c;
-        }
+    var j = ay - by;
+    var cy = s.doFlipVertically() ? 7-j : j;
+    var y = by + j;
+    for(var k = 0; k < 8; k++) {
+      var cx = s.doFlipHorizontally() ? 7-k : k;
+      var x = bx + k;
+      if(x >= 256)
+        break;
+      var ptIndex = s.getTileIndex();
+      var lsb = this._getPatternTableElement(ptIndex, cx, cy, true);
+      if(lsb != 0) {
+        var msb = s.getPalletNum();
+        var pIndex = (msb << 2) | lsb;
+        var c = PPU._PALETTE[this._getSpritePaletteIndex(pIndex)];
+        this.spritesMap[x] = c;
       }
     }
   }
@@ -805,3 +820,10 @@ Sprite.prototype.doFlipVertically = function() {
   return ((this.byte2 >> 7) & 1) ? true : false;
 };
 
+
+/**
+ * TODO: rename
+ */
+Sprite.prototype.inY = function(y) {
+  return ((y >= this.getYPosition()) && (y < this.getYPosition()+8));
+};
