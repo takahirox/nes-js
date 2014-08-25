@@ -216,6 +216,7 @@ PPU.prototype._renderPixel = function() {
 
   var x = this.cycle-1;
   var y = this.scanLine;
+
   var c = (this.spritesMap[x] !== PPU._PALETTE[0x40])
             ? this.spritesMap[x] : this._getBGPixel();
   this.display.renderPixel(x, y, c);
@@ -386,12 +387,13 @@ PPU.prototype._fetchNameTable = function() {
 PPU.prototype._fetchAttributeTable = function() {
   var x = this._getFetchedX();
   var y = this._getFetchedY();
+  var ay = (y >= 240) ? y-240 : y;
   var tileX = x >> 5;
-  var tileY = y >> 5;
+  var tileY = ay >> 5;
   var index = (tileY % 8) * 8 + (tileX % 8);
   var b = this.load(this._fetchNameTableAddress(x, y) + 0x3C0 + index);
 
-  var topbottom = (y % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
+  var topbottom = (ay % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
   var rightleft = (x % 32) >> 4; // (x % 32) > 15 ? 1 : 0; // right, left
   var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                // topright, topleft
@@ -471,6 +473,7 @@ PPU.prototype._VRAMAddress1WriteCallback = function() {
     this.VRAMAddressCount1 = 1;
   } else {
     this.VRAMAddressCount1 = 0;
+    this.yScroll = this.vRAMAddr1.load(true);
   }
 };
 
@@ -600,24 +603,25 @@ PPU.prototype._initSpritesForScanLine = function(ay) {
   for(var i = 0; i < 256; i++)
     this.spritesMap[i] = PPU._PALETTE[0x40];
 
+  var ySize = this.ctrl1.isSpriteSize16() ? 16 : 8;
   for(var i = 0; i < this.sprites.length; i++) {
     var s = this.sprites[i];
-    if(! s.inY(ay))
+    if(! s.inY(ay, ySize))
       continue;
 
 //    this.sprites[i] = s;
     var bx = s.getXPosition();
     var by = s.getYPosition();
     var j = ay - by;
-    var cy = s.doFlipVertically() ? 7-j : j;
+    var cy = s.doFlipVertically() ? ySize-j-1 : j;
     var y = by + j;
     for(var k = 0; k < 8; k++) {
       var cx = s.doFlipHorizontally() ? 7-k : k;
       var x = bx + k;
       if(x >= 256)
         break;
-      var ptIndex = s.getTileIndex();
-      var lsb = this._getPatternTableElement(ptIndex, cx, cy, true);
+      var ptIndex = (ySize == 8) ? s.getTileIndex() : s.getTileIndexForSize16();
+      var lsb = this._getPatternTableElement(ptIndex, cx, cy, ySize);
       if(lsb != 0) {
         var msb = s.getPalletNum();
         var pIndex = (msb << 2) | lsb;
@@ -633,15 +637,20 @@ PPU.prototype._initSpritesForScanLine = function(ay) {
 /**
  * TODO: temporal
  */
-PPU.prototype._getPatternTableElement = function(index, x, y, isSprite) {
+PPU.prototype._getPatternTableElement = function(index, x, y, ySize) {
   var ax = x % 8;
-  var ay = y % 8;
-  var tableNum = isSprite
-                   ? (this.ctrl1.getSpritesPatternTableNum() ? 1 : 0)
-                   : (this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0);
-  var offset = tableNum * 0x1000;
-  var a = this.load(offset + index * 0x10 + ay);
-  var b = this.load(offset + index * 0x10 + 0x8 + ay);
+  var a, b;
+  if(ySize == 8) {
+    var ay = y % 8;
+    var offset = this.ctrl1.getSpritesPatternTableNum() ? 0x1000 : 0;
+    a = this.load(offset + index * 0x10 + ay);
+    b = this.load(offset + index * 0x10 + 0x8 + ay);
+  } else {
+    var ay = y % 8;
+    ay += (y >> 3) * 0x10;
+    a = this.load(index + ay);
+    b = this.load(index + ay + 0x8);
+  }
   return ((a >> (7-ax)) & 1) |
            (((b >> (7-ax)) & 1) << 1);
 };
@@ -816,6 +825,11 @@ PPUControl1Register.prototype.clearVBlank = function() {
 };
 
 
+PPUControl1Register.prototype.isSpriteSize16 = function() {
+  return this.loadBit(PPUControl1Register._SPRITES_SIZE_BIT);
+};
+
+
 PPUControl1Register.prototype.getBackgroundPatternTableNum = function() {
   return this.loadBit(PPUControl1Register._BACKGROUND_PATTERN_TABLE_BIT);
 };
@@ -891,6 +905,10 @@ Sprite.prototype.getTileIndex = function() {
   return this.byte1;
 };
 
+Sprite.prototype.getTileIndexForSize16 = function() {
+  return ((this.byte1 & 1) * 0x1000) + (this.byte1 >> 1) * 0x20;
+};
+
 
 Sprite.prototype.getPalletNum = function() {
   return this.byte2 & 0x3;
@@ -915,6 +933,6 @@ Sprite.prototype.doFlipVertically = function() {
 /**
  * TODO: rename
  */
-Sprite.prototype.inY = function(y) {
-  return ((y >= this.getYPosition()) && (y < this.getYPosition()+8));
+Sprite.prototype.inY = function(y, length) {
+  return ((y >= this.getYPosition()) && (y < this.getYPosition()+length));
 };
