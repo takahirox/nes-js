@@ -194,11 +194,13 @@ __inherit(RegisterWithCallback, Register);
  * callback is called BEFORE the parent load method.
  * TODO: prevent callback if it's called from inside the class?
  */
+
+RegisterWithCallback.prototype.Register_load = Register.prototype.load;
 RegisterWithCallback.prototype.load = function(skip) {
   if((skip === false || skip === null || skip === void 0) &&
       this.readCallback !== null)
     this.readCallback();
-  return this.parent.prototype.load.call(this);
+  return this.Register_load();
 };
 
 
@@ -206,8 +208,9 @@ RegisterWithCallback.prototype.load = function(skip) {
  * callback is called AFTER the parent load method.
  * TODO: prevent callback if it's called from inside the class?
  */
+RegisterWithCallback.prototype.Register_store = Register.prototype.store;
 RegisterWithCallback.prototype.store = function(value, skip) {
-  this.parent.prototype.store.call(this, value);
+  this.Register_store(value);
   if((skip === false || skip === null || skip === void 0) &&
       this.writeCallback !== null)
     this.writeCallback();

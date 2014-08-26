@@ -1231,7 +1231,7 @@ CPU.prototype._operate = function(op) {
 CPU.prototype.disassembleROM = function() {
   var buffer = '';
   var rom = this.mem.rom;
-  var pc = ROM._HEADER_SIZE;
+  var pc = ROM.prototype._HEADER_SIZE;
   var previousIsZero = false;
   var skipZero = false;
 
@@ -1251,7 +1251,7 @@ CPU.prototype.disassembleROM = function() {
       buffer += '...\n';
     skipZero = false;
 
-    str += __10to16(pc - ROM._HEADER_SIZE, 4) + ' ';
+    str += __10to16(pc - ROM.prototype._HEADER_SIZE, 4) + ' ';
     str += __10to16(opc, 2) + ' ';
     str += op.op.name + ' ';
     str += this._dumpMemoryAddressingMode(op,

@@ -70,72 +70,72 @@ function PPU() {
 PPU._MAX_SCANLINE = 262;
 PPU._SCANLINE_CYCLE = 341;
 
-PPU._PALETTE = [];
-PPU._PALETTE[0x00] = [0x75, 0x75, 0x75];
-PPU._PALETTE[0x01] = [0x27, 0x1B, 0x8F];
-PPU._PALETTE[0x02] = [0x00, 0x00, 0xAB];
-PPU._PALETTE[0x03] = [0x47, 0x00, 0x9F];
-PPU._PALETTE[0x04] = [0x8F, 0x00, 0x77];
-PPU._PALETTE[0x05] = [0xAB, 0x00, 0x13];
-PPU._PALETTE[0x06] = [0xA7, 0x00, 0x00];
-PPU._PALETTE[0x07] = [0x7F, 0x0B, 0x00];
-PPU._PALETTE[0x08] = [0x43, 0x2F, 0x00];
-PPU._PALETTE[0x09] = [0x00, 0x47, 0x00];
-PPU._PALETTE[0x0A] = [0x00, 0x51, 0x00];
-PPU._PALETTE[0x0B] = [0x00, 0x3F, 0x17];
-PPU._PALETTE[0x0C] = [0x1B, 0x3F, 0x5F];
-PPU._PALETTE[0x0D] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x0E] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x0F] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x10] = [0xBC, 0xBC, 0xBC];
-PPU._PALETTE[0x11] = [0x00, 0x73, 0xEF];
-PPU._PALETTE[0x12] = [0x23, 0x3B, 0xEF];
-PPU._PALETTE[0x13] = [0x83, 0x00, 0xF3];
-PPU._PALETTE[0x14] = [0xBF, 0x00, 0xBF];
-PPU._PALETTE[0x15] = [0xE7, 0x00, 0x5B];
-PPU._PALETTE[0x16] = [0xDB, 0x2B, 0x00];
-PPU._PALETTE[0x17] = [0xCB, 0x4F, 0x0F];
-PPU._PALETTE[0x18] = [0x8B, 0x73, 0x00];
-PPU._PALETTE[0x19] = [0x00, 0x97, 0x00];
-PPU._PALETTE[0x1A] = [0x00, 0xAB, 0x00];
-PPU._PALETTE[0x1B] = [0x00, 0x93, 0x3B];
-PPU._PALETTE[0x1C] = [0x00, 0x83, 0x8B];
-PPU._PALETTE[0x1D] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x1E] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x1F] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x20] = [0xFF, 0xFF, 0xFF];
-PPU._PALETTE[0x21] = [0x3F, 0xBF, 0xFF];
-PPU._PALETTE[0x22] = [0x5F, 0x97, 0xFF];
-PPU._PALETTE[0x23] = [0xA7, 0x8B, 0xFD];
-PPU._PALETTE[0x24] = [0xF7, 0x7B, 0xFF];
-PPU._PALETTE[0x25] = [0xFF, 0x77, 0xB7];
-PPU._PALETTE[0x26] = [0xFF, 0x77, 0x63];
-PPU._PALETTE[0x27] = [0xFF, 0x9B, 0x3B];
-PPU._PALETTE[0x28] = [0xF3, 0xBF, 0x3F];
-PPU._PALETTE[0x29] = [0x83, 0xD3, 0x13];
-PPU._PALETTE[0x2A] = [0x4F, 0xDF, 0x4B];
-PPU._PALETTE[0x2B] = [0x58, 0xF8, 0x98];
-PPU._PALETTE[0x2C] = [0x00, 0xEB, 0xDB];
-PPU._PALETTE[0x2D] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x2E] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x2F] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x30] = [0xFF, 0xFF, 0xFF];
-PPU._PALETTE[0x31] = [0xAB, 0xE7, 0xFF];
-PPU._PALETTE[0x32] = [0xC7, 0xD7, 0xFF];
-PPU._PALETTE[0x33] = [0xD7, 0xCB, 0xFF];
-PPU._PALETTE[0x34] = [0xFF, 0xC7, 0xFF];
-PPU._PALETTE[0x35] = [0xFF, 0xC7, 0xDB];
-PPU._PALETTE[0x36] = [0xFF, 0xBF, 0xB3];
-PPU._PALETTE[0x37] = [0xFF, 0xDB, 0xAB];
-PPU._PALETTE[0x38] = [0xFF, 0xE7, 0xA3];
-PPU._PALETTE[0x39] = [0xE3, 0xFF, 0xA3];
-PPU._PALETTE[0x3A] = [0xAB, 0xF3, 0xBF];
-PPU._PALETTE[0x3B] = [0xB3, 0xFF, 0xCF];
-PPU._PALETTE[0x3C] = [0x9F, 0xFF, 0xF3];
-PPU._PALETTE[0x3D] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x3E] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x3F] = [0x00, 0x00, 0x00];
-PPU._PALETTE[0x40] = [0x00, 0x00, 0x00]; // for null
+PPU.prototype._PALETTE = [];
+PPU.prototype._PALETTE[0x00] = [0x75, 0x75, 0x75];
+PPU.prototype._PALETTE[0x01] = [0x27, 0x1B, 0x8F];
+PPU.prototype._PALETTE[0x02] = [0x00, 0x00, 0xAB];
+PPU.prototype._PALETTE[0x03] = [0x47, 0x00, 0x9F];
+PPU.prototype._PALETTE[0x04] = [0x8F, 0x00, 0x77];
+PPU.prototype._PALETTE[0x05] = [0xAB, 0x00, 0x13];
+PPU.prototype._PALETTE[0x06] = [0xA7, 0x00, 0x00];
+PPU.prototype._PALETTE[0x07] = [0x7F, 0x0B, 0x00];
+PPU.prototype._PALETTE[0x08] = [0x43, 0x2F, 0x00];
+PPU.prototype._PALETTE[0x09] = [0x00, 0x47, 0x00];
+PPU.prototype._PALETTE[0x0A] = [0x00, 0x51, 0x00];
+PPU.prototype._PALETTE[0x0B] = [0x00, 0x3F, 0x17];
+PPU.prototype._PALETTE[0x0C] = [0x1B, 0x3F, 0x5F];
+PPU.prototype._PALETTE[0x0D] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x0E] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x0F] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x10] = [0xBC, 0xBC, 0xBC];
+PPU.prototype._PALETTE[0x11] = [0x00, 0x73, 0xEF];
+PPU.prototype._PALETTE[0x12] = [0x23, 0x3B, 0xEF];
+PPU.prototype._PALETTE[0x13] = [0x83, 0x00, 0xF3];
+PPU.prototype._PALETTE[0x14] = [0xBF, 0x00, 0xBF];
+PPU.prototype._PALETTE[0x15] = [0xE7, 0x00, 0x5B];
+PPU.prototype._PALETTE[0x16] = [0xDB, 0x2B, 0x00];
+PPU.prototype._PALETTE[0x17] = [0xCB, 0x4F, 0x0F];
+PPU.prototype._PALETTE[0x18] = [0x8B, 0x73, 0x00];
+PPU.prototype._PALETTE[0x19] = [0x00, 0x97, 0x00];
+PPU.prototype._PALETTE[0x1A] = [0x00, 0xAB, 0x00];
+PPU.prototype._PALETTE[0x1B] = [0x00, 0x93, 0x3B];
+PPU.prototype._PALETTE[0x1C] = [0x00, 0x83, 0x8B];
+PPU.prototype._PALETTE[0x1D] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x1E] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x1F] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x20] = [0xFF, 0xFF, 0xFF];
+PPU.prototype._PALETTE[0x21] = [0x3F, 0xBF, 0xFF];
+PPU.prototype._PALETTE[0x22] = [0x5F, 0x97, 0xFF];
+PPU.prototype._PALETTE[0x23] = [0xA7, 0x8B, 0xFD];
+PPU.prototype._PALETTE[0x24] = [0xF7, 0x7B, 0xFF];
+PPU.prototype._PALETTE[0x25] = [0xFF, 0x77, 0xB7];
+PPU.prototype._PALETTE[0x26] = [0xFF, 0x77, 0x63];
+PPU.prototype._PALETTE[0x27] = [0xFF, 0x9B, 0x3B];
+PPU.prototype._PALETTE[0x28] = [0xF3, 0xBF, 0x3F];
+PPU.prototype._PALETTE[0x29] = [0x83, 0xD3, 0x13];
+PPU.prototype._PALETTE[0x2A] = [0x4F, 0xDF, 0x4B];
+PPU.prototype._PALETTE[0x2B] = [0x58, 0xF8, 0x98];
+PPU.prototype._PALETTE[0x2C] = [0x00, 0xEB, 0xDB];
+PPU.prototype._PALETTE[0x2D] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x2E] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x2F] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x30] = [0xFF, 0xFF, 0xFF];
+PPU.prototype._PALETTE[0x31] = [0xAB, 0xE7, 0xFF];
+PPU.prototype._PALETTE[0x32] = [0xC7, 0xD7, 0xFF];
+PPU.prototype._PALETTE[0x33] = [0xD7, 0xCB, 0xFF];
+PPU.prototype._PALETTE[0x34] = [0xFF, 0xC7, 0xFF];
+PPU.prototype._PALETTE[0x35] = [0xFF, 0xC7, 0xDB];
+PPU.prototype._PALETTE[0x36] = [0xFF, 0xBF, 0xB3];
+PPU.prototype._PALETTE[0x37] = [0xFF, 0xDB, 0xAB];
+PPU.prototype._PALETTE[0x38] = [0xFF, 0xE7, 0xA3];
+PPU.prototype._PALETTE[0x39] = [0xE3, 0xFF, 0xA3];
+PPU.prototype._PALETTE[0x3A] = [0xAB, 0xF3, 0xBF];
+PPU.prototype._PALETTE[0x3B] = [0xB3, 0xFF, 0xCF];
+PPU.prototype._PALETTE[0x3C] = [0x9F, 0xFF, 0xF3];
+PPU.prototype._PALETTE[0x3D] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x3E] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x3F] = [0x00, 0x00, 0x00];
+PPU.prototype._PALETTE[0x40] = [0x00, 0x00, 0x00]; // for null
 
 
 
@@ -217,8 +217,12 @@ PPU.prototype._renderPixel = function() {
   var x = this.cycle-1;
   var y = this.scanLine;
 
-  var c = (this.spritesMap[x] !== PPU._PALETTE[0x40])
+  var c = (this.spritesMap[x] !== this._PALETTE[0x40])
             ? this.spritesMap[x] : this._getBGPixel();
+
+  // TODO: temporal
+//  this.sr.setZeroHit();
+
   this.display.renderPixel(x, y, c);
 };
 
@@ -278,6 +282,11 @@ PPU.prototype._initForFetch = function() {
  * Note: this comparison order is for performance.
  */
 PPU.prototype._fetch = function() {
+
+  // TODO: temporal
+  if(this.scanLine == 261 && this.cycle == 1)
+    this.sr.clearZeroHit();
+
   if(this.cycle % 8 != 0)
     return;
 
@@ -288,8 +297,9 @@ PPU.prototype._fetch = function() {
       this._initBGPalette();
       this._initSPPalette();
     }
-    if(this.scanLine >= 0 && this.scanLine <= 239)
+    if(this.scanLine >= 0 && this.scanLine <= 239) {
       this._initSpritesForScanLine(this.scanLine);
+    }
     return;
   }
 
@@ -354,6 +364,9 @@ PPU.prototype._getFetchedY = function() {
 };
 
 
+/**
+ * TODO: optimize
+ */
 PPU.prototype._fetchNameTableAddress = function(x, y) {
   switch(this.ctrl1.getNameTableAddress()) {
     case 0:
@@ -449,7 +462,7 @@ PPU.prototype._countCycle = function() {
       this.setVBlank();
       this.display.updateScreen();
       if(this.ctrl1.isVBlank()) {
-        this.cpu.interrupt(CPU._INTERRUPT_NMI);
+        this.cpu.interrupt(CPU._INTERRUPT_NMI); // TODO: move to CPU
       }
     } else if(this.scanLine == 261) {
       this.clearVBlank();
@@ -584,14 +597,14 @@ PPU.prototype._initSpritesForFrame = function() {
 
 PPU.prototype._initBGPalette = function() {
   for(var i = 0; i < 16; i++) {
-    this.bgPalette[i] = PPU._PALETTE[this._getPaletteIndex(i)];
+    this.bgPalette[i] = this._PALETTE[this._getPaletteIndex(i)];
   }
 };
 
 
 PPU.prototype._initSPPalette = function() {
   for(var i = 0; i < 16; i++) {
-    this.spPalette[i] = PPU._PALETTE[this._getSpritePaletteIndex(i)];
+    this.spPalette[i] = this._PALETTE[this._getSpritePaletteIndex(i)];
   }
 };
 
@@ -601,7 +614,7 @@ PPU.prototype._initSPPalette = function() {
  */
 PPU.prototype._initSpritesForScanLine = function(ay) {
   for(var i = 0; i < 256; i++)
-    this.spritesMap[i] = PPU._PALETTE[0x40];
+    this.spritesMap[i] = this._PALETTE[0x40];
 
   var ySize = this.ctrl1.isSpriteSize16() ? 16 : 8;
   for(var i = 0; i < this.sprites.length; i++) {
@@ -755,7 +768,7 @@ function PPUMemoryController(ppu) {
 };
 __inherit(PPUMemoryController, ProcessorMemoryController);
 
-PPUMemoryController._CONTAINER = {'target': null, 'addr': null};
+PPUMemoryController.prototype._CONTAINER = {'target': null, 'addr': null};
 
 
 PPUMemoryController.prototype._map = function(address) {
@@ -780,7 +793,7 @@ PPUMemoryController.prototype._map = function(address) {
     }
   }
 
-  var result = PPUMemoryController._CONTAINER;
+  var result = this._CONTAINER;
   result.target = target;
   result.addr = addr;
   return result;
@@ -794,56 +807,56 @@ function PPUControl1Register() {
 };
 __inherit(PPUControl1Register, Register);
 
-PPUControl1Register._NMI_VBLANK_BIT = 7;
-PPUControl1Register._MASTER_SLAVE_BIT = 6;
-PPUControl1Register._SPRITES_SIZE_BIT = 5;
-PPUControl1Register._BACKGROUND_PATTERN_TABLE_BIT = 4;
-PPUControl1Register._SPRITES_PATTERN_TABLE_BIT = 3;
-PPUControl1Register._INCREMENT_ADDRESS_BIT = 2;
+PPUControl1Register.prototype._NMI_VBLANK_BIT = 7;
+PPUControl1Register.prototype._MASTER_SLAVE_BIT = 6;
+PPUControl1Register.prototype._SPRITES_SIZE_BIT = 5;
+PPUControl1Register.prototype._BACKGROUND_PATTERN_TABLE_BIT = 4;
+PPUControl1Register.prototype._SPRITES_PATTERN_TABLE_BIT = 3;
+PPUControl1Register.prototype._INCREMENT_ADDRESS_BIT = 2;
 
-PPUControl1Register._NAME_TABLE_ADDRESS_BIT = 0;
-PPUControl1Register._NAME_TABLE_ADDRESS_BITS_MASK = 0x3;
+PPUControl1Register.prototype._NAME_TABLE_ADDRESS_BIT = 0;
+PPUControl1Register.prototype._NAME_TABLE_ADDRESS_BITS_MASK = 0x3;
 
 
 PPUControl1Register.prototype.isIncrementAddressSet = function() {
-  return this.loadBit(PPUControl1Register._INCREMENT_ADDRESS_BIT);
+  return this.loadBit(this._INCREMENT_ADDRESS_BIT);
 };
 
 
 PPUControl1Register.prototype.isVBlank = function() {
-  return this.loadBit(PPUControl1Register._NMI_VBLANK_BIT);
+  return this.loadBit(this._NMI_VBLANK_BIT);
 };
 
 
 PPUControl1Register.prototype.setVBlank = function() {
-  this.storeBit(PPUControl1Register._NMI_VBLANK_BIT, 1);
+  this.storeBit(this._NMI_VBLANK_BIT, 1);
 };
 
 
 PPUControl1Register.prototype.clearVBlank = function() {
-  this.storeBit(PPUControl1Register._NMI_VBLANK_BIT, 0);
+  this.storeBit(this._NMI_VBLANK_BIT, 0);
 };
 
 
 PPUControl1Register.prototype.isSpriteSize16 = function() {
-  return this.loadBit(PPUControl1Register._SPRITES_SIZE_BIT);
+  return this.loadBit(this._SPRITES_SIZE_BIT);
 };
 
 
 PPUControl1Register.prototype.getBackgroundPatternTableNum = function() {
-  return this.loadBit(PPUControl1Register._BACKGROUND_PATTERN_TABLE_BIT);
+  return this.loadBit(this._BACKGROUND_PATTERN_TABLE_BIT);
 };
 
 
 PPUControl1Register.prototype.getSpritesPatternTableNum = function() {
-  return this.loadBit(PPUControl1Register._SPRITES_PATTERN_TABLE_BIT);
+  return this.loadBit(this._SPRITES_PATTERN_TABLE_BIT);
 };
 
 
 PPUControl1Register.prototype.getNameTableAddress = function() {
   return this.loadPartialBits(
-           PPUControl1Register._NAME_TABLE_ADDRESS_BIT,
-           PPUControl1Register._NAME_TABLE_ADDRESS_BITS_MASK);
+           this._NAME_TABLE_ADDRESS_BIT,
+           this._NAME_TABLE_ADDRESS_BITS_MASK);
 };
 
 
@@ -875,6 +888,16 @@ PPUStatusRegister._VBLANK_BIT_BIT = 7;
 PPUStatusRegister._SPRITE_ZERO_HIT_BIT = 6;
 PPUStatusRegister._SCANLINE_SPRITE_COUNT_BIT = 5;
 PPUStatusRegister._IGNORE_VRAM_WRITE_BIT = 4;
+
+
+PPUStatusRegister.prototype.setZeroHit = function() {
+  this.storeBit(PPUStatusRegister._SPRITE_ZERO_HIT_BIT, 1);
+};
+
+
+PPUStatusRegister.prototype.clearZeroHit = function() {
+  this.storeBit(PPUStatusRegister._SPRITE_ZERO_HIT_BIT, 0);
+};
 
 
 

@@ -11,7 +11,7 @@ function ROM(arrayBuffer) {
 };
 __inherit(ROM, GenericMemory);
 
-ROM._HEADER_SIZE = 16; // 16bytes
+ROM.prototype._HEADER_SIZE = 16; // 16bytes
 
 
 ROM.prototype._init = function() {
@@ -24,9 +24,10 @@ ROM.prototype._init = function() {
 ROM.prototype._initCHRROM = function() {
   if(this.hasCHRROM()) {
     var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();
+    var offset = this.header.getPRGROMBanksNum() * 0x4000 + this._HEADER_SIZE;
     this.chrrom = new CHRROM(capacity);
     for(var i = 0; i < capacity; i++) {
-      var value = this.loadWithoutMapping(i + 0x4000 + ROM._HEADER_SIZE);
+      var value = this.loadWithoutMapping(i + offset);
       this.chrrom.storeWithoutMapping(i, value);
     }
   }
@@ -34,7 +35,7 @@ ROM.prototype._initCHRROM = function() {
 
 
 ROM.prototype._map = function(address) {
-  return this.mapper.map(address) + ROM._HEADER_SIZE;
+  return this.mapper.map(address) + this._HEADER_SIZE;
 };
 
 
@@ -79,7 +80,7 @@ ROM.prototype.dumpHeader = function() {
 
 
 ROM.prototype._getStartDumpAddress = function() {
-  return ROM._HEADER_SIZE;
+  return this._HEADER_SIZE;
 };
 
 
@@ -87,7 +88,7 @@ ROM.prototype._getStartDumpAddress = function() {
  * TODO: temporal. for NROM.
  */
 ROM.prototype._getEndDumpAddress = function() {
-  return 0x4000 + ROM._HEADER_SIZE;
+  return 0x4000 + this._HEADER_SIZE;
 };
 
 
@@ -284,7 +285,7 @@ ROMHeader.prototype.dump = function() {
   var buffer = '';
 
   buffer += '0x ';
-  for(var i = 0; i < ROM._HEADER_SIZE; i++) {
+  for(var i = 0; i < ROM.prototype._HEADER_SIZE; i++) {
     buffer += __10to16(this.load(i), 2, true) + ' ';
   }
   buffer += '\n\n';
@@ -342,12 +343,13 @@ ROMMapper.prototype.store = function(address, value) {
 function NROMMapper(rom) {
   this.parent = ROMMapper;
   this.parent.call(this, rom);
+  this.prgNum = rom.header.getPRGROMBanksNum();
 };
 __inherit(NROMMapper, ROMMapper);
 
 
 NROMMapper.prototype.map = function(address) {
-  if(this.rom.header.getPRGROMBanksNum() == 1 && address >= 0x4000)
+  if(this.prgNum == 1 && address >= 0x4000)
     address -= 0x4000;
   return address;
 };
