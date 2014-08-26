@@ -776,8 +776,8 @@ PPUMemoryController.prototype._map = function(address) {
   var addr = null;
 
   // TODO: temporal. for NROM.
-  if(address < 0x2000 && this.rom.hasCHRROM()) {
-    target = this.rom.chrrom;
+  if(address < 0x2000 && this.hasCHRROM) {
+    target = this.chrrom;
     addr = address;
   } else {
     target = this.vram;

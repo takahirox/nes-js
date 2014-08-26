@@ -178,11 +178,17 @@ GenericMemory.prototype._checkNext16BytesIsZero = function(offset) {
 
 function ProcessorMemoryController() {
   this.rom = null;
+  this.chrrom = null
+  this.hasCHRROM = false;
 };
 
 
 ProcessorMemoryController.prototype.setROM = function(rom) {
   this.rom = rom;
+  if(rom.hasCHRROM()) {
+    this.chrrom = rom.chrrom;
+    this.hasCHRROM = true;
+  }
 };
 
 
@@ -253,7 +259,7 @@ ProcessorMemoryController.prototype.store =
  */
 ProcessorMemoryController.prototype.store2Bytes =
     function(address, value, preventCallback) {
-  this.store(address,          value,      preventCallback);
+  this.store(address,            value,      preventCallback);
   this.store((address+1)&0xffff, value >> 8, preventCallback);
 };
 
