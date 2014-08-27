@@ -462,7 +462,7 @@ PPU.prototype._countCycle = function() {
       this.setVBlank();
       this.display.updateScreen();
       if(this.ctrl1.isVBlank()) {
-        this.cpu.interrupt(CPU._INTERRUPT_NMI); // TODO: move to CPU
+        this.cpu.interrupt(CPU.prototype._INTERRUPT_NMI); // TODO: move to CPU
       }
     } else if(this.scanLine == 261) {
       this.clearVBlank();

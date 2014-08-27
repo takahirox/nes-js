@@ -55,7 +55,7 @@ NES.prototype.setInstructionDumpFlag = function(flag) {
 NES.prototype.bootup = function() {
   this.cpu.p.store(0x34);
   this.cpu.sp.store(0xFD);
-  this.cpu.interrupt(CPU._INTERRUPT_RESET);
+  this.cpu.interrupt(CPU.prototype._INTERRUPT_RESET);
 //  nes.cpu.pc.store(0xc000);
   this.state = NES._STATE_RUN;
 };

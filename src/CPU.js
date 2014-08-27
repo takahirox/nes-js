@@ -15,379 +15,380 @@ function CPU() {
   this.handling = 0;
 };
 
-CPU._INTERRUPT_NMI = 0;
-CPU._INTERRUPT_RESET = 1;
-CPU._INTERRUPT_IRQ = 2;
+CPU.prototype._INTERRUPT_NMI = 0;
+CPU.prototype._INTERRUPT_RESET = 1;
+CPU.prototype._INTERRUPT_IRQ = 2;
 
-CPU._INTERRUPT_HANDLER_ADDRESSES = [];
-CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_NMI] = 0xFFFA;
-CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_RESET] = 0xFFFC;
-CPU._INTERRUPT_HANDLER_ADDRESSES[CPU._INTERRUPT_IRQ] = 0xFFFE;
+CPU.prototype._INTERRUPT_HANDLER_ADDRESSES = [];
+CPU.prototype._INTERRUPT_HANDLER_ADDRESSES[CPU.prototype._INTERRUPT_NMI] = 0xFFFA;
+CPU.prototype._INTERRUPT_HANDLER_ADDRESSES[CPU.prototype._INTERRUPT_RESET] = 0xFFFC;
+CPU.prototype._INTERRUPT_HANDLER_ADDRESSES[CPU.prototype._INTERRUPT_IRQ] = 0xFFFE;
 
-CPU._OP_INV = {'opc':  0, 'name': 'inv'}; // Invalid
-CPU._OP_ADC = {'opc':  1, 'name': 'adc'};
-CPU._OP_AND = {'opc':  2, 'name': 'and'};
-CPU._OP_ASL = {'opc':  3, 'name': 'asl'};
-CPU._OP_BCC = {'opc':  4, 'name': 'bcc'};
-CPU._OP_BCS = {'opc':  5, 'name': 'bcs'};
-CPU._OP_BEQ = {'opc':  6, 'name': 'beq'};
-CPU._OP_BIT = {'opc':  7, 'name': 'bit'};
-CPU._OP_BMI = {'opc':  8, 'name': 'bmi'};
-CPU._OP_BNE = {'opc':  9, 'name': 'bne'};
-CPU._OP_BPL = {'opc': 10, 'name': 'bpl'};
-CPU._OP_BRK = {'opc': 11, 'name': 'brk'};
-CPU._OP_BVC = {'opc': 12, 'name': 'bvc'};
-CPU._OP_BVS = {'opc': 13, 'name': 'bvs'};
-CPU._OP_CLC = {'opc': 14, 'name': 'clc'};
-CPU._OP_CLD = {'opc': 15, 'name': 'cld'};
-CPU._OP_CLI = {'opc': 16, 'name': 'cli'};
-CPU._OP_CLV = {'opc': 17, 'name': 'clv'};
-CPU._OP_CMP = {'opc': 18, 'name': 'cmp'};
-CPU._OP_CPX = {'opc': 19, 'name': 'cpx'};
-CPU._OP_CPY = {'opc': 20, 'name': 'cpy'};
-CPU._OP_DEC = {'opc': 21, 'name': 'dec'};
-CPU._OP_DEX = {'opc': 22, 'name': 'dex'};
-CPU._OP_DEY = {'opc': 23, 'name': 'dey'};
-CPU._OP_EOR = {'opc': 24, 'name': 'eor'};
-CPU._OP_INC = {'opc': 25, 'name': 'inc'};
-CPU._OP_INX = {'opc': 26, 'name': 'inx'};
-CPU._OP_INY = {'opc': 27, 'name': 'iny'};
-CPU._OP_JMP = {'opc': 28, 'name': 'jmp'};
-CPU._OP_JSR = {'opc': 29, 'name': 'jsr'};
-CPU._OP_LDA = {'opc': 30, 'name': 'lda'};
-CPU._OP_LDX = {'opc': 31, 'name': 'ldx'};
-CPU._OP_LDY = {'opc': 32, 'name': 'ldy'};
-CPU._OP_LSR = {'opc': 33, 'name': 'lsr'};
-CPU._OP_NOP = {'opc': 34, 'name': 'nop'};
-CPU._OP_ORA = {'opc': 35, 'name': 'ora'};
-CPU._OP_PHA = {'opc': 36, 'name': 'pha'};
-CPU._OP_PHP = {'opc': 37, 'name': 'php'};
-CPU._OP_PLA = {'opc': 38, 'name': 'pla'};
-CPU._OP_PLP = {'opc': 39, 'name': 'plp'};
-CPU._OP_ROL = {'opc': 40, 'name': 'rol'};
-CPU._OP_ROR = {'opc': 41, 'name': 'ror'};
-CPU._OP_RTI = {'opc': 42, 'name': 'rti'};
-CPU._OP_RTS = {'opc': 43, 'name': 'rts'};
-CPU._OP_SBC = {'opc': 44, 'name': 'sbc'};
-CPU._OP_SEC = {'opc': 45, 'name': 'sec'};
-CPU._OP_SED = {'opc': 46, 'name': 'sed'};
-CPU._OP_SEI = {'opc': 47, 'name': 'sei'};
-CPU._OP_STA = {'opc': 48, 'name': 'sta'};
-CPU._OP_STX = {'opc': 49, 'name': 'stx'};
-CPU._OP_STY = {'opc': 50, 'name': 'sty'};
-CPU._OP_TAX = {'opc': 51, 'name': 'tax'};
-CPU._OP_TAY = {'opc': 52, 'name': 'tay'};
-CPU._OP_TSX = {'opc': 53, 'name': 'tsx'};
-CPU._OP_TXA = {'opc': 54, 'name': 'txa'};
-CPU._OP_TXS = {'opc': 55, 'name': 'txs'};
-CPU._OP_TYA = {'opc': 56, 'name': 'tya'};
+CPU.prototype._OP_INV = {'opc':  0, 'name': 'inv'}; // Invalid
+CPU.prototype._OP_ADC = {'opc':  1, 'name': 'adc'};
+CPU.prototype._OP_AND = {'opc':  2, 'name': 'and'};
+CPU.prototype._OP_ASL = {'opc':  3, 'name': 'asl'};
+CPU.prototype._OP_BCC = {'opc':  4, 'name': 'bcc'};
+CPU.prototype._OP_BCS = {'opc':  5, 'name': 'bcs'};
+CPU.prototype._OP_BEQ = {'opc':  6, 'name': 'beq'};
+CPU.prototype._OP_BIT = {'opc':  7, 'name': 'bit'};
+CPU.prototype._OP_BMI = {'opc':  8, 'name': 'bmi'};
+CPU.prototype._OP_BNE = {'opc':  9, 'name': 'bne'};
+CPU.prototype._OP_BPL = {'opc': 10, 'name': 'bpl'};
+CPU.prototype._OP_BRK = {'opc': 11, 'name': 'brk'};
+CPU.prototype._OP_BVC = {'opc': 12, 'name': 'bvc'};
+CPU.prototype._OP_BVS = {'opc': 13, 'name': 'bvs'};
+CPU.prototype._OP_CLC = {'opc': 14, 'name': 'clc'};
+CPU.prototype._OP_CLD = {'opc': 15, 'name': 'cld'};
+CPU.prototype._OP_CLI = {'opc': 16, 'name': 'cli'};
+CPU.prototype._OP_CLV = {'opc': 17, 'name': 'clv'};
+CPU.prototype._OP_CMP = {'opc': 18, 'name': 'cmp'};
+CPU.prototype._OP_CPX = {'opc': 19, 'name': 'cpx'};
+CPU.prototype._OP_CPY = {'opc': 20, 'name': 'cpy'};
+CPU.prototype._OP_DEC = {'opc': 21, 'name': 'dec'};
+CPU.prototype._OP_DEX = {'opc': 22, 'name': 'dex'};
+CPU.prototype._OP_DEY = {'opc': 23, 'name': 'dey'};
+CPU.prototype._OP_EOR = {'opc': 24, 'name': 'eor'};
+CPU.prototype._OP_INC = {'opc': 25, 'name': 'inc'};
+CPU.prototype._OP_INX = {'opc': 26, 'name': 'inx'};
+CPU.prototype._OP_INY = {'opc': 27, 'name': 'iny'};
+CPU.prototype._OP_JMP = {'opc': 28, 'name': 'jmp'};
+CPU.prototype._OP_JSR = {'opc': 29, 'name': 'jsr'};
+CPU.prototype._OP_LDA = {'opc': 30, 'name': 'lda'};
+CPU.prototype._OP_LDX = {'opc': 31, 'name': 'ldx'};
+CPU.prototype._OP_LDY = {'opc': 32, 'name': 'ldy'};
+CPU.prototype._OP_LSR = {'opc': 33, 'name': 'lsr'};
+CPU.prototype._OP_NOP = {'opc': 34, 'name': 'nop'};
+CPU.prototype._OP_ORA = {'opc': 35, 'name': 'ora'};
+CPU.prototype._OP_PHA = {'opc': 36, 'name': 'pha'};
+CPU.prototype._OP_PHP = {'opc': 37, 'name': 'php'};
+CPU.prototype._OP_PLA = {'opc': 38, 'name': 'pla'};
+CPU.prototype._OP_PLP = {'opc': 39, 'name': 'plp'};
+CPU.prototype._OP_ROL = {'opc': 40, 'name': 'rol'};
+CPU.prototype._OP_ROR = {'opc': 41, 'name': 'ror'};
+CPU.prototype._OP_RTI = {'opc': 42, 'name': 'rti'};
+CPU.prototype._OP_RTS = {'opc': 43, 'name': 'rts'};
+CPU.prototype._OP_SBC = {'opc': 44, 'name': 'sbc'};
+CPU.prototype._OP_SEC = {'opc': 45, 'name': 'sec'};
+CPU.prototype._OP_SED = {'opc': 46, 'name': 'sed'};
+CPU.prototype._OP_SEI = {'opc': 47, 'name': 'sei'};
+CPU.prototype._OP_STA = {'opc': 48, 'name': 'sta'};
+CPU.prototype._OP_STX = {'opc': 49, 'name': 'stx'};
+CPU.prototype._OP_STY = {'opc': 50, 'name': 'sty'};
+CPU.prototype._OP_TAX = {'opc': 51, 'name': 'tax'};
+CPU.prototype._OP_TAY = {'opc': 52, 'name': 'tay'};
+CPU.prototype._OP_TSX = {'opc': 53, 'name': 'tsx'};
+CPU.prototype._OP_TXA = {'opc': 54, 'name': 'txa'};
+CPU.prototype._OP_TXS = {'opc': 55, 'name': 'txs'};
+CPU.prototype._OP_TYA = {'opc': 56, 'name': 'tya'};
 
 // TODO: not fixed yet.
-CPU._ADDRESSING_IMMEDIATE             = {'id':  0, 'pc': 2, 'name': 'immediate'};
-CPU._ADDRESSING_ABSOLUTE              = {'id':  1, 'pc': 3, 'name': 'absolute'};
-CPU._ADDRESSING_INDEXED_ABSOLUTE_X    = {'id':  2, 'pc': 3, 'name': 'indexed_absolute_x'};
-CPU._ADDRESSING_INDEXED_ABSOLUTE_Y    = {'id':  3, 'pc': 3, 'name': 'indexed_absolute_y'};
-CPU._ADDRESSING_ZERO_PAGE             = {'id':  4, 'pc': 2, 'name': 'zero_page'};
-CPU._ADDRESSING_INDEXED_ZERO_PAGE_X   = {'id':  5, 'pc': 2, 'name': 'indexed_zero_page_x'};
-CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y   = {'id':  6, 'pc': 2, 'name': 'indexed_zero_page_y'};
-CPU._ADDRESSING_IMPLIED               = {'id':  7, 'pc': 1, 'name': 'implied'};
-CPU._ADDRESSING_ACCUMULATOR           = {'id':  8, 'pc': 1, 'name': 'accumulator'};
-CPU._ADDRESSING_INDIRECT              = {'id':  9, 'pc': 3, 'name': 'indirect'};
-CPU._ADDRESSING_INDEXED_INDIRECT_X    = {'id': 10, 'pc': 2, 'name': 'indexed_indirect_x'};
-CPU._ADDRESSING_INDEXED_INDIRECT_Y    = {'id': 11, 'pc': 2, 'name': 'indexed_indirect_y'};
-CPU._ADDRESSING_RELATIVE              = {'id': 12, 'pc': 2, 'name': 'relative'};
+CPU.prototype._ADDRESSING_IMMEDIATE             = {'id':  0, 'pc': 2, 'name': 'immediate'};
+CPU.prototype._ADDRESSING_ABSOLUTE              = {'id':  1, 'pc': 3, 'name': 'absolute'};
+CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X    = {'id':  2, 'pc': 3, 'name': 'indexed_absolute_x'};
+CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y    = {'id':  3, 'pc': 3, 'name': 'indexed_absolute_y'};
+CPU.prototype._ADDRESSING_ZERO_PAGE             = {'id':  4, 'pc': 2, 'name': 'zero_page'};
+CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X   = {'id':  5, 'pc': 2, 'name': 'indexed_zero_page_x'};
+CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_Y   = {'id':  6, 'pc': 2, 'name': 'indexed_zero_page_y'};
+CPU.prototype._ADDRESSING_IMPLIED               = {'id':  7, 'pc': 1, 'name': 'implied'};
+CPU.prototype._ADDRESSING_ACCUMULATOR           = {'id':  8, 'pc': 1, 'name': 'accumulator'};
+CPU.prototype._ADDRESSING_INDIRECT              = {'id':  9, 'pc': 3, 'name': 'indirect'};
+CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X    = {'id': 10, 'pc': 2, 'name': 'indexed_indirect_x'};
+CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y    = {'id': 11, 'pc': 2, 'name': 'indexed_indirect_y'};
+CPU.prototype._ADDRESSING_RELATIVE              = {'id': 12, 'pc': 2, 'name': 'relative'};
 
 // decodes in advance cuz it's much easier than implementing decoder.
 // be careful that some 6502 related documents include some mistakes.
 // TODO: validation.
-CPU._OP = [];
-CPU._OP[0x00] = {'op': CPU._OP_BRK, 'cycle': 7, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x01] = {'op': CPU._OP_ORA, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0x02] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x03] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x04] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x05] = {'op': CPU._OP_ORA, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x06] = {'op': CPU._OP_ASL, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x07] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+// TODO: opzimization. each line is long.
+CPU.prototype._OP = [];
+CPU.prototype._OP[0x00] = {'op': CPU.prototype._OP_BRK, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x01] = {'op': CPU.prototype._OP_ORA, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0x02] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x03] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x04] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x05] = {'op': CPU.prototype._OP_ORA, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x06] = {'op': CPU.prototype._OP_ASL, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x07] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x08] = {'op': CPU._OP_PHP, 'cycle': 3, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x09] = {'op': CPU._OP_ORA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0x0A] = {'op': CPU._OP_ASL, 'cycle': 2, 'mode': CPU._ADDRESSING_ACCUMULATOR};
-CPU._OP[0x0B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x0C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x0D] = {'op': CPU._OP_ORA, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x0E] = {'op': CPU._OP_ASL, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x0F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x08] = {'op': CPU.prototype._OP_PHP, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x09] = {'op': CPU.prototype._OP_ORA, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0x0A] = {'op': CPU.prototype._OP_ASL, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_ACCUMULATOR};
+CPU.prototype._OP[0x0B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x0C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x0D] = {'op': CPU.prototype._OP_ORA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x0E] = {'op': CPU.prototype._OP_ASL, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x0F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x10] = {'op': CPU._OP_BPL, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0x11] = {'op': CPU._OP_ORA, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0x12] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x13] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x14] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x15] = {'op': CPU._OP_ORA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x16] = {'op': CPU._OP_ASL, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x17] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x10] = {'op': CPU.prototype._OP_BPL, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0x11] = {'op': CPU.prototype._OP_ORA, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0x12] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x13] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x14] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x15] = {'op': CPU.prototype._OP_ORA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x16] = {'op': CPU.prototype._OP_ASL, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x17] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x18] = {'op': CPU._OP_CLC, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x19] = {'op': CPU._OP_ORA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0x1A] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x1B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x1C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x1D] = {'op': CPU._OP_ORA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x1E] = {'op': CPU._OP_ASL, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x1F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x18] = {'op': CPU.prototype._OP_CLC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x19] = {'op': CPU.prototype._OP_ORA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0x1A] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x1B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x1C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x1D] = {'op': CPU.prototype._OP_ORA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x1E] = {'op': CPU.prototype._OP_ASL, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x1F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x20] = {'op': CPU._OP_JSR, 'cycle': 0, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x21] = {'op': CPU._OP_AND, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0x22] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x23] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x24] = {'op': CPU._OP_BIT, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x25] = {'op': CPU._OP_AND, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x26] = {'op': CPU._OP_ROL, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x27] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x20] = {'op': CPU.prototype._OP_JSR, 'cycle': 0, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x21] = {'op': CPU.prototype._OP_AND, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0x22] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x23] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x24] = {'op': CPU.prototype._OP_BIT, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x25] = {'op': CPU.prototype._OP_AND, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x26] = {'op': CPU.prototype._OP_ROL, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x27] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x28] = {'op': CPU._OP_PLP, 'cycle': 4, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x29] = {'op': CPU._OP_AND, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0x2A] = {'op': CPU._OP_ROL, 'cycle': 2, 'mode': CPU._ADDRESSING_ACCUMULATOR};
-CPU._OP[0x2B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x2C] = {'op': CPU._OP_BIT, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x2D] = {'op': CPU._OP_AND, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x2E] = {'op': CPU._OP_ROL, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x2F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x28] = {'op': CPU.prototype._OP_PLP, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x29] = {'op': CPU.prototype._OP_AND, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0x2A] = {'op': CPU.prototype._OP_ROL, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_ACCUMULATOR};
+CPU.prototype._OP[0x2B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x2C] = {'op': CPU.prototype._OP_BIT, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x2D] = {'op': CPU.prototype._OP_AND, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x2E] = {'op': CPU.prototype._OP_ROL, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x2F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x30] = {'op': CPU._OP_BMI, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0x31] = {'op': CPU._OP_AND, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0x32] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x33] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x34] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x35] = {'op': CPU._OP_AND, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x36] = {'op': CPU._OP_ROL, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x37] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x30] = {'op': CPU.prototype._OP_BMI, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0x31] = {'op': CPU.prototype._OP_AND, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0x32] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x33] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x34] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x35] = {'op': CPU.prototype._OP_AND, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x36] = {'op': CPU.prototype._OP_ROL, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x37] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x38] = {'op': CPU._OP_SEC, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x39] = {'op': CPU._OP_AND, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0x3A] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x3B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x3C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x3D] = {'op': CPU._OP_AND, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x3E] = {'op': CPU._OP_ROL, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x3F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x38] = {'op': CPU.prototype._OP_SEC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x39] = {'op': CPU.prototype._OP_AND, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0x3A] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x3B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x3C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x3D] = {'op': CPU.prototype._OP_AND, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x3E] = {'op': CPU.prototype._OP_ROL, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x3F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x40] = {'op': CPU._OP_RTI, 'cycle': 6, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x41] = {'op': CPU._OP_EOR, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0x42] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x43] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x44] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x45] = {'op': CPU._OP_EOR, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x46] = {'op': CPU._OP_LSR, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x47] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x40] = {'op': CPU.prototype._OP_RTI, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x41] = {'op': CPU.prototype._OP_EOR, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0x42] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x43] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x44] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x45] = {'op': CPU.prototype._OP_EOR, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x46] = {'op': CPU.prototype._OP_LSR, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x47] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x48] = {'op': CPU._OP_PHA, 'cycle': 3, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x49] = {'op': CPU._OP_EOR, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0x4A] = {'op': CPU._OP_LSR, 'cycle': 2, 'mode': CPU._ADDRESSING_ACCUMULATOR};
-CPU._OP[0x4B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x4C] = {'op': CPU._OP_JMP, 'cycle': 0, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x4D] = {'op': CPU._OP_EOR, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x4E] = {'op': CPU._OP_LSR, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x4F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x48] = {'op': CPU.prototype._OP_PHA, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x49] = {'op': CPU.prototype._OP_EOR, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0x4A] = {'op': CPU.prototype._OP_LSR, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_ACCUMULATOR};
+CPU.prototype._OP[0x4B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x4C] = {'op': CPU.prototype._OP_JMP, 'cycle': 0, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x4D] = {'op': CPU.prototype._OP_EOR, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x4E] = {'op': CPU.prototype._OP_LSR, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x4F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x50] = {'op': CPU._OP_BVC, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0x51] = {'op': CPU._OP_EOR, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0x52] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x53] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x54] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x55] = {'op': CPU._OP_EOR, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x56] = {'op': CPU._OP_LSR, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x57] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x50] = {'op': CPU.prototype._OP_BVC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0x51] = {'op': CPU.prototype._OP_EOR, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0x52] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x53] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x54] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x55] = {'op': CPU.prototype._OP_EOR, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x56] = {'op': CPU.prototype._OP_LSR, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x57] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x58] = {'op': CPU._OP_CLI, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x59] = {'op': CPU._OP_EOR, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0x5A] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x5B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x5C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x5D] = {'op': CPU._OP_EOR, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x5E] = {'op': CPU._OP_LSR, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x5F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x58] = {'op': CPU.prototype._OP_CLI, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x59] = {'op': CPU.prototype._OP_EOR, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0x5A] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x5B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x5C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x5D] = {'op': CPU.prototype._OP_EOR, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x5E] = {'op': CPU.prototype._OP_LSR, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x5F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x60] = {'op': CPU._OP_RTS, 'cycle': 6, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x61] = {'op': CPU._OP_ADC, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0x62] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x63] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x64] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x65] = {'op': CPU._OP_ADC, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x66] = {'op': CPU._OP_ROR, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x67] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x60] = {'op': CPU.prototype._OP_RTS, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x61] = {'op': CPU.prototype._OP_ADC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0x62] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x63] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x64] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x65] = {'op': CPU.prototype._OP_ADC, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x66] = {'op': CPU.prototype._OP_ROR, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x67] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x68] = {'op': CPU._OP_PLA, 'cycle': 4, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x69] = {'op': CPU._OP_ADC, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0x6A] = {'op': CPU._OP_ROR, 'cycle': 2, 'mode': CPU._ADDRESSING_ACCUMULATOR};
-CPU._OP[0x6B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x6C] = {'op': CPU._OP_JMP, 'cycle': 0, 'mode': CPU._ADDRESSING_INDIRECT};
-CPU._OP[0x6D] = {'op': CPU._OP_ADC, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x6E] = {'op': CPU._OP_ROR, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x6F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x68] = {'op': CPU.prototype._OP_PLA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x69] = {'op': CPU.prototype._OP_ADC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0x6A] = {'op': CPU.prototype._OP_ROR, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_ACCUMULATOR};
+CPU.prototype._OP[0x6B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x6C] = {'op': CPU.prototype._OP_JMP, 'cycle': 0, 'mode': CPU.prototype._ADDRESSING_INDIRECT};
+CPU.prototype._OP[0x6D] = {'op': CPU.prototype._OP_ADC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x6E] = {'op': CPU.prototype._OP_ROR, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x6F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x70] = {'op': CPU._OP_BVS, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0x71] = {'op': CPU._OP_ADC, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0x72] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x73] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x74] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x75] = {'op': CPU._OP_ADC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x76] = {'op': CPU._OP_ROR, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x77] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x70] = {'op': CPU.prototype._OP_BVS, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0x71] = {'op': CPU.prototype._OP_ADC, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0x72] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x73] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x74] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x75] = {'op': CPU.prototype._OP_ADC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x76] = {'op': CPU.prototype._OP_ROR, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x77] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x78] = {'op': CPU._OP_SEI, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x79] = {'op': CPU._OP_ADC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0x7A] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x7B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x7C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x7D] = {'op': CPU._OP_ADC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x7E] = {'op': CPU._OP_ROR, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x7F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x78] = {'op': CPU.prototype._OP_SEI, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x79] = {'op': CPU.prototype._OP_ADC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0x7A] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x7B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x7C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x7D] = {'op': CPU.prototype._OP_ADC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x7E] = {'op': CPU.prototype._OP_ROR, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x7F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x80] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x81] = {'op': CPU._OP_STA, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0x82] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x83] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x84] = {'op': CPU._OP_STY, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x85] = {'op': CPU._OP_STA, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x86] = {'op': CPU._OP_STX, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0x87] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x80] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x81] = {'op': CPU.prototype._OP_STA, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0x82] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x83] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x84] = {'op': CPU.prototype._OP_STY, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x85] = {'op': CPU.prototype._OP_STA, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x86] = {'op': CPU.prototype._OP_STX, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0x87] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x88] = {'op': CPU._OP_DEY, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x89] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x8A] = {'op': CPU._OP_TXA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x8B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x8C] = {'op': CPU._OP_STY, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x8D] = {'op': CPU._OP_STA, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x8E] = {'op': CPU._OP_STX, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0x8F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x88] = {'op': CPU.prototype._OP_DEY, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x89] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x8A] = {'op': CPU.prototype._OP_TXA, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x8B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x8C] = {'op': CPU.prototype._OP_STY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x8D] = {'op': CPU.prototype._OP_STA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x8E] = {'op': CPU.prototype._OP_STX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0x8F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x90] = {'op': CPU._OP_BCC, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0x91] = {'op': CPU._OP_STA, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0x92] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x93] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x94] = {'op': CPU._OP_STY, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x95] = {'op': CPU._OP_STA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0x96] = {'op': CPU._OP_STX, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y};
-CPU._OP[0x97] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x90] = {'op': CPU.prototype._OP_BCC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0x91] = {'op': CPU.prototype._OP_STA, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0x92] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x93] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x94] = {'op': CPU.prototype._OP_STY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x95] = {'op': CPU.prototype._OP_STA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0x96] = {'op': CPU.prototype._OP_STX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_Y};
+CPU.prototype._OP[0x97] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0x98] = {'op': CPU._OP_TYA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x99] = {'op': CPU._OP_STA, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0x9A] = {'op': CPU._OP_TXS, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0x9B] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x9C] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x9D] = {'op': CPU._OP_STA, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0x9E] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0x9F] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x98] = {'op': CPU.prototype._OP_TYA, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x99] = {'op': CPU.prototype._OP_STA, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0x9A] = {'op': CPU.prototype._OP_TXS, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0x9B] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x9C] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x9D] = {'op': CPU.prototype._OP_STA, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0x9E] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0x9F] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xA0] = {'op': CPU._OP_LDY, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xA1] = {'op': CPU._OP_LDA, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0xA2] = {'op': CPU._OP_LDX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xA3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xA4] = {'op': CPU._OP_LDY, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xA5] = {'op': CPU._OP_LDA, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xA6] = {'op': CPU._OP_LDX, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xA7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xA0] = {'op': CPU.prototype._OP_LDY, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xA1] = {'op': CPU.prototype._OP_LDA, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0xA2] = {'op': CPU.prototype._OP_LDX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xA3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xA4] = {'op': CPU.prototype._OP_LDY, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xA5] = {'op': CPU.prototype._OP_LDA, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xA6] = {'op': CPU.prototype._OP_LDX, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xA7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xA8] = {'op': CPU._OP_TAY, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xA9] = {'op': CPU._OP_LDA, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xAA] = {'op': CPU._OP_TAX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xAB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xAC] = {'op': CPU._OP_LDY, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xAD] = {'op': CPU._OP_LDA, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xAE] = {'op': CPU._OP_LDX, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xAF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xA8] = {'op': CPU.prototype._OP_TAY, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xA9] = {'op': CPU.prototype._OP_LDA, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xAA] = {'op': CPU.prototype._OP_TAX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xAB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xAC] = {'op': CPU.prototype._OP_LDY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xAD] = {'op': CPU.prototype._OP_LDA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xAE] = {'op': CPU.prototype._OP_LDX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xAF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xB0] = {'op': CPU._OP_BCS, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0xB1] = {'op': CPU._OP_LDA, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0xB2] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xB3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xB4] = {'op': CPU._OP_LDY, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xB5] = {'op': CPU._OP_LDA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xB6] = {'op': CPU._OP_LDX, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y};
-CPU._OP[0xB7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xB0] = {'op': CPU.prototype._OP_BCS, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0xB1] = {'op': CPU.prototype._OP_LDA, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0xB2] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xB3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xB4] = {'op': CPU.prototype._OP_LDY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xB5] = {'op': CPU.prototype._OP_LDA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xB6] = {'op': CPU.prototype._OP_LDX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_Y};
+CPU.prototype._OP[0xB7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xB8] = {'op': CPU._OP_CLV, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xB9] = {'op': CPU._OP_LDA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0xBA] = {'op': CPU._OP_TSX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xBB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xBC] = {'op': CPU._OP_LDY, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xBD] = {'op': CPU._OP_LDA, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xBE] = {'op': CPU._OP_LDX, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0xBF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xB8] = {'op': CPU.prototype._OP_CLV, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xB9] = {'op': CPU.prototype._OP_LDA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0xBA] = {'op': CPU.prototype._OP_TSX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xBB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xBC] = {'op': CPU.prototype._OP_LDY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xBD] = {'op': CPU.prototype._OP_LDA, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xBE] = {'op': CPU.prototype._OP_LDX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0xBF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xC0] = {'op': CPU._OP_CPY, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xC1] = {'op': CPU._OP_CMP, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0xC2] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xC3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xC4] = {'op': CPU._OP_CPY, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xC5] = {'op': CPU._OP_CMP, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xC6] = {'op': CPU._OP_DEC, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xC7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xC0] = {'op': CPU.prototype._OP_CPY, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xC1] = {'op': CPU.prototype._OP_CMP, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0xC2] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xC3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xC4] = {'op': CPU.prototype._OP_CPY, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xC5] = {'op': CPU.prototype._OP_CMP, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xC6] = {'op': CPU.prototype._OP_DEC, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xC7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xC8] = {'op': CPU._OP_INY, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xC9] = {'op': CPU._OP_CMP, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xCA] = {'op': CPU._OP_DEX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xCB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xCC] = {'op': CPU._OP_CPY, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xCD] = {'op': CPU._OP_CMP, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xCE] = {'op': CPU._OP_DEC, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xCF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xC8] = {'op': CPU.prototype._OP_INY, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xC9] = {'op': CPU.prototype._OP_CMP, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xCA] = {'op': CPU.prototype._OP_DEX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xCB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xCC] = {'op': CPU.prototype._OP_CPY, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xCD] = {'op': CPU.prototype._OP_CMP, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xCE] = {'op': CPU.prototype._OP_DEC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xCF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xD0] = {'op': CPU._OP_BNE, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0xD1] = {'op': CPU._OP_CMP, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0xD2] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xD3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xD4] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xD5] = {'op': CPU._OP_CMP, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xD6] = {'op': CPU._OP_DEC, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xD7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xD0] = {'op': CPU.prototype._OP_BNE, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0xD1] = {'op': CPU.prototype._OP_CMP, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0xD2] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xD3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xD4] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xD5] = {'op': CPU.prototype._OP_CMP, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xD6] = {'op': CPU.prototype._OP_DEC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xD7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xD8] = {'op': CPU._OP_CLD, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xD9] = {'op': CPU._OP_CMP, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0xDA] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xDB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xDC] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xDD] = {'op': CPU._OP_CMP, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xDE] = {'op': CPU._OP_DEC, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xDF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xD8] = {'op': CPU.prototype._OP_CLD, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xD9] = {'op': CPU.prototype._OP_CMP, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0xDA] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xDB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xDC] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xDD] = {'op': CPU.prototype._OP_CMP, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xDE] = {'op': CPU.prototype._OP_DEC, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xDF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xE0] = {'op': CPU._OP_CPX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xE1] = {'op': CPU._OP_SBC, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_X};
-CPU._OP[0xE2] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xE3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xE4] = {'op': CPU._OP_CPX, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xE5] = {'op': CPU._OP_SBC, 'cycle': 3, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xE6] = {'op': CPU._OP_INC, 'cycle': 5, 'mode': CPU._ADDRESSING_ZERO_PAGE};
-CPU._OP[0xE7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xE0] = {'op': CPU.prototype._OP_CPX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xE1] = {'op': CPU.prototype._OP_SBC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X};
+CPU.prototype._OP[0xE2] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xE3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xE4] = {'op': CPU.prototype._OP_CPX, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xE5] = {'op': CPU.prototype._OP_SBC, 'cycle': 3, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xE6] = {'op': CPU.prototype._OP_INC, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_ZERO_PAGE};
+CPU.prototype._OP[0xE7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xE8] = {'op': CPU._OP_INX, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xE9] = {'op': CPU._OP_SBC, 'cycle': 2, 'mode': CPU._ADDRESSING_IMMEDIATE};
-CPU._OP[0xEA] = {'op': CPU._OP_NOP, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xEB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xEC] = {'op': CPU._OP_CPX, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xED] = {'op': CPU._OP_SBC, 'cycle': 4, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xEE] = {'op': CPU._OP_INC, 'cycle': 6, 'mode': CPU._ADDRESSING_ABSOLUTE};
-CPU._OP[0xEF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xE8] = {'op': CPU.prototype._OP_INX, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xE9] = {'op': CPU.prototype._OP_SBC, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMMEDIATE};
+CPU.prototype._OP[0xEA] = {'op': CPU.prototype._OP_NOP, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xEB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xEC] = {'op': CPU.prototype._OP_CPX, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xED] = {'op': CPU.prototype._OP_SBC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xEE] = {'op': CPU.prototype._OP_INC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_ABSOLUTE};
+CPU.prototype._OP[0xEF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xF0] = {'op': CPU._OP_BEQ, 'cycle': 2, 'mode': CPU._ADDRESSING_RELATIVE};
-CPU._OP[0xF1] = {'op': CPU._OP_SBC, 'cycle': 5, 'mode': CPU._ADDRESSING_INDEXED_INDIRECT_Y};
-CPU._OP[0xF2] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xF3] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xF4] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xF5] = {'op': CPU._OP_SBC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xF6] = {'op': CPU._OP_INC, 'cycle': 6, 'mode': CPU._ADDRESSING_INDEXED_ZERO_PAGE_X};
-CPU._OP[0xF7] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xF0] = {'op': CPU.prototype._OP_BEQ, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_RELATIVE};
+CPU.prototype._OP[0xF1] = {'op': CPU.prototype._OP_SBC, 'cycle': 5, 'mode': CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y};
+CPU.prototype._OP[0xF2] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xF3] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xF4] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xF5] = {'op': CPU.prototype._OP_SBC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xF6] = {'op': CPU.prototype._OP_INC, 'cycle': 6, 'mode': CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X};
+CPU.prototype._OP[0xF7] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
-CPU._OP[0xF8] = {'op': CPU._OP_SED, 'cycle': 2, 'mode': CPU._ADDRESSING_IMPLIED};
-CPU._OP[0xF9] = {'op': CPU._OP_SBC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_Y};
-CPU._OP[0xFA] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xFB] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xFC] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
-CPU._OP[0xFD] = {'op': CPU._OP_SBC, 'cycle': 4, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xFE] = {'op': CPU._OP_INC, 'cycle': 7, 'mode': CPU._ADDRESSING_INDEXED_ABSOLUTE_X};
-CPU._OP[0xFF] = {'op': CPU._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xF8] = {'op': CPU.prototype._OP_SED, 'cycle': 2, 'mode': CPU.prototype._ADDRESSING_IMPLIED};
+CPU.prototype._OP[0xF9] = {'op': CPU.prototype._OP_SBC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y};
+CPU.prototype._OP[0xFA] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xFB] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xFC] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
+CPU.prototype._OP[0xFD] = {'op': CPU.prototype._OP_SBC, 'cycle': 4, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xFE] = {'op': CPU.prototype._OP_INC, 'cycle': 7, 'mode': CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X};
+CPU.prototype._OP[0xFF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null};
 
 
 CPU.prototype.initMemoryController = function(ppu, pad1) {
@@ -398,7 +399,7 @@ CPU.prototype.initMemoryController = function(ppu, pad1) {
 CPU.prototype.setROM = function(rom) {
   this.mem.setROM(rom);
   // TODO: temporal
-  this._jumpToInterruptHandler(CPU._INTERRUPT_RESET);
+  this._jumpToInterruptHandler(this._INTERRUPT_RESET);
 };
 
 
@@ -440,7 +441,7 @@ CPU.prototype._fetch = function() {
 
 
 CPU.prototype._decode = function(opc) {
-  return CPU._OP[opc];
+  return this._OP[opc];
 };
 
 
@@ -459,7 +460,7 @@ CPU.prototype.runCycle = function() {
  * TODO: not fixed yet.
  */
 CPU.prototype.interrupt = function(type) {
-  if(type == CPU._INTERRUPT_IRQ && this.p.isI()) {
+  if(type == this._INTERRUPT_IRQ && this.p.isI()) {
     return;
   }
   this._pushStack2Bytes(this.pc.load());
@@ -470,19 +471,19 @@ CPU.prototype.interrupt = function(type) {
 
 
 CPU.prototype._jumpToInterruptHandler = function(type) {
-  this.pc.store(this.load2Bytes(CPU._INTERRUPT_HANDLER_ADDRESSES[type]));
+  this.pc.store(this.load2Bytes(this._INTERRUPT_HANDLER_ADDRESSES[type]));
 };
 
 
 CPU.prototype._loadMemoryWithAddressingMode = function(op) {
-  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
+  if(op.mode.id == this._ADDRESSING_ACCUMULATOR.id) {
     return this.a.load();
   }
 
   var address = this._getMemoryAddressWithAddressingMode(op);
   var value = this.load(address);
   // expects that relative addressing mode is used only for load.
-  if(op.mode.id == CPU._ADDRESSING_RELATIVE.id) {
+  if(op.mode.id == this._ADDRESSING_RELATIVE.id) {
     // TODO: confirm if this logic is right.
     if(value & 0x80)
       value = value | 0xff00;
@@ -492,7 +493,7 @@ CPU.prototype._loadMemoryWithAddressingMode = function(op) {
 
 
 CPU.prototype._storeMemoryWithAddressingMode = function(op, value) {
-  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
+  if(op.mode.id == this._ADDRESSING_ACCUMULATOR.id) {
     this.a.store(value);
     return;
   }
@@ -506,7 +507,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
   var address;
   var src;
 
-  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
+  if(op.mode.id == this._ADDRESSING_ACCUMULATOR.id) {
     src = this.a.load();
   } else {
     address = this._getMemoryAddressWithAddressingMode(op);
@@ -515,7 +516,7 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
 
   var result = func(src);
 
-  if(op.mode.id == CPU._ADDRESSING_ACCUMULATOR.id) {
+  if(op.mode.id == this._ADDRESSING_ACCUMULATOR.id) {
     this.a.store(result);
   } else {
     this.store(address, result);
@@ -526,51 +527,51 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
 CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
   var address = null;
   switch(op.mode.id) {
-    case CPU._ADDRESSING_IMMEDIATE.id:
-    case CPU._ADDRESSING_RELATIVE.id:
+    case this._ADDRESSING_IMMEDIATE.id:
+    case this._ADDRESSING_RELATIVE.id:
       address = this.pc.load();
       this.pc.increment();
       break;
 
-    case CPU._ADDRESSING_ABSOLUTE.id:
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
+    case this._ADDRESSING_ABSOLUTE.id:
+    case this._ADDRESSING_INDEXED_ABSOLUTE_X.id:
+    case this._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
       address = this.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
       switch(op.mode.id) {
-        case CPU._ADDRESSING_INDEXED_ABSOLUTE_X.id:
+        case this._ADDRESSING_INDEXED_ABSOLUTE_X.id:
           address += this.x.load();
           break;
-        case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
+        case this._ADDRESSING_INDEXED_ABSOLUTE_Y.id:
           address += this.y.load();
           break;
       }
       address = address & 0xffff;
       break;
 
-    case CPU._ADDRESSING_ZERO_PAGE.id:
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
+    case this._ADDRESSING_ZERO_PAGE.id:
+    case this._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
+    case this._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
       address = this.load(this.pc.load());
       this.pc.increment();
       switch(op.mode.id) {
-        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
+        case this._ADDRESSING_INDEXED_ZERO_PAGE_X.id:
         address += this.x.load();
         break;
-        case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
+        case this._ADDRESSING_INDEXED_ZERO_PAGE_Y.id:
         address += this.y.load();
         break;
       }
       address = address & 0xff;
       break;
 
-    case CPU._ADDRESSING_INDIRECT.id:
+    case this._ADDRESSING_INDIRECT.id:
       var tmp = this.load2Bytes(this.pc.load());
       this.pc.incrementBy2();
       address = this.load2BytesInPage(tmp);
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_X.id:
+    case this._ADDRESSING_INDEXED_INDIRECT_X.id:
       var tmp = this.load(this.pc.load());
       this.pc.increment();
       tmp += this.x.load();
@@ -578,7 +579,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
       address = this.load2BytesFromZeropage(tmp);
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_Y.id:
+    case this._ADDRESSING_INDEXED_INDIRECT_Y.id:
       var tmp = this.load(this.pc.load());
       this.pc.increment();
       address = this.load2BytesFromZeropage(tmp);
@@ -604,11 +605,11 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
   var ramDump = (mem instanceof CPUMemoryController) ? true : false;
 
   switch(op.mode) {
-    case CPU._ADDRESSING_IMMEDIATE:
+    case this._ADDRESSING_IMMEDIATE:
       buffer += '#' + __10to16(mem.load(pc, true), 2);
       break;
 
-    case CPU._ADDRESSING_RELATIVE:
+    case this._ADDRESSING_RELATIVE:
       var value = mem.load(pc, true);
       if(value & 0x80) {
         value = -(0x100 - value); // make negative native integer.
@@ -616,7 +617,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       buffer += value.toString(10);
       break;
 
-    case CPU._ADDRESSING_ABSOLUTE:
+    case this._ADDRESSING_ABSOLUTE:
       var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4);
       if(ramDump) {
@@ -624,7 +625,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_X:
+    case this._ADDRESSING_INDEXED_ABSOLUTE_X:
       var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4) + ',X ';
       if(ramDump) {
@@ -634,7 +635,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_ABSOLUTE_Y:
+    case this._ADDRESSING_INDEXED_ABSOLUTE_Y:
       var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4) + ',Y ';
       if(ramDump) {
@@ -644,7 +645,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_ZERO_PAGE:
+    case this._ADDRESSING_ZERO_PAGE:
       var address = mem.load(pc, true);
       buffer += __10to16(address, 2);
       if(ramDump) {
@@ -652,7 +653,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_X:
+    case this._ADDRESSING_INDEXED_ZERO_PAGE_X:
       var address = mem.load(pc, true);
       buffer += __10to16(address, 2) + ',X ';
       if(ramDump) {
@@ -662,7 +663,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_ZERO_PAGE_Y:
+    case this._ADDRESSING_INDEXED_ZERO_PAGE_Y:
       var address = mem.load(pc, true);
       buffer += __10to16(address, 2) + ',Y ';
       if(ramDump) {
@@ -672,7 +673,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDIRECT:
+    case this._ADDRESSING_INDIRECT:
       var address = mem.load2Bytes(pc, true);
       buffer += __10to16(address, 4);
       if(ramDump) {
@@ -684,7 +685,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_X:
+    case this._ADDRESSING_INDEXED_INDIRECT_X:
       var address = mem.load(pc, true);
       buffer += '(' + __10to16(address, 2) + ',X) ';
       if(ramDump) {
@@ -698,7 +699,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_INDEXED_INDIRECT_Y:
+    case this._ADDRESSING_INDEXED_INDIRECT_Y:
       var address = mem.load(pc, true);
       buffer += '(' + __10to16(address, 2) + '),Y ';
       if(ramDump) {
@@ -712,7 +713,7 @@ CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
       }
       break;
 
-    case CPU._ADDRESSING_ACCUMULATOR:
+    case this._ADDRESSING_ACCUMULATOR:
       if(ramDump) {
         buffer += 'A(' + __10to16(this.a.load(), 2) + ')';
       }
@@ -797,7 +798,7 @@ CPU.prototype._doBranch = function(op, flag) {
  */
 CPU.prototype._operate = function(op) {
   switch(op.op.opc) {
-    case CPU._OP_ADC.opc:
+    case this._OP_ADC.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var c = this.p.isC() ? 1 : 0;
@@ -812,7 +813,7 @@ CPU.prototype._operate = function(op) {
         this.p.clearV();
       break;
 
-    case CPU._OP_AND.opc:
+    case this._OP_AND.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 & src2;
@@ -821,7 +822,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_ASL.opc:
+    case this._OP_ASL.opc:
       var self = this;
       var func = function(src) {
         var result = src << 1;
@@ -833,20 +834,20 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_BCC.opc:
+    case this._OP_BCC.opc:
       this._doBranch(op, !this.p.isC());
       break;
 
-    case CPU._OP_BCS.opc:
+    case this._OP_BCS.opc:
       this._doBranch(op, this.p.isC());
       break;
 
-    case CPU._OP_BEQ.opc:
+    case this._OP_BEQ.opc:
       this._doBranch(op, this.p.isZ());
       break;
 
     // TODO: check logic.
-    case CPU._OP_BIT.opc:
+    case this._OP_BIT.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 & src2;
@@ -858,62 +859,62 @@ CPU.prototype._operate = function(op) {
         this.p.setV();
       break;
 
-    case CPU._OP_BMI.opc:
+    case this._OP_BMI.opc:
       this._doBranch(op, this.p.isN());
       break;
 
-    case CPU._OP_BNE.opc:
+    case this._OP_BNE.opc:
       this._doBranch(op, !this.p.isZ());
       break;
 
-    case CPU._OP_BPL.opc:
+    case this._OP_BPL.opc:
       this._doBranch(op, !this.p.isN());
       break;
 
     // TODO: check logic.
-    case CPU._OP_BRK.opc:
+    case this._OP_BRK.opc:
       this.pc.increment(); // necessary?
       this.p.setB();
-      this.interrupt(CPU._INTERRUPT_IRQ);
+      this.interrupt(this._INTERRUPT_IRQ);
       break;
 
-    case CPU._OP_BVC.opc:
+    case this._OP_BVC.opc:
       this._doBranch(op, !this.p.isV());
       break;
 
-    case CPU._OP_BVS.opc:
+    case this._OP_BVS.opc:
       this._doBranch(op, this.p.isV());
       break;
 
-    case CPU._OP_CLC.opc:
+    case this._OP_CLC.opc:
       this.p.clearC();
       break;
 
-    case CPU._OP_CLD.opc:
+    case this._OP_CLD.opc:
       this.p.clearD();
       break;
 
-    case CPU._OP_CLI.opc:
+    case this._OP_CLI.opc:
       this.p.clearI();
       break;
 
-    case CPU._OP_CLV.opc:
+    case this._OP_CLV.opc:
       this.p.clearV();
       break;
 
     // TODO: separate?
-    case CPU._OP_CMP.opc:
-    case CPU._OP_CPX.opc:
-    case CPU._OP_CPY.opc:
+    case this._OP_CMP.opc:
+    case this._OP_CPX.opc:
+    case this._OP_CPY.opc:
       var src1;
       switch(op.op.opc) {
-        case CPU._OP_CMP.opc:
+        case this._OP_CMP.opc:
           src1 = this.a.load();
           break;
-        case CPU._OP_CPX.opc:
+        case this._OP_CPX.opc:
           src1 = this.x.load();
           break;
-        case CPU._OP_CPY.opc:
+        case this._OP_CPY.opc:
           src1 = this.y.load();
           break;
       }
@@ -927,7 +928,7 @@ CPU.prototype._operate = function(op) {
         this.p.clearC();
       break;
 
-    case CPU._OP_DEC.opc:
+    case this._OP_DEC.opc:
       var self = this;
       var func = function(src) {
         var result = src - 1;
@@ -938,14 +939,14 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_DEX.opc:
-    case CPU._OP_DEY.opc:
+    case this._OP_DEX.opc:
+    case this._OP_DEY.opc:
       var reg;
       switch(op.op.opc) {
-        case CPU._OP_DEX.opc:
+        case this._OP_DEX.opc:
           reg = this.x;
           break;
-        case CPU._OP_DEY.opc:
+        case this._OP_DEY.opc:
           reg = this.y;
           break;
       }
@@ -956,7 +957,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_EOR.opc:
+    case this._OP_EOR.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 ^ src2;
@@ -965,7 +966,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_INC.opc:
+    case this._OP_INC.opc:
       var self = this;
       var func = function(src) {
         var result = src + 1;
@@ -976,14 +977,14 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_INX.opc:
-    case CPU._OP_INY.opc:
+    case this._OP_INX.opc:
+    case this._OP_INY.opc:
       var reg;
       switch(op.op.opc) {
-        case CPU._OP_INX.opc:
+        case this._OP_INX.opc:
           reg = this.x;
           break;
-        case CPU._OP_INY.opc:
+        case this._OP_INY.opc:
           reg = this.y;
           break;
       }
@@ -995,32 +996,32 @@ CPU.prototype._operate = function(op) {
       break;
 
     // TODO: check the logic.
-    case CPU._OP_JMP.opc:
+    case this._OP_JMP.opc:
       var address = this._getMemoryAddressWithAddressingMode(op);
       this.pc.store(address);
       break;
 
     // TODO: check the logic.
-    case CPU._OP_JSR.opc:
+    case this._OP_JSR.opc:
       var address = this._getMemoryAddressWithAddressingMode(op);
       this.pc.decrement();
       this._pushStack2Bytes(this.pc.load());
       this.pc.store(address);
       break;
 
-    case CPU._OP_LDA.opc:
-    case CPU._OP_LDX.opc:
-    case CPU._OP_LDY.opc:
+    case this._OP_LDA.opc:
+    case this._OP_LDX.opc:
+    case this._OP_LDY.opc:
       var result = this._loadMemoryWithAddressingMode(op);
       var reg;
       switch(op.op.opc) {
-        case CPU._OP_LDA.opc:
+        case this._OP_LDA.opc:
           reg = this.a;
           break;
-        case CPU._OP_LDX.opc:
+        case this._OP_LDX.opc:
           reg = this.x;
           break;
-        case CPU._OP_LDY.opc:
+        case this._OP_LDY.opc:
           reg = this.y;
           break;
       }
@@ -1029,7 +1030,7 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_LSR.opc:
+    case this._OP_LSR.opc:
       var self = this;
       var func = function(src) {
         var result = src >> 1;
@@ -1044,10 +1045,10 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_NOP.opc:
+    case this._OP_NOP.opc:
       break;
 
-    case CPU._OP_ORA.opc:
+    case this._OP_ORA.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var result = src1 | src2;
@@ -1056,14 +1057,14 @@ CPU.prototype._operate = function(op) {
       this._updateZ(result);
       break;
 
-    case CPU._OP_PHA.opc:
-    case CPU._OP_PHP.opc:
+    case this._OP_PHA.opc:
+    case this._OP_PHP.opc:
       var reg;
       switch(op.op.opc) {
-        case CPU._OP_PHA.opc:
+        case this._OP_PHA.opc:
           reg = this.a;
           break;
-        case CPU._OP_PHP.opc:
+        case this._OP_PHP.opc:
           // TODO: check this logic. when to clear?
           this.p.setA();
           this.p.setB();
@@ -1073,18 +1074,18 @@ CPU.prototype._operate = function(op) {
       this._pushStack(reg.load());
       break;
 
-    case CPU._OP_PLA.opc:
+    case this._OP_PLA.opc:
       var result = this._popStack();
       this.a.store(result);
       this._updateN(result);
       this._updateZ(result);
       break;
 
-    case CPU._OP_PLP.opc:
+    case this._OP_PLP.opc:
       this.p.store(this._popStack());
       break;
 
-    case CPU._OP_ROL.opc:
+    case this._OP_ROL.opc:
       var self = this;
       var func = function(src) {
         var c = self.p.isC() ? 1 : 0;
@@ -1097,7 +1098,7 @@ CPU.prototype._operate = function(op) {
       this._updateMemoryWithAddressingMode(op, func);
       break;
 
-    case CPU._OP_ROR.opc:
+    case this._OP_ROR.opc:
       var self = this;
       var func = function(src) {
         var c = self.p.isC() ? 0x80 : 0x00;
@@ -1114,17 +1115,17 @@ CPU.prototype._operate = function(op) {
       break;
 
     // TODO: check logic.
-    case CPU._OP_RTI.opc:
+    case this._OP_RTI.opc:
       this.p.store(this._popStack());
       this.pc.store(this._popStack2Bytes());
       break;
 
     // TODO: check logic.
-    case CPU._OP_RTS.opc:
+    case this._OP_RTS.opc:
       this.pc.store(this._popStack2Bytes() + 1);
       break;
 
-    case CPU._OP_SBC.opc:
+    case this._OP_SBC.opc:
       var src1 = this.a.load();
       var src2 = this._loadMemoryWithAddressingMode(op);
       var c = this.p.isC() ? 0 : 1;
@@ -1145,73 +1146,73 @@ CPU.prototype._operate = function(op) {
         this.p.clearV();
       break;
 
-    case CPU._OP_SEC.opc:
+    case this._OP_SEC.opc:
       this.p.setC();
       break;
 
-    case CPU._OP_SED.opc:
+    case this._OP_SED.opc:
       this.p.setD();
       break;
 
-    case CPU._OP_SEI.opc:
+    case this._OP_SEI.opc:
       this.p.setI();
       break;
 
-    case CPU._OP_STA.opc:
-    case CPU._OP_STX.opc:
-    case CPU._OP_STY.opc:
+    case this._OP_STA.opc:
+    case this._OP_STX.opc:
+    case this._OP_STY.opc:
       var reg;
       switch(op.op.opc) {
-        case CPU._OP_STA.opc:
+        case this._OP_STA.opc:
           reg = this.a;
           break;
-        case CPU._OP_STX.opc:
+        case this._OP_STX.opc:
           reg = this.x;
           break;
-        case CPU._OP_STY.opc:
+        case this._OP_STY.opc:
           reg = this.y;
           break;
       }
       this._storeMemoryWithAddressingMode(op, reg.load());
       break;
 
-    case CPU._OP_TAX.opc:
-    case CPU._OP_TAY.opc:
-    case CPU._OP_TSX.opc:
-    case CPU._OP_TXA.opc:
-    case CPU._OP_TXS.opc:
-    case CPU._OP_TYA.opc:
+    case this._OP_TAX.opc:
+    case this._OP_TAY.opc:
+    case this._OP_TSX.opc:
+    case this._OP_TXA.opc:
+    case this._OP_TXS.opc:
+    case this._OP_TYA.opc:
       var srcReg;
       var desReg;
       switch(op.op.opc) {
-        case CPU._OP_TAX.opc:
+        case this._OP_TAX.opc:
           srcReg = this.a;
           desReg = this.x;
           break;
-        case CPU._OP_TAY.opc:
+        case this._OP_TAY.opc:
           srcReg = this.a;
           desReg = this.y;
           break;
-        case CPU._OP_TSX.opc:
+        case this._OP_TSX.opc:
           srcReg = this.sp;
           desReg = this.x;
           break;
-        case CPU._OP_TXA.opc:
+        case this._OP_TXA.opc:
           srcReg = this.x;
           desReg = this.a;
           break;
-        case CPU._OP_TXS.opc:
+        case this._OP_TXS.opc:
           srcReg = this.x;
           desReg = this.sp;
           break;
-        case CPU._OP_TYA.opc:
+        case this._OP_TYA.opc:
           srcReg = this.y;
           desReg = this.a;
           break;
       }
       var result = srcReg.load();
       desReg.store(result);
-      if(op.op.opc != CPU._OP_TXS.opc) {
+      if(op.op.opc != this._OP_TXS.opc) {
         this._updateN(result);
         this._updateZ(result);
       }
@@ -1323,7 +1324,7 @@ function CPUMemoryController(cpu, ppu, pad1) {
 __inherit(CPUMemoryController, ProcessorMemoryController);
 
 // This is used to avoid memory allocation.
-CPUMemoryController._CONTAINER = {'target': null, 'addr': null};
+CPUMemoryController.prototype._CONTAINER = {'target': null, 'addr': null};
 
 
 /**
@@ -1453,7 +1454,7 @@ CPUMemoryController.prototype._map = function(address) {
     addr = address - 0x8000;
   }
 
-  var result = CPUMemoryController._CONTAINER;
+  var result = this._CONTAINER;
   result.target = target;
   result.addr = addr;
 
@@ -1469,133 +1470,133 @@ function CPUStatusRegister() {
 };
 __inherit(CPUStatusRegister, Register);
 
-CPUStatusRegister._N_BIT = 7;
-CPUStatusRegister._V_BIT = 6;
-CPUStatusRegister._A_BIT = 5;  // TODO: temporal name
-CPUStatusRegister._B_BIT = 4;
-CPUStatusRegister._D_BIT = 3;
-CPUStatusRegister._I_BIT = 2;
-CPUStatusRegister._Z_BIT = 1;
-CPUStatusRegister._C_BIT = 0;
+CPUStatusRegister.prototype._N_BIT = 7;
+CPUStatusRegister.prototype._V_BIT = 6;
+CPUStatusRegister.prototype._A_BIT = 5;  // TODO: temporal name
+CPUStatusRegister.prototype._B_BIT = 4;
+CPUStatusRegister.prototype._D_BIT = 3;
+CPUStatusRegister.prototype._I_BIT = 2;
+CPUStatusRegister.prototype._Z_BIT = 1;
+CPUStatusRegister.prototype._C_BIT = 0;
 
 
 CPUStatusRegister.prototype.isN = function() {
-  return this.loadBit(CPUStatusRegister._N_BIT);
+  return this.loadBit(this._N_BIT);
 };
 
 
 CPUStatusRegister.prototype.setN = function() {
-  this.storeBit(CPUStatusRegister._N_BIT, 1);
+  this.storeBit(this._N_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearN = function() {
-  this.storeBit(CPUStatusRegister._N_BIT, 0);
+  this.storeBit(this._N_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isV = function() {
-  return this.loadBit(CPUStatusRegister._V_BIT);
+  return this.loadBit(this._V_BIT);
 };
 
 
 CPUStatusRegister.prototype.setV = function() {
-  this.storeBit(CPUStatusRegister._V_BIT, 1);
+  this.storeBit(this._V_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearV = function() {
-  this.storeBit(CPUStatusRegister._V_BIT, 0);
+  this.storeBit(this._V_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isA = function() {
-  return this.loadBit(CPUStatusRegister._A_BIT);
+  return this.loadBit(this._A_BIT);
 };
 
 
 CPUStatusRegister.prototype.setA = function() {
-  this.storeBit(CPUStatusRegister._A_BIT, 1);
+  this.storeBit(this._A_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearA = function() {
-  this.storeBit(CPUStatusRegister._A_BIT, 0);
+  this.storeBit(this._A_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isB = function() {
-  return this.loadBit(CPUStatusRegister._B_BIT);
+  return this.loadBit(this._B_BIT);
 };
 
 
 CPUStatusRegister.prototype.setB = function() {
-  this.storeBit(CPUStatusRegister._B_BIT, 1);
+  this.storeBit(this._B_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearB = function() {
-  this.storeBit(CPUStatusRegister._B_BIT, 0);
+  this.storeBit(this._B_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isD = function() {
-  return this.loadBit(CPUStatusRegister._D_BIT);
+  return this.loadBit(this._D_BIT);
 };
 
 
 CPUStatusRegister.prototype.setD = function() {
-  this.storeBit(CPUStatusRegister._D_BIT, 1);
+  this.storeBit(this._D_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearD = function() {
-  this.storeBit(CPUStatusRegister._D_BIT, 0);
+  this.storeBit(this._D_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isI = function() {
-  return this.loadBit(CPUStatusRegister._I_BIT);
+  return this.loadBit(this._I_BIT);
 };
 
 
 CPUStatusRegister.prototype.setI = function() {
-  this.storeBit(CPUStatusRegister._I_BIT, 1);
+  this.storeBit(this._I_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearI = function() {
-  this.storeBit(CPUStatusRegister._I_BIT, 0);
+  this.storeBit(this._I_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isZ = function() {
-  return this.loadBit(CPUStatusRegister._Z_BIT);
+  return this.loadBit(this._Z_BIT);
 };
 
 
 CPUStatusRegister.prototype.setZ = function() {
-  this.storeBit(CPUStatusRegister._Z_BIT, 1);
+  this.storeBit(this._Z_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearZ = function() {
-  this.storeBit(CPUStatusRegister._Z_BIT, 0);
+  this.storeBit(this._Z_BIT, 0);
 };
 
 
 CPUStatusRegister.prototype.isC = function() {
-  return this.loadBit(CPUStatusRegister._C_BIT);
+  return this.loadBit(this._C_BIT);
 };
 
 
 CPUStatusRegister.prototype.setC = function() {
-  this.storeBit(CPUStatusRegister._C_BIT, 1);
+  this.storeBit(this._C_BIT, 1);
 };
 
 
 CPUStatusRegister.prototype.clearC = function() {
-  this.storeBit(CPUStatusRegister._C_BIT, 0);
+  this.storeBit(this._C_BIT, 0);
 };
 
 
