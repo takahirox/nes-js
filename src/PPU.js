@@ -12,27 +12,20 @@ function PPU() {
   this.display = null;
   this.ctrl1 = new PPUControl1Register();
   this.ctrl2 = new PPUControl2Register();
-  this.sr = new PPUStatusRegister( // Status Register
-                  this._StatusRegisterReadCallback.bind(this),
-                  null);
-  this.sprAddr = new RegisterWithCallback(
-                       null,
-                       this._SPRRAMAddressWriteCallback.bind(this));
-  this.sprIO = new RegisterWithCallback(
-                     null,
-                     this._SPRRAMIOWriteCallback.bind(this));
-  this.vRAMAddr1 = new RegisterWithCallback(
-                         null,
-                         this._VRAMAddress1WriteCallback.bind(this));
-  this.vRAMAddr2 = new RegisterWithCallback(
-                         null,
-                         this._VRAMAddress2WriteCallback.bind(this));
-  this.vRAMIO = new RegisterWithCallback(
-                      this._VRAMIOReadCallback.bind(this),
-                      this._VRAMIOWriteCallback.bind(this));
-  this.sprDMA = new RegisterWithCallback(
-                      null,
-                      this._SPRRAMDMAWriteCallback.bind(this));
+
+  this.sr = new PPUStatusRegister(this._ID_SR_REG, this, true, false);
+  this.sprAddr = new RegisterWithCallback(this._ID_SPR_ADDR_REG, this,
+                                          false, true);
+  this.sprIO = new RegisterWithCallback(this._ID_SPR_IO_REG, this,
+                                        false, true);
+  this.vRAMAddr1 = new RegisterWithCallback(this._ID_VRAM_ADDR1_REG, this,
+                                            false, true);
+  this.vRAMAddr2 = new RegisterWithCallback(this._ID_VRAM_ADDR2_REG, this,
+                                            false, true);
+  this.vRAMIO = new RegisterWithCallback(this._ID_VRAM_IO_REG, this,
+                                         true, true);
+  this.sprDMA = new RegisterWithCallback(this._ID_SPR_DMA_REG, this,
+                                         false, true);
 
   this.vram = new VRAM();
   this.sprram = new SPRRAM();
@@ -66,6 +59,14 @@ function PPU() {
   this.spPalette = [];
   this.spPalette.length = 16;
 };
+
+PPU.prototype._ID_SR_REG         = 0;
+PPU.prototype._ID_SPR_ADDR_REG   = 1;
+PPU.prototype._ID_SPR_IO_REG     = 2;
+PPU.prototype._ID_VRAM_ADDR1_REG = 3;
+PPU.prototype._ID_VRAM_ADDR2_REG = 4;
+PPU.prototype._ID_VRAM_IO_REG    = 5;
+PPU.prototype._ID_SPR_DMA_REG    = 6;
 
 PPU._MAX_SCANLINE = 262;
 PPU._SCANLINE_CYCLE = 341;
@@ -477,6 +478,46 @@ PPU.prototype._countCycle = function() {
 };
 
 
+PPU.prototype.notifyRegisterLoading = function(id) {
+  switch(id) {
+    case this._ID_SR_REG:
+      this._StatusRegisterReadCallback();
+      break;
+    case this._ID_VRAM_IO_REG:
+      this._VRAMIOReadCallback();
+      break;
+    default:
+      break;
+  }
+};
+
+
+PPU.prototype.notifyRegisterStoring = function(id) {
+  switch(id) {
+    case this._ID_SPR_ADDR_REG:
+      this._SPRRAMAddressWriteCallback();
+      break;
+    case this._ID_SPR_IO_REG:
+      this._SPRRAMIOWriteCallback();
+      break;
+    case this._ID_VRAM_ADDR1_REG:
+      this._VRAMAddress1WriteCallback();
+      break;
+    case this._ID_VRAM_ADDR2_REG:
+      this._VRAMAddress2WriteCallback();
+      break;
+    case this._ID_VRAM_IO_REG:
+      this._VRAMIOWriteCallback();
+      break;
+    case this._ID_SPR_DMA_REG:
+      this._SPRRAMDMAWriteCallback();
+      break;
+    default:
+      break;
+  }
+};
+
+
 PPU.prototype._VRAMAddress1WriteCallback = function() {
   if(this.VRAMAddressCount1 == 0) {
     this.xScroll = this.vRAMAddr1.load(true);
@@ -539,7 +580,6 @@ PPU.prototype._StatusRegisterReadCallback = function() {
 PPU.prototype._SPRRAMAddressWriteCallback = function() {
 
 };
-
 
 PPU.prototype._SPRRAMIOWriteCallback = function() {
   var addr = this.sprAddr.load(true);
@@ -906,9 +946,9 @@ PPUControl2Register._COLOR_MODE_BIT = 0;
 
 
 
-function PPUStatusRegister(readCallback, writeCallback) {
+function PPUStatusRegister(id, caller, l, s) {
   this.parent = RegisterWithCallback;
-  this.parent.call(this, readCallback, writeCallback);
+  this.parent.call(this, id, caller, l, s);
 };
 __inherit(PPUStatusRegister, RegisterWithCallback);
 

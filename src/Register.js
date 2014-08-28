@@ -183,11 +183,14 @@ Register16bit.prototype.dump = function() {
 /**
  * A class uses this class should be careful not to occur infinite loop.
  */
-function RegisterWithCallback(readCallback, writeCallback) {
+function RegisterWithCallback(id, caller, callbackLoading, callbackStoring) {
   this.parent = Register;
   this.parent.call(this);
-  this.readCallback = readCallback ? readCallback : null;
-  this.writeCallback = writeCallback ? writeCallback : null;
+  this.caller = caller;
+  this.id = id;
+  // TODO: rename
+  this.callbackLoading = callbackLoading;
+  this.callbackStoring = callbackStoring;
 };
 __inherit(RegisterWithCallback, Register);
 
@@ -198,9 +201,8 @@ __inherit(RegisterWithCallback, Register);
  */
 RegisterWithCallback.prototype.Register_load = Register.prototype.load;
 RegisterWithCallback.prototype.load = function(skip) {
-  if((skip === false || skip === null || skip === void 0) &&
-      this.readCallback !== null)
-    this.readCallback();
+  if(this.callbackLoading === true && skip !== true)
+    this.caller.notifyRegisterLoading(this.id);
   return this.Register_load();
 };
 
@@ -212,9 +214,8 @@ RegisterWithCallback.prototype.load = function(skip) {
 RegisterWithCallback.prototype.Register_store = Register.prototype.store;
 RegisterWithCallback.prototype.store = function(value, skip) {
   this.Register_store(value);
-  if((skip === false || skip === null || skip === void 0) &&
-      this.writeCallback !== null)
-    this.writeCallback();
+  if(this.callbackStoring === true && skip !== true)
+    this.caller.notifyRegisterStoring(this.id);
 };
 
 

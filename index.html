@@ -132,8 +132,8 @@ function __run(arrayBuffer) {
   var display = new Display(canvas);
   nes.setDisplay(display);
 
-  window.onkeydown = nes.handleKeyDown.bind(nes);
-  window.onkeyup = nes.handleKeyUp.bind(nes);
+  window.onkeydown = function(e) { nes.handleKeyDown(e) };
+  window.onkeyup = function(e) { nes.handleKeyUp(e) };
 
   __nes = nes; // for debug on console.
 
