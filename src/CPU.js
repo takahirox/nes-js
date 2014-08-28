@@ -1439,7 +1439,7 @@ CPUMemoryController.prototype._map = function(address) {
     }
     addr = null;
     // TODO: temporal.
-    if(target == null) {
+    if(target === null) {
       target = new Register();
     }
   } else if(address >= 0x4020 && address < 0x6000) {

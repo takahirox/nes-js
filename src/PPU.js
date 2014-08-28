@@ -579,6 +579,7 @@ PPU.prototype.clearVBlank = function() {
  */
 PPU.prototype._initSpritesForFrame = function() {
   this.sprites.length = 0;
+  var n = 0;
   for(var i = 0; i < 64; i++) {
     var b0 = this.sprram.load(i*4+0);
     var b1 = this.sprram.load(i*4+1);
@@ -587,7 +588,7 @@ PPU.prototype._initSpritesForFrame = function() {
     var s = new Sprite(b0, b1, b2, b3);
     if(!s.doDisplay() || s.getPriority())
       continue;
-    this.sprites.push(s);
+    this.sprites[n++] = s;
   }
 };
 
@@ -610,16 +611,24 @@ PPU.prototype._initSPPalette = function() {
  * TODO: temporal
  */
 PPU.prototype._initSpritesForScanLine = function(ay) {
+  if(this.sprites.length === 0)
+    return;
+
   for(var i = 0; i < 256; i++)
     this.spritesMap[i] = 0;
 
   var ySize = this.ctrl1.isSpriteSize16() ? 16 : 8;
-  for(var i = 0; i < this.sprites.length; i++) {
-    var s = this.sprites[i];
-    if(! s.inY(ay, ySize))
+  var n = 0;
+  for(var i = 0, len = this.sprites.length; i < len; i++) {
+    if(this.sprites[i].afterY(ay, ySize)) {
+      n++;
       continue;
+    } else if(this.sprites[i].beforeY(ay)) {
+      this.sprites[i-n] = this.sprites[i];
+      continue;
+    }
+    var s = this.sprites[i-n] = this.sprites[i];
 
-//    this.sprites[i] = s;
     var bx = s.getXPosition();
     var by = s.getYPosition();
     var j = ay - by;
@@ -639,6 +648,7 @@ PPU.prototype._initSpritesForScanLine = function(ay) {
       }
     }
   }
+  this.sprites.length -= n;
 
 };
 
@@ -796,6 +806,28 @@ PPUMemoryController.prototype._map = function(address) {
 };
 
 
+/**
+ * Note: for performance.
+ */
+PPUMemoryController.prototype.load = function(address, preventCallback) {
+  if(address < 0x2000 && this.hasCHRROM) {
+    return this.chrrom.load(address);
+  } else {
+    var addr = address;
+    if(addr >= 0x4000) {
+      addr = addr & 0x3FFF;
+    }
+    if(addr >= 0x3F00 && addr < 0x4000) {
+      addr = addr & 0x3F1F;
+    }
+    if(addr >= 0x2000 && addr < 0x3F00) {
+      addr = addr & 0x2FFF;
+    }
+    return this.vram.load(addr);
+  }
+};
+
+
 
 function PPUControl1Register() {
   this.parent = Register;
@@ -946,6 +978,22 @@ Sprite.prototype.doFlipHorizontally = function() {
 
 Sprite.prototype.doFlipVertically = function() {
   return ((this.byte2 >> 7) & 1) ? true : false;
+};
+
+
+/**
+ * TODO: rename
+ */
+Sprite.prototype.beforeY = function(y) {
+  return this.getYPosition() > y;
+};
+
+
+/**
+ * TODO: rename
+ */
+Sprite.prototype.afterY = function(y, length) {
+  return this.getYPosition() + length <= y;
 };
 
 
