@@ -168,7 +168,9 @@ Register16bit.prototype.lshift = function(value) {
 
 
 Register16bit.prototype.lshift8bits = function() {
-  this.storeHigherByte(this.loadLowerByte());
+  // Note: to improve the performance
+//  this.storeHigherByte(this.loadLowerByte());
+  this.uint8[1] = this.uint8[0];
 };
 
 
@@ -194,7 +196,6 @@ __inherit(RegisterWithCallback, Register);
  * callback is called BEFORE the parent load method.
  * TODO: prevent callback if it's called from inside the class?
  */
-
 RegisterWithCallback.prototype.Register_load = Register.prototype.load;
 RegisterWithCallback.prototype.load = function(skip) {
   if((skip === false || skip === null || skip === void 0) &&
