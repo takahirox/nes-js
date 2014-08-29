@@ -15,7 +15,7 @@ function GenericMemory(param) {
   this._init();
 };
 
-GenericMemory._WORD_SIZE = 1; // 1 byte
+GenericMemory.prototype._WORD_SIZE = 1; // 1 byte
 
 
 GenericMemory.prototype._init = function() {
@@ -29,34 +29,8 @@ GenericMemory.prototype.getCapacity = function() {
 };
 
 
-GenericMemory.prototype._map = function(address) {
-  return address;
-};
-
-
 GenericMemory.prototype.load = function(address) {
-  return this.uint8[this._map(address)];
-};
-
-
-/**
- * little endian.
- * TODO: implement overlap?
- * TODO: move this method to the caller side?
- */
-GenericMemory.prototype.load2Bytes = function(address) {
-  return this.load(address) | (this.load(address + 1) << 8);
-};
-
-
-/**
- * little endian.
- * TODO: implement overlap?
- * TODO: move this method to the caller side?
- */
-GenericMemory.prototype.load2BytesFromZeropage = function(address) {
-  return this.load(address & 0xff) |
-           (this.load((address+1) & 0xff) << 8);
+  return this.uint8[address];
 };
 
 
@@ -65,47 +39,13 @@ GenericMemory.prototype.loadWithoutMapping = function(address) {
 };
 
 
-GenericMemory.prototype.load2BytesWithoutMapping = function(address) {
-  return this.loadWithoutMapping(address) |
-           (this.loadWithoutMapping(address + 1) << 8);
-};
-
-
 GenericMemory.prototype.store = function(address, value) {
-  this.uint8[this._map(address)] = value;
-};
-
-
-/**
- * little endian.
- * TODO: implement overlap?
- * TODO: move this method to the caller side?
- */
-GenericMemory.prototype.store2Bytes = function(address, value) {
-  this.store(address,   value);
-  this.store(address+1, value >> 8);
-};
-
-
-/**
- * little endian.
- * TODO: implement overlap?
- * TODO: move this method to the caller side?
- */
-GenericMemory.prototype.store2BytesToZeropage = function(address, value) {
-  this.store((address&0xff),   value);
-  this.store((address&0xff)+1, value >> 8);
+  this.uint8[address] = value;
 };
 
 
 GenericMemory.prototype.storeWithoutMapping = function(address, value) {
   this.uint8[address] = value;
-};
-
-
-GenericMemory.prototype.store2BytesWithoutMapping = function(address, value) {
-  this.storeWithoutMapping(address,   value);
-  this.storeWithoutMapping(address+1, value >> 8);
 };
 
 

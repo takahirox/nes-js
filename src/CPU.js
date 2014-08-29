@@ -1614,3 +1614,25 @@ CPUStatusRegister.prototype.dump = function() {
   buffer += ')';
   return buffer;
 };
+
+
+/**
+ * CPU RAM.
+ */
+function RAM() {
+  this.parent = GenericMemory;
+  this.parent.call(this, this._CAPACITY);
+};
+__inherit(RAM, GenericMemory);
+
+RAM.prototype._CAPACITY = 64 * 1024; // 64KB
+
+/**
+ * little endian.
+ * TODO: implement overlap?
+ * TODO: move this method to the caller side?
+ */
+RAM.prototype.load2BytesFromZeropage = function(address) {
+  return this.load(address & 0xff) |
+           (this.load((address+1) & 0xff) << 8);
+};

@@ -58,6 +58,7 @@ function PPU() {
   this.bgPalette.length = 16;
   this.spPalette = [];
   this.spPalette.length = 16;
+
 };
 
 PPU.prototype._ID_SR_REG         = 0;
@@ -217,10 +218,6 @@ PPU.prototype._renderPixel = function() {
   var y = this.scanLine;
 
   var c = (this.spritesMap[x] !== 0) ? this.spritesMap[x] : this._getBGPixel();
-
-  // TODO: temporal
-//  this.sr.setZeroHit();
-
   this.display.renderPixel(x, y, c);
 };
 
@@ -255,12 +252,6 @@ PPU.prototype._shiftRegisters = function() {
       this.atL.lshift8bits();
       this.atH.lshift8bits();
     }
-/*
-    this.ptL.lshift(0);
-    this.ptH.lshift(0);
-    this.atL.lshift(0);
-    this.atH.lshift(0);
-*/
   }
 };
 
@@ -280,10 +271,6 @@ PPU.prototype._initForFetch = function() {
  * Note: this comparison order is for performance.
  */
 PPU.prototype._fetch = function() {
-
-  // TODO: temporal
-  if(this.scanLine == 261 && this.cycle == 1)
-    this.sr.clearZeroHit();
 
   if(this.cycle % 8 != 0)
     return;
@@ -1043,3 +1030,25 @@ Sprite.prototype.afterY = function(y, length) {
 Sprite.prototype.inY = function(y, length) {
   return ((y >= this.getYPosition()) && (y < this.getYPosition()+length));
 };
+
+
+
+/**
+ * PPU VRAM.
+ */
+function VRAM() {
+  this.parent = GenericMemory;
+  this.parent.call(this, VRAM._CAPACITY);
+};
+__inherit(VRAM, GenericMemory);
+
+VRAM._CAPACITY = 64 * 1024; // 64KB
+
+
+function SPRRAM() {
+  this.parent = GenericMemory;
+  this.parent.call(this, SPRRAM._CAPACITY);
+};
+__inherit(SPRRAM, GenericMemory);
+
+SPRRAM._CAPACITY = 256; // 256 bytes

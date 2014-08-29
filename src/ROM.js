@@ -34,8 +34,8 @@ ROM.prototype._initCHRROM = function() {
 };
 
 
-ROM.prototype._map = function(address) {
-  return this.mapper.map(address) + this._HEADER_SIZE;
+ROM.prototype.load = function(address) {
+  return this.uint8[this.mapper.map(address) + this._HEADER_SIZE];
 };
 
 
@@ -97,64 +97,64 @@ function ROMHeader(rom) {
   this.rom = rom;
 };
 
-ROMHeader._WORD_SIZE = 1; // 1byte
+ROMHeader.prototype._WORD_SIZE = 1; // 1byte
 
-ROMHeader._SIGNATURE = 'NES';
-ROMHeader._SIGNATURE_ADDRESS = 0;
-ROMHeader._SIGNATURE_SIZE = ROMHeader._SIGNATURE.length;
+ROMHeader.prototype._SIGNATURE = 'NES';
+ROMHeader.prototype._SIGNATURE_ADDRESS = 0;
+ROMHeader.prototype._SIGNATURE_SIZE = ROMHeader.prototype._SIGNATURE.length;
 
-ROMHeader._MAGIC_NUMBER = 0x1a;
-ROMHeader._MAGIC_NUMBER_ADDRESS = 3;
-ROMHeader._MAGIC_NUMBER_SIZE = 1;
+ROMHeader.prototype._MAGIC_NUMBER = 0x1a;
+ROMHeader.prototype._MAGIC_NUMBER_ADDRESS = 3;
+ROMHeader.prototype._MAGIC_NUMBER_SIZE = 1;
 
-ROMHeader._PRG_ROM_BANKS_NUM_ADDRESS = 4;
-ROMHeader._PRG_ROM_BANKS_NUM_SIZE = 1;
+ROMHeader.prototype._PRG_ROM_BANKS_NUM_ADDRESS = 4;
+ROMHeader.prototype._PRG_ROM_BANKS_NUM_SIZE = 1;
 
-ROMHeader._CHR_ROM_BANKS_NUM_ADDRESS = 5;
-ROMHeader._CHR_ROM_BANKS_NUM_SIZE = 1;
+ROMHeader.prototype._CHR_ROM_BANKS_NUM_ADDRESS = 5;
+ROMHeader.prototype._CHR_ROM_BANKS_NUM_SIZE = 1;
 
-ROMHeader._CONTROL_BYTE1_ADDRESS = 6;
-ROMHeader._CONTROL_BYTE1_SIZE = 1;
+ROMHeader.prototype._CONTROL_BYTE1_ADDRESS = 6;
+ROMHeader.prototype._CONTROL_BYTE1_SIZE = 1;
 
-ROMHeader._CONTROL_BYTE2_ADDRESS = 7;
-ROMHeader._CONTROL_BYTE2_SIZE = 1;
+ROMHeader.prototype._CONTROL_BYTE2_ADDRESS = 7;
+ROMHeader.prototype._CONTROL_BYTE2_SIZE = 1;
 
-ROMHeader._RAM_BANKS_NUM_ADDRESS = 8;
-ROMHeader._RAM_BANKS_NUM_SIZE = 1;
+ROMHeader.prototype._RAM_BANKS_NUM_ADDRESS = 8;
+ROMHeader.prototype._RAM_BANKS_NUM_SIZE = 1;
 
-ROMHeader._UNUSED_ADDRESS = 9;
-ROMHeader._UNUSED_SIZE = 7;
+ROMHeader.prototype._UNUSED_ADDRESS = 9;
+ROMHeader.prototype._UNUSED_SIZE = 7;
 
-ROMHeader._MIRRORING_TYPE_BIT = 0;
-ROMHeader._MIRRORING_TYPE_BITS_MASK = 0x1;
-ROMHeader._MIRRORING_TYPE_HORIZONTAL = 0;
-ROMHeader._MIRRORING_TYPE_VERTICAL = 1;
+ROMHeader.prototype._MIRRORING_TYPE_BIT = 0;
+ROMHeader.prototype._MIRRORING_TYPE_BITS_MASK = 0x1;
+ROMHeader.prototype._MIRRORING_TYPE_HORIZONTAL = 0;
+ROMHeader.prototype._MIRRORING_TYPE_VERTICAL = 1;
 
-ROMHeader._BATTERY_BACKED_RAM_BIT = 1;
-ROMHeader._BATTERY_BACKED_RAM_BITS_MASK = 0x1;
+ROMHeader.prototype._BATTERY_BACKED_RAM_BIT = 1;
+ROMHeader.prototype._BATTERY_BACKED_RAM_BITS_MASK = 0x1;
 
-ROMHeader._512BYTES_TRAINER_BIT = 2;
-ROMHeader._512BYTES_TRAINER_BITS_MASK = 0x1;
+ROMHeader.prototype._512BYTES_TRAINER_BIT = 2;
+ROMHeader.prototype._512BYTES_TRAINER_BITS_MASK = 0x1;
 
-ROMHeader._FOUR_SCREEN_MIRRORING_BIT = 3;
-ROMHeader._FOUR_SCREEN_MIRRORING_BITS_MASK = 0x1;
+ROMHeader.prototype._FOUR_SCREEN_MIRRORING_BIT = 3;
+ROMHeader.prototype._FOUR_SCREEN_MIRRORING_BITS_MASK = 0x1;
 
-ROMHeader._MAPPER_LOWER_BIT = 4;
-ROMHeader._MAPPER_LOWER_BITS_SIZE = 4; // 4bits
-ROMHeader._MAPPER_LOWER_BITS_MASK = 0xf;
+ROMHeader.prototype._MAPPER_LOWER_BIT = 4;
+ROMHeader.prototype._MAPPER_LOWER_BITS_SIZE = 4; // 4bits
+ROMHeader.prototype._MAPPER_LOWER_BITS_MASK = 0xf;
 
-ROMHeader._MAPPER_HIGHER_BIT = 4;
-ROMHeader._MAPPER_HIGHER_BITS_SIZE = 4; // 4bits
-ROMHeader._MAPPER_HIGHER_BITS_MASK = 0xf;
+ROMHeader.prototype._MAPPER_HIGHER_BIT = 4;
+ROMHeader.prototype._MAPPER_HIGHER_BITS_SIZE = 4; // 4bits
+ROMHeader.prototype._MAPPER_HIGHER_BITS_MASK = 0xf;
 
 // TODO: consider to extract mapper class.
 // TODO: not fixed yet.
-ROMHeader._MAPPERS = [];
-ROMHeader._MAPPERS[0] = {'name': 'NROM'};
-ROMHeader._MAPPERS[1] = {'name': 'MMC1'};
-ROMHeader._MAPPERS[2] = {'name': 'UNROM'};
-ROMHeader._MAPPERS[3] = {'name': 'CNROM'};
-ROMHeader._MAPPERS[4] = {'name': 'MMC3'};
+ROMHeader.prototype._MAPPERS = [];
+ROMHeader.prototype._MAPPERS[0] = {'name': 'NROM'};
+ROMHeader.prototype._MAPPERS[1] = {'name': 'MMC1'};
+ROMHeader.prototype._MAPPERS[2] = {'name': 'UNROM'};
+ROMHeader.prototype._MAPPERS[3] = {'name': 'CNROM'};
+ROMHeader.prototype._MAPPERS[4] = {'name': 'MMC3'};
 
 
 ROMHeader.prototype.load = function(address) {
@@ -164,47 +164,47 @@ ROMHeader.prototype.load = function(address) {
 
 ROMHeader.prototype.getSignature = function() {
   var str = '';
-  for(var i = 0; i < ROMHeader._SIGNATURE_SIZE; i++) {
-    str += String.fromCharCode(this.load(ROMHeader._SIGNATURE_ADDRESS+i));
+  for(var i = 0; i < this._SIGNATURE_SIZE; i++) {
+    str += String.fromCharCode(this.load(this._SIGNATURE_ADDRESS+i));
   }
   return str;
 };
 
 
 ROMHeader.prototype.getMagicNumber = function() {
-  return this.load(ROMHeader._MAGIC_NUMBER_ADDRESS);
+  return this.load(this._MAGIC_NUMBER_ADDRESS);
 };
 
 
 ROMHeader.prototype.getPRGROMBanksNum = function() {
-  return this.load(ROMHeader._PRG_ROM_BANKS_NUM_ADDRESS);
+  return this.load(this._PRG_ROM_BANKS_NUM_ADDRESS);
 };
 
 
 ROMHeader.prototype.getCHRROMBanksNum = function() {
-  return this.load(ROMHeader._CHR_ROM_BANKS_NUM_ADDRESS);
+  return this.load(this._CHR_ROM_BANKS_NUM_ADDRESS);
 };
 
 
 ROMHeader.prototype.getControlByte1 = function() {
-  return this.load(ROMHeader._CONTROL_BYTE1_ADDRESS);
+  return this.load(this._CONTROL_BYTE1_ADDRESS);
 };
 
 
 ROMHeader.prototype.getControlByte2 = function() {
-  return this.load(ROMHeader._CONTROL_BYTE2_ADDRESS);
+  return this.load(this._CONTROL_BYTE2_ADDRESS);
 };
 
 
 ROMHeader.prototype.getRAMBanksNum = function() {
-  return this.load(ROMHeader._RAM_BANKS_NUM_ADDRESS);
+  return this.load(this._RAM_BANKS_NUM_ADDRESS);
 };
 
 
 ROMHeader.prototype.getUnusedField = function() {
   var value = 0;
-  for(var i = 0; i < ROMHeader._UNUSED_SIZE; i++) {
-    value = (value << 8) | this.load(ROMHeader._UNUSED_ADDRESS+i);
+  for(var i = 0; i < this._UNUSED_SIZE; i++) {
+    value = (value << 8) | this.load(this._UNUSED_ADDRESS+i);
   }
   return value;
 };
@@ -220,62 +220,62 @@ ROMHeader.prototype._getPartialBits = function(value, bit, mask) {
 
 ROMHeader.prototype.getMirroringType = function() {
   return this._getPartialBits(this.getControlByte1(),
-                              ROMHeader._MIRRORING_TYPE_BIT,
-                              ROMHeader._MIRRORING_TYPE_BITS_MASK);
+                              this._MIRRORING_TYPE_BIT,
+                              this._MIRRORING_TYPE_BITS_MASK);
 };
 
 
 ROMHeader.prototype.getMirroringTypeAsStrings = function() {
-  return (this.getMirroringType() == ROMHeader._MIRRORING_TYPE_HORIZONTAL)
+  return (this.getMirroringType() == this._MIRRORING_TYPE_HORIZONTAL)
            ? 'horizontal' : 'vertical';
 };
 
 
 ROMHeader.prototype.getBatteryBackedRAM = function() {
   return this._getPartialBits(this.getControlByte1(),
-                              ROMHeader._BATTERY_BACKED_RAM_BIT,
-                              ROMHeader._BATTERY_BACKED_RAM_BITS_MASK);
+                              this._BATTERY_BACKED_RAM_BIT,
+                              this._BATTERY_BACKED_RAM_BITS_MASK);
 };
 
 
 ROMHeader.prototype.get512BytesTrainer = function() {
   return this._getPartialBits(this.getControlByte1(),
-                              ROMHeader._512BYTES_TRAINER_BIT,
-                              ROMHeader._512BYTES_TRAINER_BITS_MASK);
+                              this._512BYTES_TRAINER_BIT,
+                              this._512BYTES_TRAINER_BITS_MASK);
 };
 
 
 ROMHeader.prototype.getFourScreenMirroring = function() {
   return this._getPartialBits(this.getControlByte1(),
-                              ROMHeader._FOUR_SCREEN_MIRRORING_BIT,
-                              ROMHeader._FOUR_SCREEN_MIRRORING_BITS_MASK);
+                              this._FOUR_SCREEN_MIRRORING_BIT,
+                              this._FOUR_SCREEN_MIRRORING_BITS_MASK);
 };
 
 
 ROMHeader.prototype.getMapperNum = function() {
   var lowerBits = this._getPartialBits(this.getControlByte1(),
-                                       ROMHeader._MAPPER_LOWER_BIT,
-                                       ROMHeader._MAPPER_LOWER_BITS_MASK);
+                                       this._MAPPER_LOWER_BIT,
+                                       this._MAPPER_LOWER_BITS_MASK);
   var higherBits = this._getPartialBits(this.getControlByte2(),
-                                        ROMHeader._MAPPER_HIGHER_BIT,
-                                        ROMHeader._MAPPER_HIGHER_BITS_MASK);
-  return (higherBits << ROMHeader._MAPPER_LOWER_BITS_SIZE) | lowerBits;
+                                        this._MAPPER_HIGHER_BIT,
+                                        this._MAPPER_HIGHER_BITS_MASK);
+  return (higherBits << this._MAPPER_LOWER_BITS_SIZE) | lowerBits;
 };
 
 
 ROMHeader.prototype.getMapperName = function() {
   var num = this.getMapperNum();
-  if(ROMHeader._MAPPERS[num])
-    return ROMHeader._MAPPERS[num].name;
+  if(this._MAPPERS[num])
+    return this._MAPPERS[num].name;
   else
     return 'invalid or not implemented yet.';
 };
 
 
 ROMHeader.prototype.isNES = function() {
-  if(ROMHeader._SIGNATURE != this.getSignature())
+  if(this._SIGNATURE != this.getSignature())
     return false;
-  if(this.getMagicNumber() != ROMHeader._MAGIC_NUMBER)
+  if(this.getMagicNumber() != this._MAGIC_NUMBER)
     return false;
   return true;
 };

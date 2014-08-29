@@ -3,12 +3,12 @@
  * Specific register for CPU and PPU are implemented in each class.
  */
 function Register() {
-  var buffer = new ArrayBuffer(Register._WORD_SIZE);
+  var buffer = new ArrayBuffer(this._WORD_SIZE);
   this.uint8 = new Uint8Array(buffer);
   this.uint8[0] = 0;
 };
 
-Register._WORD_SIZE = 1; // 1 byte
+Register.prototype._WORD_SIZE = 1; // 1 byte
 
 
 Register.prototype.load = function() {
@@ -17,7 +17,7 @@ Register.prototype.load = function() {
 
 
 Register.prototype.loadBit = function(bit) {
-  return this.loadPartialBits(bit, 1);
+  return (this.uint8[0] >> bit) & 1;
 };
 
 
@@ -25,7 +25,7 @@ Register.prototype.loadBit = function(bit) {
  * TODO: receive the size and make the mask in the function.
  */
 Register.prototype.loadPartialBits = function(offset, mask) {
-  return (this.load() >> offset) & mask;
+  return (this.uint8[0] >> offset) & mask;
 };
 
 
@@ -35,8 +35,8 @@ Register.prototype.store = function(value) {
 
 
 Register.prototype.storeBit = function(bit, value) {
-  value = value ? 1 : 0;
-  this.storePartialBits(bit, 1, value);
+//  value = value ? 1 : 0;
+  this.uint8[0] = this.uint8[0] & ~(1 << bit) | (value << bit);
 };
 
 
@@ -44,38 +44,37 @@ Register.prototype.storeBit = function(bit, value) {
  * TODO: receive the size and make the mask in the function.
  */
 Register.prototype.storePartialBits = function(offset, mask, value) {
-  this.store(this.load() 
-               & ~(mask << offset)
-               | ((value & mask) << offset));
+  this.uint8[0] = this.uint8[0]
+                    & ~(mask << offset)
+                    | ((value & mask) << offset);
 };
 
 
 Register.prototype.increment = function() {
-  this.store(this.load() + 1);
+  this.uint8[0]++;
 };
 
 
 Register.prototype.incrementBy2 = function() {
-  this.increment();
-  this.increment();
+  this.uint8[0] += 2;
 };
 
 
 Register.prototype.decrement = function() {
-  this.store(this.load() - 1);
+  this.uint8[0]--;
 };
 
 
 Register.prototype.decrementBy2 = function() {
-  this.decrement();
-  this.decrement();
+  this.uint8[0] -= 2;
 };
 
 
 Register.prototype.lshift = function(value) {
 //  value = value ? 1 : 0;
-  var returnValue = this.loadBit(7);
-  this.store((this.load() << 1) | value);
+  var val = this.uint8[0];
+  var returnValue = val >> 7;
+  this.uint8[0] = (val << 1) | value;
   return returnValue;
 };
 
@@ -87,13 +86,13 @@ Register.prototype.dump = function() {
 
 
 function Register16bit() {
-  var buffer = new ArrayBuffer(Register16bit._WORD_SIZE);
+  var buffer = new ArrayBuffer(this._WORD_SIZE);
   this.uint8 = new Uint8Array(buffer);
   this.uint16 = new Uint16Array(buffer);
   this.uint16[0] = 0;
 };
 
-Register16bit._WORD_SIZE = 2; // 2 byte
+Register16bit.prototype._WORD_SIZE = 2; // 2 byte
 
 
 Register16bit.prototype.load = function() {
@@ -102,7 +101,7 @@ Register16bit.prototype.load = function() {
 
 
 Register16bit.prototype.loadBit = function(bit) {
-  return (this.load() >> bit) & 1;
+  return (this.uint16[0] >> bit) & 1;
 };
 
 
@@ -132,24 +131,23 @@ Register16bit.prototype.storeLowerByte = function(value) {
 
 
 Register16bit.prototype.storeBit = function(bit, value) {
-  value = value ? 1 : 0;
-  this.store(this.load() & ~(1 << bit) | (value << bit));
+//  value = value ? 1 : 0;
+  this.uint16[0] = this.uint16[0] & ~(1 << bit) | (value << bit);
 };
 
 
 Register16bit.prototype.increment = function() {
-  this.store(this.load() + 1);
+  this.uint16[0]++;
 };
 
 
 Register16bit.prototype.incrementBy2 = function() {
-  this.increment();
-  this.increment();
+  this.uint16[0] += 2;
 };
 
 
 Register16bit.prototype.decrement = function() {
-  this.store(this.load() - 1);
+  this.uint16[0]--;
 };
 
 
@@ -161,15 +159,16 @@ Register16bit.prototype.lshift = function(value) {
   this.store((this.load() << 1) | value);
   return returnValue;
 */
-  var data = this.load();
-  this.store((data << 1) | value);
-  return data >> 15;
+  var val = this.uint16[0];
+  var returnValue = val >> 15;
+  this.uint16[0] = (val << 1) | value;
+  return returnValue;
 };
 
 
 Register16bit.prototype.lshift8bits = function() {
   // Note: to improve the performance
-//  this.storeHigherByte(this.loadLowerByte());
+  //  this.storeHigherByte(this.loadLowerByte());
   this.uint8[1] = this.uint8[0];
 };
 
