@@ -89,28 +89,32 @@ NES.prototype.run = function() {
     this.cpu._runCycle();
   }
 */
-  var cycles = 341*262/3/10; // TODO: temporal
-  for(var i = 0; i < cycles; i++) {
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
-    this.cpu.runCycle();
-    this.ppu.run3Cycles();
+
+  // TODO: write note.
+  var cycles = (341*262/3/10) | 0; // TODO: temporal
+  var cpu = this.cpu;
+  var ppu = this.ppu;
+  for(var i = cycles; i--; ) {
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
+    cpu.runCycle();
+    ppu.run3Cycles();
   }
 
   if(this.state == this._STATE_RUN)

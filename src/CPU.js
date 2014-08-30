@@ -10,8 +10,9 @@ function CPU() {
   this.y = new Register();
   this.p = new CPUStatusRegister();
   this.ram = new RAM();
-  this.mem = null; // initialized by initMemoryController()
   this.pad1 = null; // set by setJoypad1()
+  this.ppu = null;
+  this.rom = null;
   this.handling = 0;
 };
 
@@ -83,19 +84,19 @@ CPU.prototype._OP_TXS = {'opc': 55, 'name': 'txs'};
 CPU.prototype._OP_TYA = {'opc': 56, 'name': 'tya'};
 
 // TODO: not fixed yet.
-CPU.prototype._ADDRESSING_IMMEDIATE             = {'id':  0, 'pc': 2, 'name': 'immediate'};
-CPU.prototype._ADDRESSING_ABSOLUTE              = {'id':  1, 'pc': 3, 'name': 'absolute'};
-CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X    = {'id':  2, 'pc': 3, 'name': 'indexed_absolute_x'};
-CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y    = {'id':  3, 'pc': 3, 'name': 'indexed_absolute_y'};
-CPU.prototype._ADDRESSING_ZERO_PAGE             = {'id':  4, 'pc': 2, 'name': 'zero_page'};
-CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X   = {'id':  5, 'pc': 2, 'name': 'indexed_zero_page_x'};
-CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_Y   = {'id':  6, 'pc': 2, 'name': 'indexed_zero_page_y'};
-CPU.prototype._ADDRESSING_IMPLIED               = {'id':  7, 'pc': 1, 'name': 'implied'};
-CPU.prototype._ADDRESSING_ACCUMULATOR           = {'id':  8, 'pc': 1, 'name': 'accumulator'};
-CPU.prototype._ADDRESSING_INDIRECT              = {'id':  9, 'pc': 3, 'name': 'indirect'};
-CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X    = {'id': 10, 'pc': 2, 'name': 'indexed_indirect_x'};
-CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y    = {'id': 11, 'pc': 2, 'name': 'indexed_indirect_y'};
-CPU.prototype._ADDRESSING_RELATIVE              = {'id': 12, 'pc': 2, 'name': 'relative'};
+CPU.prototype._ADDRESSING_IMMEDIATE           = {'id':  0, 'pc': 2, 'name': 'immediate'};
+CPU.prototype._ADDRESSING_ABSOLUTE            = {'id':  1, 'pc': 3, 'name': 'absolute'};
+CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_X  = {'id':  2, 'pc': 3, 'name': 'indexed_absolute_x'};
+CPU.prototype._ADDRESSING_INDEXED_ABSOLUTE_Y  = {'id':  3, 'pc': 3, 'name': 'indexed_absolute_y'};
+CPU.prototype._ADDRESSING_ZERO_PAGE           = {'id':  4, 'pc': 2, 'name': 'zero_page'};
+CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_X = {'id':  5, 'pc': 2, 'name': 'indexed_zero_page_x'};
+CPU.prototype._ADDRESSING_INDEXED_ZERO_PAGE_Y = {'id':  6, 'pc': 2, 'name': 'indexed_zero_page_y'};
+CPU.prototype._ADDRESSING_IMPLIED             = {'id':  7, 'pc': 1, 'name': 'implied'};
+CPU.prototype._ADDRESSING_ACCUMULATOR         = {'id':  8, 'pc': 1, 'name': 'accumulator'};
+CPU.prototype._ADDRESSING_INDIRECT            = {'id':  9, 'pc': 3, 'name': 'indirect'};
+CPU.prototype._ADDRESSING_INDEXED_INDIRECT_X  = {'id': 10, 'pc': 2, 'name': 'indexed_indirect_x'};
+CPU.prototype._ADDRESSING_INDEXED_INDIRECT_Y  = {'id': 11, 'pc': 2, 'name': 'indexed_indirect_y'};
+CPU.prototype._ADDRESSING_RELATIVE            = {'id': 12, 'pc': 2, 'name': 'relative'};
 
 // decodes in advance cuz it's much easier than implementing decoder.
 // be careful that some 6502 related documents include some mistakes.
@@ -392,44 +393,191 @@ CPU.prototype._OP[0xFF] = {'op': CPU.prototype._OP_INV, 'cycle': 0, 'mode': null
 
 
 CPU.prototype.initMemoryController = function(ppu, pad1) {
-  this.mem = new CPUMemoryController(this, ppu, pad1);
+  this.ppu = ppu;
+  this.pad1 = pad1;
 };
 
 
 CPU.prototype.setROM = function(rom) {
-  this.mem.setROM(rom);
+  this.rom = rom;
   // TODO: temporal
   this._jumpToInterruptHandler(this._INTERRUPT_RESET);
 };
 
 
+CPU.prototype._MAP_CONTAINER = {'target': null, 'arg1': null, 'arg2': null};
+CPU.prototype._map = function(address) {
+  var addr = null;
+  var target = null;
+
+  if(address >= 0x0000 && address < 0x2000) {
+    target = this.ram;
+    addr = address & 0x7ff;
+  } else if(address >= 0x2000 && address < 0x4000) {
+    // TODO: this might should move to PPU class.
+    addr = address & 0x7;
+    switch(addr) {
+      case 0x0000:
+        target = this.ppu.ctrl1;
+        break;
+      case 0x0001:
+        target = this.ppu.ctrl2;
+        break;
+      case 0x0002:
+        target = this.ppu.sr;
+        break;
+      case 0x0003:
+        target = this.ppu.sprAddr;
+        break;
+      case 0x0004:
+        target = this.ppu.sprIO;
+        break;
+      case 0x0005:
+        target = this.ppu.vRAMAddr1;
+        break;
+      case 0x0006:
+        target = this.ppu.vRAMAddr2;
+        break;
+      case 0x0007:
+        target = this.ppu.vRAMIO;
+        break;
+    }
+    addr = null;
+  } else if(address >= 0x4000 && address < 0x4020) {
+    switch(address) {
+      case 0x4000:
+        break;
+      case 0x4001:
+        break;
+      case 0x4002:
+        break;
+      case 0x4003:
+        break;
+      case 0x4004:
+        break;
+      case 0x4005:
+        break;
+      case 0x4006:
+        break;
+      case 0x4007:
+        break;
+      case 0x4008:
+        break;
+      case 0x4009:
+        break;
+      case 0x400A:
+        break;
+      case 0x400B:
+        break;
+      case 0x400C:
+        break;
+      case 0x400D:
+        break;
+      case 0x400E:
+        break;
+      case 0x400F:
+        break;
+      case 0x4010:
+        break;
+      case 0x4011:
+        break;
+      case 0x4012:
+        break;
+      case 0x4013:
+        break;
+      case 0x4014:
+        target = this.ppu.sprDMA;
+        break;
+      case 0x4015:
+        break;
+      case 0x4016:
+        target = this.pad1.register;
+        break;
+      case 0x4017:
+        break;
+      case 0x4018:
+        break;
+      case 0x4019:
+        break;
+      case 0x401A:
+        break;
+      case 0x401B:
+        break;
+      case 0x401C:
+        break;
+      case 0x401D:
+        break;
+      case 0x401E:
+        break;
+      case 0x401F:
+        break;
+    }
+    addr = null;
+    // TODO: temporal.
+    if(target === null) {
+      target = new Register();
+    }
+  } else if(address >= 0x4020 && address < 0x6000) {
+    target = this.ram;
+    addr = address;
+  } else if(address >= 0x6000 && address < 0x8000) {
+    target = this.ram;
+    addr = address;
+  } else if(address >= 0x8000 && address < 0x10000) {
+    target = this.rom;
+    // this address translation might should be done by ROM Memory mapper.
+    addr = address - 0x8000;
+  }
+
+  var result = this._MAP_CONTAINER;
+  result.target = target;
+  result.addr = addr;
+
+  return result;
+};
+
+
 CPU.prototype.load = function(address) {
-  return this.mem.load(address);
+  var map = this._map(address);
+  return map.target.load(map.addr);
 };
 
 
 CPU.prototype.load2Bytes = function(address) {
-  return this.mem.load2Bytes(address);
+  return this.load(address) | (this.load(address+1) << 8);
 };
 
 
+/**
+ * TODO: write note
+ */
 CPU.prototype.load2BytesFromZeropage = function(address) {
-  return this.mem.load2BytesFromZeropage(address);
+  return this.ram.load(address & 0xff) | (this.ram.load((address+1) & 0xff) << 8);
 };
 
 
 CPU.prototype.load2BytesInPage = function(address) {
-  return this.mem.load2BytesInPage(address);
+  var addr1 = address;
+  var addr2 = (address & 0xff00) | ((address+1) & 0xff);
+  return this.load(addr1) | (this.load(addr2) << 8);
 };
 
 
 CPU.prototype.store = function(address, value) {
-  this.mem.store(address, value);
+  var map = this._map(address);
+  if(map.addr === null)
+    map.target.store(value);
+  else
+    map.target.store(map.addr, value);
 };
 
 
+/**
+ * TODO: write note
+ */
 CPU.prototype.store2Bytes = function(address, value) {
-  this.mem.store2Bytes(address, value);
+  this.store(address,   value);
+  this.store(address+1, value >> 8);
 };
 
 
@@ -1313,157 +1461,6 @@ CPU.prototype.dumpRAM = function() {
 
 
 
-function CPUMemoryController(cpu, ppu, pad1) {
-  this.parent = ProcessorMemoryController;
-  this.parent.call(this);
-  this.cpu = cpu;
-  this.ppu = ppu;
-  this.pad1 = pad1;
-  this.ram = cpu.ram;
-};
-__inherit(CPUMemoryController, ProcessorMemoryController);
-
-// This is used to avoid memory allocation.
-CPUMemoryController.prototype._CONTAINER = {'target': null, 'addr': null};
-
-
-/**
- * TODO: not fixed yet.
- * TODO: improve the design.
- */
-CPUMemoryController.prototype._map = function(address) {
-  var addr = null;
-  var target = null;
-
-  if(address >= 0x0000 && address < 0x2000) {
-    target = this.ram;
-    addr = address & 0x7ff;
-  } else if(address >= 0x2000 && address < 0x4000) {
-    // TODO: this might should move to PPU class.
-    addr = address & 0x7;
-    switch(addr) {
-      case 0x0000:
-        target = this.ppu.ctrl1;
-        break;
-      case 0x0001:
-        target = this.ppu.ctrl2;
-        break;
-      case 0x0002:
-        target = this.ppu.sr;
-        break;
-      case 0x0003:
-        target = this.ppu.sprAddr;
-        break;
-      case 0x0004:
-        target = this.ppu.sprIO;
-        break;
-      case 0x0005:
-        target = this.ppu.vRAMAddr1;
-        break;
-      case 0x0006:
-        target = this.ppu.vRAMAddr2;
-        break;
-      case 0x0007:
-        target = this.ppu.vRAMIO;
-        break;
-    }
-    addr = null;
-  } else if(address >= 0x4000 && address < 0x4020) {
-    switch(address) {
-      case 0x4000:
-        break;
-      case 0x4001:
-        break;
-      case 0x4002:
-        break;
-      case 0x4003:
-        break;
-      case 0x4004:
-        break;
-      case 0x4005:
-        break;
-      case 0x4006:
-        break;
-      case 0x4007:
-        break;
-      case 0x4008:
-        break;
-      case 0x4009:
-        break;
-      case 0x400A:
-        break;
-      case 0x400B:
-        break;
-      case 0x400C:
-        break;
-      case 0x400D:
-        break;
-      case 0x400E:
-        break;
-      case 0x400F:
-        break;
-      case 0x4010:
-        break;
-      case 0x4011:
-        break;
-      case 0x4012:
-        break;
-      case 0x4013:
-        break;
-      case 0x4014:
-        target = this.ppu.sprDMA;
-        break;
-      case 0x4015:
-        break;
-      case 0x4016:
-        target = this.pad1.register;
-        break;
-      case 0x4017:
-        break;
-      case 0x4018:
-        break;
-      case 0x4019:
-        break;
-      case 0x401A:
-        break;
-      case 0x401B:
-        break;
-      case 0x401C:
-        break;
-      case 0x401D:
-        break;
-      case 0x401E:
-        break;
-      case 0x401F:
-        break;
-    }
-    addr = null;
-    // TODO: temporal.
-    if(target === null) {
-      target = new Register();
-    }
-  } else if(address >= 0x4020 && address < 0x6000) {
-    target = this.ram;
-    addr = address;
-  } else if(address >= 0x6000 && address < 0x8000) {
-    target = this.ram;
-    addr = address;
-  } else if(address >= 0x8000 && address < 0x10000) {
-    target = this.rom;
-    // this address translation might should be done by ROM Memory mapper.
-    addr = address - 0x8000;
-  }
-
-  var result = this._CONTAINER;
-  result.target = target;
-  result.addr = addr;
-
-  return result;
-
-};
-
-
-
 function CPUStatusRegister() {
   this.parent = Register;
   this.parent.call(this);
@@ -1627,12 +1624,3 @@ __inherit(RAM, GenericMemory);
 
 RAM.prototype._CAPACITY = 64 * 1024; // 64KB
 
-/**
- * little endian.
- * TODO: implement overlap?
- * TODO: move this method to the caller side?
- */
-RAM.prototype.load2BytesFromZeropage = function(address) {
-  return this.load(address & 0xff) |
-           (this.load((address+1) & 0xff) << 8);
-};

@@ -49,6 +49,9 @@ function PPU() {
   this.ram = null;
   this.mem = null; // initialized by initMemoryController
 
+  this.chrrom = null;
+  this.hasCHRROM = false;
+
   this.higherVRAMAddress = 0;
   this.VRAMAddressCount1 = 0;
   this.VRAMAddressCount2 = 0;
@@ -145,14 +148,16 @@ PPU.prototype._PALETTE[0x3f] = 0xff000000;
 PPU.prototype.initMemoryController = function(cpu) {
   this.cpu = cpu;
   this.ram = cpu.ram;
-  this.mem = new PPUMemoryController(this);
   // TODO: temporal
   this.sr.store(0x80);
 };
 
 
 PPU.prototype.setROM = function(rom) {
-  this.mem.setROM(rom);
+  if(rom.hasCHRROM()) {
+    this.chrrom = rom.chrrom;
+    this.hasCHRROM = true;
+  }
 };
 
 
@@ -161,13 +166,47 @@ PPU.prototype.setDisplay = function(display) {
 };
 
 
+/**
+ * TODO: write note.
+ */
 PPU.prototype.load = function(address) {
-  return this.mem.load(address);
+  if(address < 0x2000 && this.hasCHRROM) {
+    return this.chrrom.load(address);
+  } else {
+    var addr = address;
+    if(addr >= 0x4000) {
+      addr = addr & 0x3FFF;
+    }
+    if(addr >= 0x3F00 && addr < 0x4000) {
+      addr = addr & 0x3F1F;
+    }
+    if(addr >= 0x2000 && addr < 0x3F00) {
+      addr = addr & 0x2FFF;
+    }
+    return this.vram.load(addr);
+  }
 };
 
 
+/**
+ * TODO: write note.
+ */
 PPU.prototype.store = function(address, value) {
-  this.mem.store(address, value);
+  if(address < 0x2000 && this.hasCHRROM) {
+    return this.chrrom.store(address, value);
+  } else {
+    var addr = address;
+    if(addr >= 0x4000) {
+      addr = addr & 0x3FFF;
+    }
+    if(addr >= 0x3F00 && addr < 0x4000) {
+      addr = addr & 0x3F1F;
+    }
+    if(addr >= 0x2000 && addr < 0x3F00) {
+      addr = addr & 0x2FFF;
+    }
+    return this.vram.store(addr, value);
+  }
 };
 
 
@@ -543,14 +582,14 @@ PPU.prototype._incrementVRAMAddress = function() {
 
 
 PPU.prototype._VRAMIOReadCallback = function() {
-  this.vRAMIO.store(this.mem.load(this._getVRAMAddress()), true);
+  this.vRAMIO.store(this.load(this._getVRAMAddress()), true);
   this.VRAMAddressCount2 = 0;
   this._incrementVRAMAddress();
 };
 
 
 PPU.prototype._VRAMIOWriteCallback = function() {
-  this.mem.store(this._getVRAMAddress(), this.vRAMIO.load(true));
+  this.store(this._getVRAMAddress(), this.vRAMIO.load(true));
   this.VRAMAddressCount2 = 0;
   this._incrementVRAMAddress();
 };
@@ -790,68 +829,6 @@ PPU.prototype._checkNext16BytesIsZero = function(offset) {
 
 PPU.prototype.dumpSPRRAM = function() {
   return this.sprram.dump();
-};
-
-
-
-function PPUMemoryController(ppu) {
-  this.parent = ProcessorMemoryController;
-  this.parent.call(this);
-  this.vram = ppu.vram;
-};
-__inherit(PPUMemoryController, ProcessorMemoryController);
-
-PPUMemoryController.prototype._CONTAINER = {'target': null, 'addr': null};
-
-
-PPUMemoryController.prototype._map = function(address) {
-  var target = null;
-  var addr = null;
-
-  // TODO: temporal. for NROM.
-  if(address < 0x2000 && this.hasCHRROM) {
-    target = this.chrrom;
-    addr = address;
-  } else {
-    target = this.vram;
-    addr = address;
-    if(addr >= 0x4000) {
-      addr = addr & 0x3FFF;
-    }
-    if(addr >= 0x3F00 && addr < 0x4000) {
-      addr = addr & 0x3F1F;
-    }
-    if(addr >= 0x2000 && addr < 0x3F00) {
-      addr = addr & 0x2FFF;
-    }
-  }
-
-  var result = this._CONTAINER;
-  result.target = target;
-  result.addr = addr;
-  return result;
-};
-
-
-/**
- * Note: for performance.
- */
-PPUMemoryController.prototype.load = function(address, preventCallback) {
-  if(address < 0x2000 && this.hasCHRROM) {
-    return this.chrrom.load(address);
-  } else {
-    var addr = address;
-    if(addr >= 0x4000) {
-      addr = addr & 0x3FFF;
-    }
-    if(addr >= 0x3F00 && addr < 0x4000) {
-      addr = addr & 0x3F1F;
-    }
-    if(addr >= 0x2000 && addr < 0x3F00) {
-      addr = addr & 0x2FFF;
-    }
-    return this.vram.load(addr);
-  }
 };
 
 
