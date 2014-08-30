@@ -34,6 +34,9 @@ Register.prototype.store = function(value) {
 };
 
 
+/**
+ * @param value must be 0 or 1.
+ */
 Register.prototype.storeBit = function(bit, value) {
 //  value = value ? 1 : 0;
   this.uint8[0] = this.uint8[0] & ~(1 << bit) | (value << bit);
@@ -60,6 +63,11 @@ Register.prototype.incrementBy2 = function() {
 };
 
 
+Register.prototype.add = function(value) {
+  this.uint8[0] += value;
+};
+
+
 Register.prototype.decrement = function() {
   this.uint8[0]--;
 };
@@ -70,6 +78,15 @@ Register.prototype.decrementBy2 = function() {
 };
 
 
+Register.prototype.sub = function(value) {
+  this.uint8[0] -= value;
+};
+
+
+/**
+ * @param value must be 0 or 1.
+ * @return carry
+ */
 Register.prototype.lshift = function(value) {
 //  value = value ? 1 : 0;
   var val = this.uint8[0];
@@ -130,6 +147,9 @@ Register16bit.prototype.storeLowerByte = function(value) {
 };
 
 
+/**
+ * @param value must be 0 or 1.
+ */
 Register16bit.prototype.storeBit = function(bit, value) {
 //  value = value ? 1 : 0;
   this.uint16[0] = this.uint16[0] & ~(1 << bit) | (value << bit);
@@ -146,11 +166,25 @@ Register16bit.prototype.incrementBy2 = function() {
 };
 
 
+Register16bit.prototype.add = function(value) {
+  this.uint16[0] += value;
+};
+
+
 Register16bit.prototype.decrement = function() {
   this.uint16[0]--;
 };
 
 
+Register16bit.prototype.sub = function(value) {
+  this.uint16[0] -= value;
+};
+
+
+/**
+ * @param value must be 0 or 1.
+ * @return carry
+ */
 Register16bit.prototype.lshift = function(value) {
 //  Note: comment out for performance.
 /*
@@ -166,6 +200,9 @@ Register16bit.prototype.lshift = function(value) {
 };
 
 
+/**
+ * TODO: rename
+ */
 Register16bit.prototype.lshift8bits = function() {
   // Note: to improve the performance
   //  this.storeHigherByte(this.loadLowerByte());

@@ -54,11 +54,13 @@ NES.prototype.setInstructionDumpFlag = function(flag) {
 };
 
 
+/**
+ * TODO: remove Magic numbers.
+ */
 NES.prototype.bootup = function() {
   this.cpu.p.store(0x34);
   this.cpu.sp.store(0xFD);
   this.cpu.interrupt(CPU.prototype._INTERRUPT_RESET);
-//  nes.cpu.pc.store(0xc000);
   this.state = this._STATE_RUN;
 };
 
@@ -74,6 +76,11 @@ NES.prototype.resume = function() {
 };
 
 
+/**
+ * Note: This is one of the heaviest functions
+ *       though almost only calling functions.
+ *       Is there any ways to reduce calling function cost?
+ */
 NES.prototype.run = function() {
   if(this.count % 60 == 0) {
     var newDate = Date.now();
@@ -90,7 +97,12 @@ NES.prototype.run = function() {
   }
 */
 
-  // TODO: write note.
+  /*
+   * Note: using the following techniques for the performance
+   *       1. unrolling
+   *       2. inlining
+   *       3. loop value reversion
+   */
   var cycles = (341*262/3/10) | 0; // TODO: temporal
   var cpu = this.cpu;
   var ppu = this.ppu;
@@ -119,8 +131,6 @@ NES.prototype.run = function() {
 
   if(this.state == this._STATE_RUN)
     requestAnimationFrame(this.runFunc);
-//    requestAnimationFrame(this.run.bind(this));
-//    setTimeout(this.run.bind(this), 0);
 };
 
 

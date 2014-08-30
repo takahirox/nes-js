@@ -405,7 +405,7 @@ CPU.prototype.setROM = function(rom) {
 };
 
 
-CPU.prototype._MAP_CONTAINER = {'target': null, 'arg1': null, 'arg2': null};
+CPU.prototype._MAP_CONTAINER = {'target': null, 'addr': null};
 CPU.prototype._map = function(address) {
   var addr = null;
   var target = null;
@@ -537,6 +537,9 @@ CPU.prototype._map = function(address) {
 };
 
 
+/**
+ * TODO: write note.
+ */
 CPU.prototype.load = function(address) {
   var map = this._map(address);
   return map.target.load(map.addr);
@@ -593,10 +596,24 @@ CPU.prototype._decode = function(opc) {
 };
 
 
+/**
+ * Note: This is one of the heaviest functions.
+ */
 CPU.prototype.runCycle = function() {
   if(this.handling <= 0) {
+
+/*
     var opc = this._fetch();
     var op = this._decode(opc);
+*/
+
+    /*
+     * Note: using inlining for the performance.
+     */
+    var opc = this.load(this.pc.load());
+    this.pc.increment();
+    var op = this._OP[opc];
+
     this._operate(op);
     this.handling = op.cycle;
   }
@@ -672,6 +689,9 @@ CPU.prototype._updateMemoryWithAddressingMode = function(op, func) {
 };
 
 
+/**
+ * TODO: make function of each addressing mode for the performance?
+ */
 CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
   var address = null;
   switch(op.mode.id) {
@@ -935,12 +955,13 @@ CPU.prototype._popStack2Bytes = function() {
 CPU.prototype._doBranch = function(op, flag) {
   var result = this._loadMemoryWithAddressingMode(op);
   if(flag)
-    this.pc.store(this.pc.load() + result);
+    this.pc.add(result);
 };
 
 
 /**
- * TODO: make each operation class?
+ * TODO: make each operation class or method
+ *       for the performance and easy verification?
  * TODO: functions for _updateMemoryWithAddressingMode occur memory allocation
  *       and can lead GC which could affect the performance.
  */
@@ -1469,7 +1490,7 @@ __inherit(CPUStatusRegister, Register);
 
 CPUStatusRegister.prototype._N_BIT = 7;
 CPUStatusRegister.prototype._V_BIT = 6;
-CPUStatusRegister.prototype._A_BIT = 5;  // TODO: temporal name
+CPUStatusRegister.prototype._A_BIT = 5;  // unused bit. TODO: temporal name
 CPUStatusRegister.prototype._B_BIT = 4;
 CPUStatusRegister.prototype._D_BIT = 3;
 CPUStatusRegister.prototype._I_BIT = 2;

@@ -211,7 +211,7 @@ PPU.prototype.store = function(address, value) {
 
 
 /**
- * TODO: temporal imple.
+ * TODO: temporal imple for the performance.
  */
 PPU.prototype.run3Cycles = function() {
 /*
@@ -219,6 +219,10 @@ PPU.prototype.run3Cycles = function() {
   this.runCycle();
   this.runCycle();
 */
+
+  /*
+   * Note: using inlining for the performance.
+   */
   this._renderPixel();
   this._shiftRegisters();
   this._fetch();
@@ -448,11 +452,11 @@ PPU.prototype._fetchAttributeTable = function() {
  */
 PPU.prototype._fetchPatternTable = function() {
   var y = this._getFetchedY() % 8;
-  var index = this.nt.load();
   var tableNum = this.ctrl1.getBackgroundPatternTableNum() ? 1 : 0;
   var offset = tableNum * 0x1000;
-  this.ptL.storeLowerByte(this.load(offset + index * 0x10 + y));
-  this.ptH.storeLowerByte(this.load(offset + index * 0x10 + 0x8 + y));
+  var index = offset + this.nt.load() * 0x10 + y
+  this.ptL.storeLowerByte(this.load(index));
+  this.ptH.storeLowerByte(this.load(index + 0x8));
 };
 
 
