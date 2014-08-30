@@ -660,16 +660,16 @@ PPU.prototype._initSpritesForScanLine = function(ay) {
     var by = s.getYPosition();
     var j = ay - by;
     var cy = s.doFlipVertically() ? ySize-j-1 : j;
-    var y = by + j;
+    var horizontal = s.doFlipHorizontally();
+    var ptIndex = (ySize == 8) ? s.getTileIndex() : s.getTileIndexForSize16();
+    var msb = s.getPalletNum();
     for(var k = 0; k < 8; k++) {
-      var cx = s.doFlipHorizontally() ? 7-k : k;
+      var cx = horizontal ? 7-k : k;
       var x = bx + k;
       if(x >= 256)
         break;
-      var ptIndex = (ySize == 8) ? s.getTileIndex() : s.getTileIndexForSize16();
       var lsb = this._getPatternTableElement(ptIndex, cx, cy, ySize);
       if(lsb != 0) {
-        var msb = s.getPalletNum();
         var pIndex = (msb << 2) | lsb;
         this.spritesMap[x] = this.spPalette[pIndex];
       }
