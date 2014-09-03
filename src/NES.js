@@ -143,7 +143,10 @@ NES.prototype._runCycle = function() {
 NES.prototype.runStep = function() {
   if(this.state != this._STATE_STOP)
     return;
-  this._runCycle();
+
+  do {
+    this._runCycle();
+  } while(this.cpu.handling > 0)
 };
 
 

@@ -52,11 +52,15 @@ ROM.prototype.store = function(address, value) {
  */
 ROM.prototype._generateMapper = function() {
   switch(this.header.getMapperNum()) {
+    case 0:
+      return new NROMMapper(this);
+    case 1:
+      return new MMC1Mapper(this);
     case 2:
       return new UNROMMapper(this);
-
     default:
-      return new NROMMapper(this);
+      window.alert('unsupport No.' + this.header.getMapperNum() + ' Mapper');
+      throw new Error('unsupport No.' + this.header.getMapperNum() + ' Mapper');
   }
 };
 
@@ -331,7 +335,7 @@ function ROMMapper(rom) {
 
 
 ROMMapper.prototype.map = function(address) {
-  return this.address;
+  return address;
 };
 
 
@@ -377,3 +381,38 @@ UNROMMapper.prototype.map = function(address) {
 UNROMMapper.prototype.store = function(address, value) {
   this.reg.store(value & 0x7);
 };
+
+
+
+function MMC1Mapper(rom) {
+  this.parent = ROMMapper;
+  this.parent.call(this, rom);
+  this.tmpReg = new Register();
+  this.tmpWriteCount = 0;
+  this.prgNum = this.rom.header.getPRGROMBanksNum();
+};
+__inherit(MMC1Mapper, ROMMapper);
+
+
+MMC1Mapper.prototype.map = function(address) {
+  if(address >= 0x4000) {
+    address = (this.prgNum-1) * 0x4000 + address & 0x3FFF;
+  }
+  return address;
+};
+
+
+MMC1Mapper.prototype.store = function(address, value) {
+  if(value & 0x80) {
+    this.tmpWriteCount = 0;
+    this.tmpReg.store(0);
+  } else {
+    this.tmpWriteCount++;
+    this.tmpReg.lshift(value & 1);
+    if(this.tmpWriteCount >= 5) {
+      console.log(__10to16(address) + ' ' + __10to16(this.tmpReg.load()));
+      this.tmpWriteCount = 0;
+    }
+  }
+};
+

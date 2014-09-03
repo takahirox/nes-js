@@ -770,7 +770,7 @@ CPU.prototype._getMemoryAddressWithAddressingMode = function(op) {
  */
 CPU.prototype._dumpMemoryAddressingMode = function(op, mem, pc) {
   var buffer = '';
-  var ramDump = (mem instanceof CPUMemoryController) ? true : false;
+  var ramDump = (mem instanceof CPU) ? true : false;
 
   switch(op.mode) {
     case this._ADDRESSING_IMMEDIATE:
@@ -1400,7 +1400,7 @@ CPU.prototype._operate = function(op) {
  */
 CPU.prototype.disassembleROM = function() {
   var buffer = '';
-  var rom = this.mem.rom;
+  var rom = this.rom;
   var pc = ROM.prototype._HEADER_SIZE;
   var previousIsZero = false;
   var skipZero = false;
@@ -1462,7 +1462,7 @@ CPU.prototype.dump = function() {
 
   buffer += op.op.name + ' ' +
               this._dumpMemoryAddressingMode(op,
-                                             this.mem,
+                                             this,
                                              (this.pc.load() + 1) & 0xffff)
               + ' ';
 

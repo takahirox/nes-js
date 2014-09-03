@@ -111,6 +111,7 @@ function __NESstopped() {
 
 function __run(arrayBuffer) {
   var rom = new ROM(arrayBuffer);
+  __putMessage(rom.header.dump());
   if(rom.isNES()) {
     __putMessage('this seems iNES format.');
   } else {
