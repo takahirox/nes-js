@@ -328,6 +328,11 @@ PPU.prototype._fetch = function() {
     if(this.scanLine >= 0 && this.scanLine <= 239) {
       this._initSpritesForScanLine(this.scanLine);
     }
+    // TODO: temporal imple
+    if(this.scanLine == 32)
+      this.sr.setZeroHit();
+    else if(this.scanLine == 261)
+      this.sr.clearZeroHit();
     return;
   }
 
@@ -920,19 +925,19 @@ function PPUStatusRegister(id, caller, l, s) {
 };
 __inherit(PPUStatusRegister, RegisterWithCallback);
 
-PPUStatusRegister._VBLANK_BIT_BIT = 7;
-PPUStatusRegister._SPRITE_ZERO_HIT_BIT = 6;
-PPUStatusRegister._SCANLINE_SPRITE_COUNT_BIT = 5;
-PPUStatusRegister._IGNORE_VRAM_WRITE_BIT = 4;
+PPUStatusRegister.prototype._VBLANK_BIT_BIT = 7;
+PPUStatusRegister.prototype._SPRITE_ZERO_HIT_BIT = 6;
+PPUStatusRegister.prototype._SCANLINE_SPRITE_COUNT_BIT = 5;
+PPUStatusRegister.prototype._IGNORE_VRAM_WRITE_BIT = 4;
 
 
 PPUStatusRegister.prototype.setZeroHit = function() {
-  this.storeBit(PPUStatusRegister._SPRITE_ZERO_HIT_BIT, 1);
+  this.storeBit(this._SPRITE_ZERO_HIT_BIT, 1);
 };
 
 
 PPUStatusRegister.prototype.clearZeroHit = function() {
-  this.storeBit(PPUStatusRegister._SPRITE_ZERO_HIT_BIT, 0);
+  this.storeBit(this._SPRITE_ZERO_HIT_BIT, 0);
 };
 
 
