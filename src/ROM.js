@@ -6,8 +6,8 @@ function ROM(arrayBuffer) {
   this.parent.call(this, arrayBuffer);
   this.header = new ROMHeader(this);
   this.chrrom = null;
-  this._initCHRROM();
   this.mapper = this._generateMapper();
+  this._initCHRROM(this.mapper);
 };
 __inherit(ROM, GenericMemory);
 
@@ -21,11 +21,11 @@ ROM.prototype._init = function() {
 /**
  * TODO: temporal. for NROM with CHRROM.
  */
-ROM.prototype._initCHRROM = function() {
+ROM.prototype._initCHRROM = function(mapper) {
   if(this.hasCHRROM()) {
     var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();
     var offset = this.header.getPRGROMBanksNum() * 0x4000 + this._HEADER_SIZE;
-    this.chrrom = new CHRROM(capacity);
+    this.chrrom = new CHRROM(capacity, mapper);
     for(var i = 0; i < capacity; i++) {
       var value = this.loadWithoutMapping(i + offset);
       this.chrrom.storeWithoutMapping(i, value);
@@ -58,6 +58,8 @@ ROM.prototype._generateMapper = function() {
       return new MMC1Mapper(this);
     case 2:
       return new UNROMMapper(this);
+    case 76:
+      return new Mapper76(this);
     default:
       window.alert('unsupport No.' + this.header.getMapperNum() + ' Mapper');
       throw new Error('unsupport No.' + this.header.getMapperNum() + ' Mapper');
@@ -159,6 +161,7 @@ ROMHeader.prototype._MAPPERS[1] = {'name': 'MMC1'};
 ROMHeader.prototype._MAPPERS[2] = {'name': 'UNROM'};
 ROMHeader.prototype._MAPPERS[3] = {'name': 'CNROM'};
 ROMHeader.prototype._MAPPERS[4] = {'name': 'MMC3'};
+ROMHeader.prototype._MAPPERS[76] = {'name': 'Namco'};
 
 
 ROMHeader.prototype.load = function(address) {
@@ -321,11 +324,21 @@ ROMHeader.prototype.dump = function() {
 
 
 
-function CHRROM(capacity) {
+function CHRROM(capacity, mapper) {
   this.parent = GenericMemory;
   this.parent.call(this, capacity);
+  this.mapper = mapper;
 };
 __inherit(CHRROM, GenericMemory);
+
+
+CHRROM.prototype.load = function(address) {
+  return this.uint8[this.mapper.mapForCHRROM(address)];
+};
+
+
+CHRROM.prototype.store = function(address, value) {
+};
 
 
 
@@ -335,6 +348,11 @@ function ROMMapper(rom) {
 
 
 ROMMapper.prototype.map = function(address) {
+  return address;
+};
+
+
+ROMMapper.prototype.mapForCHRROM = function(address) {
   return address;
 };
 
@@ -388,17 +406,46 @@ function MMC1Mapper(rom) {
   this.parent = ROMMapper;
   this.parent.call(this, rom);
   this.tmpReg = new Register();
+  this.reg0 = new Register();
+  this.reg1 = new Register();
+  this.reg2 = new Register();
+  this.reg3 = new Register();
   this.tmpWriteCount = 0;
   this.prgNum = this.rom.header.getPRGROMBanksNum();
+  this.reg0.store(0x0C);
 };
 __inherit(MMC1Mapper, ROMMapper);
 
 
 MMC1Mapper.prototype.map = function(address) {
-  if(address >= 0x4000) {
-    address = (this.prgNum-1) * 0x4000 + address & 0x3FFF;
+  var bank;
+  var offset;
+  if(this.reg0.loadBit(3)) {
+    offset = address & 0x3FFF;
+    if(this.reg0.loadBit(2)) {
+      bank = (address < 0x4000) ? this.reg3.load() & 0x0f : this.prgNum-1;
+    } else {
+      bank = (address < 0x4000) ? 0 : this.reg3.load() & 0x0f;
+    }
+  } else {
+    offset = address & 0x7FFF;
+    bank = this.reg3.load() & 0x0f;
   }
-  return address;
+  return bank * 0x4000 + offset;
+};
+
+
+MMC1Mapper.prototype.mapForCHRROM = function(address) {
+  var bank;
+  var offset;
+  if(this.reg0.loadBit(4)) {
+    bank = ((address < 0x1000) ? this.reg1.load() : this.reg2.load()) & 0xf;
+    offset = address & 0x0FFF;
+  } else {
+    bank = (this.reg1.load() & 0xf) * 2;
+    offset = address & 0x1FFF;
+  }
+  return bank * 0x1000 + offset;
 };
 
 
@@ -406,13 +453,139 @@ MMC1Mapper.prototype.store = function(address, value) {
   if(value & 0x80) {
     this.tmpWriteCount = 0;
     this.tmpReg.store(0);
-  } else {
-    this.tmpWriteCount++;
-    this.tmpReg.lshift(value & 1);
-    if(this.tmpWriteCount >= 5) {
-      console.log(__10to16(address) + ' ' + __10to16(this.tmpReg.load()));
-      this.tmpWriteCount = 0;
+    switch(address & 0x6000) {
+      case 0x0000:
+        this.reg0.store(0x0C);
+        break;
+      case 0x2000:
+        this.reg1.store(0x00);
+        break;
+      case 0x4000:
+        this.reg2.store(0x00);
+        break;
+      case 0x6000:
+        this.reg3.store(0x00);
+        break;
+      default:
+        // throw exception?
+        break;
     }
+  } else {
+    this.tmpReg.storeBit(this.tmpWriteCount, value & 1);
+    this.tmpWriteCount++;
+    if(this.tmpWriteCount >= 5) {
+      var val = this.tmpReg.load();
+      switch(address & 0x6000) {
+        case 0x0000:
+          this.reg0.store(val);
+          break;
+        case 0x2000:
+          this.reg1.store(val);
+          break;
+        case 0x4000:
+          this.reg2.store(val);
+          break;
+        case 0x6000:
+          this.reg3.store(val);
+          break;
+        default:
+          // throw exception?
+          break;
+      }
+      this.tmpWriteCount = 0;
+      this.tmpReg.store(0);
+    }
+  }
+};
+
+
+
+function Mapper76(rom) {
+  this.parent = ROMMapper;
+  this.parent.call(this, rom);
+  this.addrReg = new Register();
+  this.chrReg0 = new Register();
+  this.chrReg1 = new Register();
+  this.chrReg2 = new Register();
+  this.chrReg3 = new Register();
+  this.prgReg0 = new Register();
+  this.prgReg1 = new Register();
+  this.prgNum = this.rom.header.getPRGROMBanksNum();
+};
+__inherit(Mapper76, ROMMapper);
+
+
+Mapper76.prototype.map = function(address) {
+  var bank;
+  var offset = address & 0x1FFF;
+  switch(address & 0x6000) {
+    case 0x0000:
+      bank = this.prgReg0.load();
+      break;
+    case 0x2000:
+      bank = this.prgReg1.load();
+      break;
+    case 0x4000:
+      bank = this.prgNum - 2;
+      break;
+    case 0x6000:
+      bank = this.prgNum - 1;
+      break;
+  }
+  return bank * 0x2000 + offset;
+};
+
+
+Mapper76.prototype.mapForCHRROM = function(address) {
+  var bank;
+  var offset = address & 0x7FF;
+  switch(address & 0x1800) {
+    case 0x0000:
+      bank = this.chrReg0.load();
+      break;
+    case 0x0800:
+      bank = this.chrReg1.load();
+      break;
+    case 0x1000:
+      bank = this.chrReg2.load();
+      break;
+    case 0x1800:
+      bank = this.chrReg3.load();
+      break;
+  }
+  return bank * 0x800 + offset;
+};
+
+
+Mapper76.prototype.store = function(address, value) {
+  if(address == 1) {
+    var reg;
+    switch(this.addrReg.load()) {
+      case 0:
+      case 1:
+        return;
+      case 2:
+        reg = this.chrReg0;
+        break;
+      case 3:
+        reg = this.chrReg1;
+        break;
+      case 4:
+        reg = this.chrReg2;
+        break;
+      case 5:
+        reg = this.chrReg3;
+        break;
+      case 6:
+        reg = this.prgReg0;
+        break;
+      case 7:
+        reg = this.prgReg1;
+        break;
+    }
+    reg.store(value & 0x3F);
+  } else {
+    this.addrReg.store(value & 7);
   }
 };
 
