@@ -10,7 +10,8 @@ function Joypad() {
 
   this.buttonNum = this.getButtonsNum();
 
-  this.buttons = [];  // if buttons are being pressed
+  this.buttons = [];  // if buttons are being pressed.
+                      // index is corresponded to Joypad.BUTTONS'
   for(var i = 0; i < this.buttonNum; i++)
     this.buttons[i] = false;
 }
@@ -35,16 +36,12 @@ Object.assign(Joypad.prototype, {
 
   //
 
-  BUTTONS: Joypad.BUTTONS,
-
-  //
-
   /**
    *
    */
   getButtonsNum: function() {
     var num = 0;
-    for (var key in this.BUTTONS) {
+    for (var key in Joypad.BUTTONS) {
       num++;
     }
     return num;
