@@ -26,14 +26,14 @@ NES.prototype._STATE_STOP      = 2;
 
 // TODO: temporal
 NES.prototype._PAD_BUTTON_TABLE = {
-  13: Joypad.prototype._BUTTON_START,
-  32: Joypad.prototype._BUTTON_SELECT,
-  37: Joypad.prototype._BUTTON_LEFT,
-  38: Joypad.prototype._BUTTON_UP,
-  39: Joypad.prototype._BUTTON_RIGHT,
-  40: Joypad.prototype._BUTTON_DOWN,
-  88: Joypad.prototype._BUTTON_B,
-  90: Joypad.prototype._BUTTON_A
+  13: Joypad.BUTTONS.START,
+  32: Joypad.BUTTONS.SELECT,
+  37: Joypad.BUTTONS.LEFT,
+  38: Joypad.BUTTONS.UP,
+  39: Joypad.BUTTONS.RIGHT,
+  40: Joypad.BUTTONS.DOWN,
+  88: Joypad.BUTTONS.B,
+  90: Joypad.BUTTONS.A
 };
 
 
@@ -152,7 +152,7 @@ NES.prototype.runStep = function() {
 
 NES.prototype.handleKeyDown = function(e) {
   if(this._PAD_BUTTON_TABLE[e.keyCode] !== void 0)
-    this.pad1.pushButton(this._PAD_BUTTON_TABLE[e.keyCode]);
+    this.pad1.pressButton(this._PAD_BUTTON_TABLE[e.keyCode]);
   e.preventDefault();
 };
 

@@ -1,66 +1,96 @@
 /**
- * TODO: should be IO port class?
+ * Standard joypad implementation.
+ * Refer to https://wiki.nesdev.com/w/index.php/Standard_controller
  */
 function Joypad() {
-  this.register = new RegisterWithCallback(this._ID_REG, this, true, true);
-  this.count = 0;
-  this.strobeFlag = false;
-  this.previousValue = 0;
-  this.buttons = [];
-  for(var i = 0; i < this._BUTTON_NUM; i++)
+  this.register = new RegisterWithCallback(0, this, true, true);
+
+  this.latch = 0;
+  this.currentButton = 0;
+
+  this.buttonNum = this.getButtonsNum();
+
+  this.buttons = [];  // if buttons are being pressed
+  for(var i = 0; i < this.buttonNum; i++)
     this.buttons[i] = false;
+}
+
+//
+
+Joypad.BUTTONS = {
+  A:      0,
+  B:      1,
+  SELECT: 2,
+  START:  3,
+  UP:     4,
+  DOWN:   5,
+  LEFT:   6,
+  RIGHT:  7
 };
 
-Joypad.prototype._ID_REG = 0;
+//
 
-Joypad.prototype._BUTTON_A      = 0;
-Joypad.prototype._BUTTON_B      = 1;
-Joypad.prototype._BUTTON_SELECT = 2;
-Joypad.prototype._BUTTON_START  = 3;
-Joypad.prototype._BUTTON_UP     = 4;
-Joypad.prototype._BUTTON_DOWN   = 5;
-Joypad.prototype._BUTTON_LEFT   = 6;
-Joypad.prototype._BUTTON_RIGHT  = 7;
+Object.assign(Joypad.prototype, {
+  isJoypad: true,
 
-Joypad.prototype._BUTTON_NUM = 8;
+  //
 
-Joypad.prototype._STROBE_BIT = 0;
+  BUTTONS: Joypad.BUTTONS,
 
+  //
 
-/**
- * TODO: temporal
- */
-Joypad.prototype.notifyRegisterLoading = function(id) {
-  this.previousValue = 0;
-  if(this.strobeFlag) {
-    var value = this.count >= this._BUTTON_NUM ||
-                  this.buttons[this.count] ? 0x01 : 0x00;
+  /**
+   *
+   */
+  getButtonsNum: function() {
+    var num = 0;
+    for (var key in this.BUTTONS) {
+      num++;
+    }
+    return num;
+  },
+
+  //
+
+  /**
+   *
+   */
+  pressButton: function(type) {
+    this.buttons[type] = true;
+  },
+
+  /**
+   *
+   */
+  releaseButton: function(type) {
+    this.buttons[type] = false;
+  },
+
+  //
+
+  /**
+   *
+   */
+  notifyRegisterLoading: function(id) {
+    var button = this.latch === 1 ? 0 : this.currentButton++;
+
+    // 1: a button is being pressed or after eight reads
+    // 0: otherwise
+    var value = (button >= this.buttonNum || this.buttons[button]) ? 1 : 0;
+
+    // to return the button state to CPU, writes value to the register
     this.register.store(value, true);
-    this.count++;
+  },
+
+  /**
+   *
+   */
+  notifyRegisterStoring: function() {
+    var value = this.register.loadBit(0);
+
+    if (value === 1)
+      this.currentButton = 0;
+
+    this.latch = value;
   }
-};
-
-
-/**
- * TODO: temporal
- */
-Joypad.prototype.notifyRegisterStoring = function() {
-  var value = this.register.load(true) & 1;
-  if(this.previousValue == 1 && value == 0) {
-    this.strobeFlag = true;
-    this.count = 0;
-  } else {
-    this.strobeFlag = false;
-  }
-  this.previousValue = value & 1;
-};
-
-
-Joypad.prototype.pushButton = function(type) {
-  this.buttons[type] = true;
-};
-
-
-Joypad.prototype.releaseButton = function(type) {
-  this.buttons[type] = false;
-};
+});
