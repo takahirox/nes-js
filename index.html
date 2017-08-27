@@ -1,306 +1,351 @@
+<!DOCTYPE html>
 <html>
-<head>
-<script type="text/javascript" src="utility/utility.js"></script>
-<script type="text/javascript" src="utility/Inherit.js"></script>
-<script type="text/javascript" src="src/Register.js"></script>
-<script type="text/javascript" src="src/GenericMemory.js"></script>
-<script type="text/javascript" src="src/Joypad.js"></script>
-<script type="text/javascript" src="src/ROM.js"></script>
-<script type="text/javascript" src="src/CPU.js"></script>
-<script type="text/javascript" src="src/PPU.js"></script>
-<script type="text/javascript" src="src/NES.js"></script>
-<script type="text/javascript" src="src/Display.js"></script>
-<script type="text/javascript">
-var __nes;
+  <head>
+    <script type="text/javascript" src="utility/utility.js"></script>
+    <script type="text/javascript" src="utility/Inherit.js"></script>
+    <script type="text/javascript" src="src/Register.js"></script>
+    <script type="text/javascript" src="src/GenericMemory.js"></script>
+    <script type="text/javascript" src="src/Joypad.js"></script>
+    <script type="text/javascript" src="src/ROM.js"></script>
+    <script type="text/javascript" src="src/CPU.js"></script>
+    <script type="text/javascript" src="src/PPU.js"></script>
+    <script type="text/javascript" src="src/Apu.js"></script>
+    <script type="text/javascript" src="src/NES.js"></script>
+    <script type="text/javascript" src="src/Display.js"></script>
+    <script type="text/javascript">
+      var __nes;
 
-function __dragOverHandler(e) {
-  e.preventDefault();
-};
+      /**
+       *
+       */
+      function __dragOverHandler(e) {
+        e.preventDefault();
+      }
 
+      /**
+       *
+       */
+      function __dropRomImage(e) {
+        e.preventDefault();
 
-// TODO: remove duplicated __putMessage()
-function __dropRomImage(e) {
-  e.preventDefault();
-  var file = e.dataTransfer.files[0];
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    __putMessage('loading done.');
-    __run(e.target.result);
-  };
-  reader.onerror = function(e) {
-    for(var key in reader.error) {
-      __putMessage(key + '=' + reader.error[key]);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  __putMessage('')
-  __putMessage('loading rom image...')
-};
+        var file = e.dataTransfer.files[0];
 
+        var reader = new FileReader();
 
-function __loadRom() {
-  var url = document.getElementById('romList').selectedOptions[0].value;
-  var request = new XMLHttpRequest();
-  request.responseType = 'arraybuffer';
-  request.onload = function() {
-    __putMessage('loading done.');
-    __run(request.response);
-  };
-  request.onerror = function(e) {
-    __putMessage('failed to load.');
-  };
-  request.open('GET', url, true);
-  request.send(null);
-  __putMessage('')
-  __putMessage('loading rom image...')
-  __ROMloaded();
-};
+        reader.onload = function(e) {
+          __putMessage('loading done.');
+          __run(e.target.result);
+        };
 
+        reader.onerror = function(e) {
+          for(var key in reader.error) {
+            __putMessage(key + '=' + reader.error[key]);
+          }
+        };
 
-function __init() {
-  document.getElementById('loadROMButton').disabled = false;
-  document.getElementById('dumpROMButton').disabled = true;
-  document.getElementById('dumpRegButton').disabled = true;
-  document.getElementById('dumpRAMButton').disabled = true;
-  document.getElementById('dumpVRAMButton').disabled = true;
-  document.getElementById('dumpSPRRAMButton').disabled = true;
-  document.getElementById('stopButton').disabled = true;
-  document.getElementById('stepButton').disabled = true;
-  document.getElementById('resumeButton').disabled = true;
-};
+        reader.readAsArrayBuffer(file);
 
+        __putMessage('')
+        __putMessage('loading rom image...')
+      }
 
-function __ROMloaded() {
-  document.getElementById('loadROMButton').disabled = true;
-  document.getElementById('dumpROMButton').disabled = true;
-  document.getElementById('dumpRegButton').disabled = true;
-  document.getElementById('dumpRAMButton').disabled = true;
-  document.getElementById('dumpVRAMButton').disabled = true;
-  document.getElementById('dumpSPRRAMButton').disabled = true;
-  document.getElementById('stopButton').disabled = true;
-  document.getElementById('stepButton').disabled = true;
-  document.getElementById('resumeButton').disabled = true;
-};
+      /**
+       *
+       */
+      function __loadRom() {
+        var url = document.getElementById('romList').selectedOptions[0].value;
 
+        var request = new XMLHttpRequest();
+        request.responseType = 'arraybuffer';
 
-function __NESran() {
-  document.getElementById('loadROMButton').disabled = true;
-  document.getElementById('dumpROMButton').disabled = true;
-  document.getElementById('dumpRegButton').disabled = true;
-  document.getElementById('dumpRAMButton').disabled = true;
-  document.getElementById('dumpVRAMButton').disabled = true;
-  document.getElementById('dumpSPRRAMButton').disabled = true;
-  document.getElementById('stopButton').disabled = false;
-  document.getElementById('stepButton').disabled = true;
-  document.getElementById('resumeButton').disabled = true;
-};
+        request.onload = function() {
+          __putMessage('loading done.');
+          __run(request.response);
+        };
 
+        request.onerror = function(e) {
+          __putMessage('failed to load.');
+        };
 
-function __NESstopped() {
-  document.getElementById('loadROMButton').disabled = true;
-  document.getElementById('dumpROMButton').disabled = false;
-  document.getElementById('dumpRegButton').disabled = false;
-  document.getElementById('dumpRAMButton').disabled = false;
-  document.getElementById('dumpVRAMButton').disabled = false;
-  document.getElementById('dumpSPRRAMButton').disabled = false;
-  document.getElementById('stopButton').disabled = true;
-  document.getElementById('stepButton').disabled = false;
-  document.getElementById('resumeButton').disabled = false;
-};
+        request.open('GET', url, true);
+        request.send(null);
 
+        __putMessage('')
+        __putMessage('loading rom image...')
+        __ROMloaded();
+      }
 
-function __run(arrayBuffer) {
-  var rom = new ROM(arrayBuffer);
-  __putMessage(rom.header.dump());
-  if(rom.isNES()) {
-    __putMessage('this seems iNES format.');
-  } else {
-    __putMessage('this doesn\'t seem iNES format.');
-  }
+      /**
+       *
+       */
+      function __init() {
+        document.getElementById('loadROMButton').disabled = false;
+        document.getElementById('dumpROMButton').disabled = true;
+        document.getElementById('dumpRegButton').disabled = true;
+        document.getElementById('dumpRAMButton').disabled = true;
+        document.getElementById('dumpVRAMButton').disabled = true;
+        document.getElementById('dumpSPRRAMButton').disabled = true;
+        document.getElementById('stopButton').disabled = true;
+        document.getElementById('stepButton').disabled = true;
+        document.getElementById('resumeButton').disabled = true;
+      }
 
-  if(! rom.isNES())
-    return;
+      /**
+       *
+       */
+      function __ROMloaded() {
+        document.getElementById('loadROMButton').disabled = true;
+        document.getElementById('dumpROMButton').disabled = true;
+        document.getElementById('dumpRegButton').disabled = true;
+        document.getElementById('dumpRAMButton').disabled = true;
+        document.getElementById('dumpVRAMButton').disabled = true;
+        document.getElementById('dumpSPRRAMButton').disabled = true;
+        document.getElementById('stopButton').disabled = true;
+        document.getElementById('stepButton').disabled = true;
+        document.getElementById('resumeButton').disabled = true;
+      }
 
-  // TODO: temporal
-  var canvas = document.getElementById('mainCanvas');
+      /**
+       *
+       */
+      function __NESran() {
+        document.getElementById('loadROMButton').disabled = true;
+        document.getElementById('dumpROMButton').disabled = true;
+        document.getElementById('dumpRegButton').disabled = true;
+        document.getElementById('dumpRAMButton').disabled = true;
+        document.getElementById('dumpVRAMButton').disabled = true;
+        document.getElementById('dumpSPRRAMButton').disabled = true;
+        document.getElementById('stopButton').disabled = false;
+        document.getElementById('stepButton').disabled = true;
+        document.getElementById('resumeButton').disabled = true;
+      }
 
-  var nes = new NES();
-  nes.setROM(rom);
+      /**
+       *
+       */
+      function __NESstopped() {
+        document.getElementById('loadROMButton').disabled = true;
+        document.getElementById('dumpROMButton').disabled = false;
+        document.getElementById('dumpRegButton').disabled = false;
+        document.getElementById('dumpRAMButton').disabled = false;
+        document.getElementById('dumpVRAMButton').disabled = false;
+        document.getElementById('dumpSPRRAMButton').disabled = false;
+        document.getElementById('stopButton').disabled = true;
+        document.getElementById('stepButton').disabled = false;
+        document.getElementById('resumeButton').disabled = false;
+      }
 
-  var display = new Display(canvas);
-  nes.setDisplay(display);
+      /**
+       *
+       */
+      function __run(arrayBuffer) {
+        var rom = new ROM(arrayBuffer);
 
-  window.onkeydown = function(e) { nes.handleKeyDown(e) };
-  window.onkeyup = function(e) { nes.handleKeyUp(e) };
+        __putMessage(rom.header.dump());
 
-  __nes = nes; // for debug on console.
+        if(!rom.isNES()) {
+          __putMessage('this doesn\'t seem iNES format.');
+          return;
+        }
 
-  __putMessage('bootup.');
-  nes.bootup();
+        __putMessage('this seems iNES format.');
 
-  __putMessage('runs.');
-  __NESran();
-  nes.run();
+        if(! rom.isNES())
+          return;
 
-  return;
-};
+        // TODO: temporal
+        var canvas = document.getElementById('mainCanvas');
 
-function __pushDumpROM() {
-  __putMessage(__nes.dumpROM());
-};
+        var nes = new NES();
+        nes.setROM(rom);
 
+        var display = new Display(canvas);
+        nes.setDisplay(display);
 
-function __pushDumpReg() {
-  __putMessage(__nes.dumpCPU());
-  __putMessage(__nes.dumpPPU());
-};
+        window.onkeydown = function(e) { nes.handleKeyDown(e) };
+        window.onkeyup = function(e) { nes.handleKeyUp(e) };
 
+        __nes = nes; // for debug on console.
 
-function __pushDumpRAM() {
-  __putMessage(__nes.dumpRAM());
-};
+        __putMessage('bootup.');
+        nes.bootup();
 
+        __putMessage('runs.');
+        __NESran();
+        nes.run();
+      }
 
-function __pushDumpVRAM() {
-  __putMessage(__nes.dumpVRAM());
-};
+      /**
+       *
+       */
+      function __pushDumpROM() {
+        __putMessage(__nes.dumpROM());
+      }
 
+      /**
+       *
+       */
+      function __pushDumpReg() {
+        __putMessage(__nes.dumpCPU());
+        __putMessage(__nes.dumpPPU());
+      }
 
-function __pushDumpSPRRAM() {
-  __putMessage(__nes.dumpSPRRAM());
-};
+      /**
+       *
+       */
+      function __pushDumpRAM() {
+        __putMessage(__nes.dumpRAM());
+      }
 
+      /**
+       *
+       */
+      function __pushDumpVRAM() {
+        __putMessage(__nes.dumpVRAM());
+      }
 
-function __pushStopButton() {
-  __nes.stop();
-  __putMessage('stopped.');
-  __NESstopped();
-};
+      /**
+       *
+       */
+      function __pushDumpSPRRAM() {
+        __putMessage(__nes.dumpSPRRAM());
+      }
 
+      /**
+       *
+       */
+      function __pushStopButton() {
+        __nes.stop();
+        __putMessage('stopped.');
+        __NESstopped();
+      }
 
-function __pushStepButton() {
-  __nes.runStep();
-  __putMessage(__nes.dumpCPU());
-};
+      /**
+       *
+       */
+      function __pushStepButton() {
+        __nes.runStep();
+        __putMessage(__nes.dumpCPU());
+      }
 
+      /**
+       *
+       */
+      function __pushResumeButton() {
+        __nes.resume();
+        __putMessage('resumed.');
+        __NESran();
+      }
 
-function __pushResumeButton() {
-  __nes.resume();
-  __putMessage('resumed.');
-  __NESran();
-};
+      /**
+       *
+       */
+      function __pushPadButton(key) {
+        if(! __nes)
+          return;
+        __nes.pad1.pushButton(parseInt(key.split('_')[1]));
+      }
 
+      /**
+       *
+       */
+      function __releasePadButton(key) {
+        if(! __nes)
+          return;
+        __nes.pad1.releaseButton(parseInt(key.split('_')[1]));
+      }
 
-/**
- * TODO: temporal
- */
-function __pushPadButton(key) {
-  if(! __nes)
-    return;
-  __nes.pad1.pushButton(parseInt(key.split('_')[1]));
-};
+      /**
+       *
+       */
+      function __putMessage(str) {
+        var area = document.getElementById('dump');
+        area.firstChild.appendData(str + '\n');
+        area.scrollTop = area.scrollHeight;
+      }
 
+      window.addEventListener('drop', __dropRomImage, false);
+      window.addEventListener('dragover', __dragOverHandler, false);
+    </script>
+  </head>
+  <body onload="__init()">
+    <p>
+      <select id="romList">
+        <option value="./roms/nestest.nes">nestest</option>
+        <option value="./roms/pong1k.nes">pong1k</option>
+        <option value="./roms/The Invasion.nes" selected>The Invasion</option>
+        <option value="./roms/mguard.nes">mguard</option>
+      </select>
+      <button id="loadROMButton" onclick="__loadRom()">load rom</button>
+      push this button or drag and drop your own rom into this window to load rom image.
+    </p>
 
-/**
- * TODO: temporal
- */
-function __releasePadButton(key) {
-  if(! __nes)
-    return;
-  __nes.pad1.releaseButton(parseInt(key.split('_')[1]));
-};
+    <p>
+      <canvas id="mainCanvas" width="256" height="240"></canvas>
+      <span id="fps"></span> fps
+    </p>
 
+    <div>
+      <table>
+        <tr>
+          <td></td>
+          <td><button id="pad1_4" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">U</button></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><button id="pad1_6" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">L</button></td>
+          <td></td>
+          <td><button id="pad1_7" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">R</button></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><button id="pad1_5" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">D</button></td>
+          <td></td>
+          <td><button id="pad1_2" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">SELECT</button></td>
+          <td><button id="pad1_3" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">START</button></td>
+          <td><button id="pad1_0" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">A</button></td>
+          <td><button id="pad1_1" onmousedown="__pushPadButton(this.id)"
+                onclick="__releasePadButton(this.id)">B</button></td>
+        </tr>
+      </table>
+    </div>
 
-function __putMessage(str) {
-  var area = document.getElementById('dump');
-  area.firstChild.appendData(str + '\n');
-  area.scrollTop = area.scrollHeight;
-};
+    <p>
+      <div>
+        <button id="dumpROMButton" onclick="__pushDumpROM()">dump ROM</button>
+        <button id="dumpRegButton" onclick="__pushDumpReg()">dump CPU/PPU reg</button>
+        <button id="dumpRAMButton" onclick="__pushDumpRAM()">dump CPU RAM</button>
+        <button id="dumpVRAMButton" onclick="__pushDumpVRAM()">dump PPU VRAM</button>
+        <button id="dumpSPRRAMButton" onclick="__pushDumpSPRRAM()">dump PPU SPRRAM</button>
+        <button id="stopButton" onclick="__pushStopButton()">stop</button>
+        <button id="stepButton" onclick="__pushStepButton()">step</button>
+        <button id="resumeButton" onclick="__pushResumeButton()">resume</button>
+      </div>
+      <textarea id="dump" cols="128" rows="16" readonly="readonly"> </textarea>
+    </p>
 
+    <p>
+      Thanks for the public domain NES roms.
+    </p>
+    <ul>
+      <li><a href="http://pdroms.de/category/nintendoentertainmentsystem">http://pdroms.de/category/nintendoentertainmentsystem</a></li>
+      <li><a href="http://slydogstudios.org/index.php/1k-series/">http://slydogstudios.org/index.php/1k-series/</a></li>
+    </ul>
 
-window.addEventListener('drop', __dropRomImage, false);
-window.addEventListener('dragover', __dragOverHandler, false);
-</script>
-</head>
-<body onload="__init()">
-<p>
-<select id="romList">
-<option value="./roms/nestest.nes">nestest</option>
-<option value="./roms/pong1k.nes">pong1k</option>
-<option value="./roms/The Invasion.nes" selected>The Invasion</option>
-<option value="./roms/mguard.nes">mguard</option>
-</select>
-<button id="loadROMButton" onclick="__loadRom()">load rom</button>
-push this button or drag and drop your own rom into this window to load rom image.
-</p>
-
-
-<p>
-<canvas id="mainCanvas" width="256" height="240"></canvas>
-<span id="fps"></span> fps
-</p>
-
-<div>
-<table>
-<tr>
- <td></td>
- <td><button id="pad1_4" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">U</button></td>
- <td></td>
- <td></td>
- <td></td>
- <td></td>
- <td></td>
-</tr>
-<tr>
- <td><button id="pad1_6" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">L</button></td>
- <td></td>
- <td><button id="pad1_7" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">R</button></td>
- <td></td>
- <td></td>
- <td></td>
- <td></td>
-<tr>
-<tr>
- <td></td>
- <td><button id="pad1_5" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">D</button></td>
- <td></td>
- <td><button id="pad1_2" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">SELECT</button></td>
- <td><button id="pad1_3" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">START</button></td>
- <td><button id="pad1_0" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">A</button></td>
- <td><button id="pad1_1" onmousedown="__pushPadButton(this.id)"
-              onclick="__releasePadButton(this.id)">B</button></td>
-<tr>
-</table>
-</div>
-
-<p>
-<div>
-<button id="dumpROMButton" onclick="__pushDumpROM()">dump ROM</button>
-<button id="dumpRegButton" onclick="__pushDumpReg()">dump CPU/PPU reg</button>
-<button id="dumpRAMButton" onclick="__pushDumpRAM()">dump CPU RAM</button>
-<button id="dumpVRAMButton" onclick="__pushDumpVRAM()">dump PPU VRAM</button>
-<button id="dumpSPRRAMButton" onclick="__pushDumpSPRRAM()">dump PPU SPRRAM</button>
-<button id="stopButton" onclick="__pushStopButton()">stop</button>
-<button id="stepButton" onclick="__pushStepButton()">step</button>
-<button id="resumeButton" onclick="__pushResumeButton()">resume</button>
-</div>
-<textarea id="dump" cols="128" rows="16" readonly="readonly"> </textarea>
-</p>
-
-<p>
-Thanks for the public domain NES roms.
-</p>
-<ul>
-<li><a href="http://pdroms.de/category/nintendoentertainmentsystem">http://pdroms.de/category/nintendoentertainmentsystem</a></li>
-<li><a href="http://slydogstudios.org/index.php/1k-series/">http://slydogstudios.org/index.php/1k-series/</a></li>
-</ul>
-
-</body>
+  </body>
 </html>
