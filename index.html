@@ -10,7 +10,7 @@
     <script type="text/javascript" src="src/CPU.js"></script>
     <script type="text/javascript" src="src/PPU.js"></script>
     <script type="text/javascript" src="src/Apu.js"></script>
-    <script type="text/javascript" src="src/NES.js"></script>
+    <script type="text/javascript" src="src/Nes.js"></script>
     <script type="text/javascript" src="src/Display.js"></script>
     <script type="text/javascript">
       var __nes;
@@ -156,8 +156,8 @@
         // TODO: temporal
         var canvas = document.getElementById('mainCanvas');
 
-        var nes = new NES();
-        nes.setROM(rom);
+        var nes = new Nes();
+        nes.setRom(rom);
 
         var display = new Display(canvas);
         nes.setDisplay(display);
@@ -179,36 +179,36 @@
        *
        */
       function __pushDumpROM() {
-        __putMessage(__nes.dumpROM());
+        __putMessage(__nes.dumpRom());
       }
 
       /**
        *
        */
       function __pushDumpReg() {
-        __putMessage(__nes.dumpCPU());
-        __putMessage(__nes.dumpPPU());
+        __putMessage(__nes.dumpCpu());
+        __putMessage(__nes.dumpPpu());
       }
 
       /**
        *
        */
       function __pushDumpRAM() {
-        __putMessage(__nes.dumpRAM());
+        __putMessage(__nes.dumpRam());
       }
 
       /**
        *
        */
       function __pushDumpVRAM() {
-        __putMessage(__nes.dumpVRAM());
+        __putMessage(__nes.dumpVRam());
       }
 
       /**
        *
        */
       function __pushDumpSPRRAM() {
-        __putMessage(__nes.dumpSPRRAM());
+        __putMessage(__nes.dumpSprRam());
       }
 
       /**
@@ -225,7 +225,7 @@
        */
       function __pushStepButton() {
         __nes.runStep();
-        __putMessage(__nes.dumpCPU());
+        __putMessage(__nes.dumpCpu());
       }
 
       /**

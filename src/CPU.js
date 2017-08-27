@@ -405,6 +405,18 @@ CPU.prototype.setROM = function(rom) {
 };
 
 
+CPU.prototype.bootup = function() {
+  this.p.store(0x34);
+  this.sp.store(0xFD);
+  this.interrupt(CPU.prototype._INTERRUPT_RESET);
+};
+
+
+CPU.prototype.reset = function() {
+
+};
+
+
 CPU.prototype._MAP_CONTAINER = {'target': null, 'addr': null};
 CPU.prototype._map = function(address) {
   var addr = null;

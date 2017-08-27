@@ -153,6 +153,16 @@ PPU.prototype.initMemoryController = function(cpu) {
 };
 
 
+PPU.prototype.bootup = function() {
+
+};
+
+
+PPU.prototype.reset = function() {
+
+};
+
+
 PPU.prototype.setROM = function(rom) {
   if(rom.hasCHRROM()) {
     this.chrrom = rom.chrrom;
