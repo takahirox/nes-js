@@ -157,6 +157,11 @@
         var canvas = document.getElementById('mainCanvas');
 
         var nes = new Nes();
+
+        nes.addEventListener('fps', function(fps) {
+          document.getElementById('fps').innerText = fps.toFixed(2);
+        });
+
         nes.setRom(rom);
 
         var display = new Display(canvas);

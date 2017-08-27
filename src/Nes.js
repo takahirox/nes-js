@@ -13,15 +13,16 @@ function Nes() {
   this.cpu.initMemoryController(this.ppu, this.pad1);
   this.ppu.initMemoryController(this.cpu);
 
-  this.count = 0;
-
   this.state = this.STATES.POWER_OFF;
 
-  this.fpsDiv = document.getElementById('fps');
-  this.oldDate = Date.now();
+  // for requestAnimationFrame()
 
   var self = this;
   this.runFunc = function() { self.run(); };
+
+  // event listeners
+
+  this.onFpsUpdates = [];
 }
 
 Object.assign(Nes.prototype, {
@@ -44,6 +45,29 @@ Object.assign(Nes.prototype, {
     40: Joypad.BUTTONS.DOWN,    // down arrow
     88: Joypad.BUTTONS.B,       // x
     90: Joypad.BUTTONS.A        // z
+  },
+
+  // event listeners
+
+  /**
+   * Registered callbacks will be invoked when
+   *   'fps': FPS number is updated
+   */
+  addEventListener: function(type, func) {
+    switch(type) {
+      case 'fps':
+        this.onFpsUpdates.push(func);
+        break;
+
+      default:
+        throw new Error('Nes.addEventListener: unknown type ' + type);
+    }
+  },
+
+  invokeFpsUpdateListeners: function(fps) {
+    for(var i = 0, il = this.onFpsUpdates.length; i < il; i++) {
+      this.onFpsUpdates[i](fps);
+    }
   },
 
   //
@@ -102,13 +126,7 @@ Object.assign(Nes.prototype, {
    *
    */
   run: function() {
-    if(this.count % 60 === 0) {
-      var newDate = Date.now();
-      var fps = parseInt((60*1000) / (newDate - this.oldDate));
-      this.fpsDiv.innerText = fps;
-      this.oldDate = newDate;
-    }
-    this.count++;
+    this.measureFps();
 
     var cycles = 341 * 262 / 3; // TODO: temporal
     for(var i = 0; i < cycles; i++) {
@@ -154,6 +172,26 @@ Object.assign(Nes.prototype, {
       this.pad1.releaseButton(this.KEY_TO_PAD_BUTTONS[e.keyCode]);
     e.preventDefault();
   },
+
+  //
+
+  measureFps: function() {
+    var oldTime = null;
+    var frame = 0;
+
+    return function measureFps() {
+      if(frame === 60) {
+        var newTime = performance.now();
+
+        if (oldTime !== null)
+          this.invokeFpsUpdateListeners(60000 / (newTime - oldTime));
+
+        oldTime = newTime;
+        frame = 0;
+      }
+      frame++;
+    };
+  }(),
 
   // dump methods
 
