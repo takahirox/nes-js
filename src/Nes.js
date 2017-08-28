@@ -164,7 +164,7 @@ Object.assign(Nes.prototype, {
 
     do {
       this.runCycle();
-    } while(this.cpu.stallCycle > 0)
+    } while(this.cpu.isStall())
   },
 
   // key input handlers
