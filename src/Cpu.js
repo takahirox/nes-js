@@ -32,14 +32,20 @@ function Cpu() {
   this.stallCycle = 0;
 }
 
-Cpu.prototype._INTERRUPT_NMI = 0;
-Cpu.prototype._INTERRUPT_RESET = 1;
-Cpu.prototype._INTERRUPT_IRQ = 2;
+//
 
-Cpu.prototype._INTERRUPT_HANDLER_ADDRESSES = [];
-Cpu.prototype._INTERRUPT_HANDLER_ADDRESSES[Cpu.prototype._INTERRUPT_NMI] = 0xFFFA;
-Cpu.prototype._INTERRUPT_HANDLER_ADDRESSES[Cpu.prototype._INTERRUPT_RESET] = 0xFFFC;
-Cpu.prototype._INTERRUPT_HANDLER_ADDRESSES[Cpu.prototype._INTERRUPT_IRQ] = 0xFFFE;
+Cpu.INTERRUPTS = {
+  NMI: 0,
+  RESET: 1,
+  IRQ: 2
+};
+
+Cpu.INTERRUPT_HANDLER_ADDRESSES = [];
+Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.NMI]   = 0xFFFA;
+Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.RESET] = 0xFFFC;
+Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.IRQ]   = 0xFFFE;
+
+//
 
 Cpu.prototype._OP_INV = {'opc':  0, 'name': 'inv'}; // Invalid
 Cpu.prototype._OP_ADC = {'opc':  1, 'name': 'adc'};
@@ -410,6 +416,11 @@ Cpu.prototype._OP[0xFF] = {'op': Cpu.prototype._OP_INV, 'cycle': 0, 'mode': null
 Object.assign(Cpu.prototype, {
   isCpu: true,
 
+  //
+
+  INTERRUPTS: Cpu.INTERRUPTS,
+  INTERRUPT_HANDLER_ADDRESSES: Cpu.INTERRUPT_HANDLER_ADDRESSES,
+
   /**
    *
    */
@@ -441,13 +452,13 @@ Object.assign(Cpu.prototype, {
   setROM: function(rom) {
     this.rom = rom;
     // TODO: temporal
-    this._jumpToInterruptHandler(this._INTERRUPT_RESET);
+    this._jumpToInterruptHandler(this.INTERRUPTS.RESET);
   },
 
   bootup: function() {
     this.p.store(0x34);
     this.sp.store(0xFD);
-    this.interrupt(Cpu.prototype._INTERRUPT_RESET);
+    this.interrupt(this.INTERRUPTS.RESET);
   },
 
   reset: function() {
@@ -663,7 +674,7 @@ Object.assign(Cpu.prototype, {
   },
 
   interrupt: function(type) {
-    if(type == this._INTERRUPT_IRQ && this.p.isI()) {
+    if(type == this.INTERRUPTS.IRQ && this.p.isI()) {
       return;
     }
     this._pushStack2Bytes(this.pc.load());
@@ -673,7 +684,7 @@ Object.assign(Cpu.prototype, {
   },
 
   _jumpToInterruptHandler: function(type) {
-    this.pc.store(this.load2Bytes(this._INTERRUPT_HANDLER_ADDRESSES[type]));
+    this.pc.store(this.load2Bytes(this.INTERRUPT_HANDLER_ADDRESSES[type]));
   },
 
   _loadMemoryWithAddressingMode: function(op) {
@@ -1052,7 +1063,7 @@ Object.assign(Cpu.prototype, {
       case this._OP_BRK.opc:
         this.pc.increment(); // necessary?
         this.p.setB();
-        this.interrupt(this._INTERRUPT_IRQ);
+        this.interrupt(this.INTERRUPTS.IRQ);
         break;
 
       case this._OP_BVC.opc:
