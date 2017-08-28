@@ -2,14 +2,14 @@
  *
  */
 function Rom(arrayBuffer) {
-  GenericMemory.call(this, arrayBuffer);
+  Memory.call(this, arrayBuffer);
   this.header = new RomHeader(this);
   this.chrrom = null;
   this.mapper = this._generateMapper();
   this._initCHRROM(this.mapper);
 }
 
-Rom.prototype = Object.assign(Object.create(GenericMemory.prototype), {
+Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   isRom: true,
 
   _HEADER_SIZE: 16,  // 16bytes
@@ -372,11 +372,11 @@ Object.assign(RomHeader.prototype, {
  *
  */
 function CHRROM(capacity, mapper) {
-  GenericMemory.call(this, capacity);
+  Memory.call(this, capacity);
   this.mapper = mapper;
 }
 
-CHRROM.prototype = Object.assign(Object.create(GenericMemory.prototype), {
+CHRROM.prototype = Object.assign(Object.create(Memory.prototype), {
   isCHRROM: true,
 
   /**

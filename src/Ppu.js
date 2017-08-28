@@ -67,8 +67,8 @@ function Ppu() {
     }
   );
 
-  this.vram = new GenericMemory(64 * 1024);  // 64KB
-  this.sprram = new GenericMemory(256);      // 256B
+  this.vram = new Memory(64 * 1024);  // 64KB
+  this.sprram = new Memory(256);      // 256B
 
   this.nt = new Register8bit();
   this.atL = new Register16bit();

@@ -9,7 +9,7 @@ function Cpu() {
   this.x = new Register8bit();
   this.y = new Register8bit();
   this.p = new CPUStatusRegister();
-  this.ram = new GenericMemory(64 * 1024);  // 64KB
+  this.ram = new Memory(64 * 1024);  // 64KB
   this.pad1 = null; // set by setJoypad1()
   this.ppu = null;
   this.apu = null;

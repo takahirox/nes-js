@@ -2,7 +2,7 @@
  * Generic 8bit-word Memory.
  * TODO: consider to make parameter simpler.
  */
-function GenericMemory(param) {
+function Memory(param) {
   if(param instanceof ArrayBuffer) {
     this.buffer = param;
     this.uint8 = new Uint8Array(this.buffer);
@@ -15,8 +15,8 @@ function GenericMemory(param) {
   this._init();
 }
 
-Object.assign(GenericMemory.prototype, {
-  isGenericMemory: true,
+Object.assign(Memory.prototype, {
+  isMemory: true,
 
   _WORD_SIZE: 1, // 1 byte
 
