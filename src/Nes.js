@@ -10,7 +10,7 @@ function Nes() {
 
   this.rom = null;  // set by .setRom()
 
-  this.cpu.initMemoryController(this.ppu, this.pad1);
+  this.cpu.initMemoryController(this.ppu, this.apu, this.pad1);
   this.ppu.initMemoryController(this.cpu);
 
   this.state = this.STATES.POWER_OFF;

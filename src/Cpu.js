@@ -12,6 +12,7 @@ function Cpu() {
   this.ram = new GenericMemory(64 * 1024);  // 64KB
   this.pad1 = null; // set by setJoypad1()
   this.ppu = null;
+  this.apu = null;
   this.rom = null;
   this.handling = 0;
 }
@@ -394,8 +395,9 @@ Cpu.prototype._OP[0xFF] = {'op': Cpu.prototype._OP_INV, 'cycle': 0, 'mode': null
 Object.assign(Cpu.prototype, {
   isCpu: true,
 
-  initMemoryController: function(ppu, pad1) {
+  initMemoryController: function(ppu, apu, pad1) {
     this.ppu = ppu;
+    this.apu = apu;
     this.pad1 = pad1;
   },
 
@@ -457,54 +459,76 @@ Object.assign(Cpu.prototype, {
     } else if(address >= 0x4000 && address < 0x4020) {
       switch(address) {
         case 0x4000:
+          target = this.apu.pulse0;
           break;
         case 0x4001:
+          target = this.apu.pulse1;
           break;
         case 0x4002:
+          target = this.apu.pulse2;
           break;
         case 0x4003:
+          target = this.apu.pulse3;
           break;
         case 0x4004:
+          target = this.apu.pulse4;
           break;
         case 0x4005:
+          target = this.apu.pulse5;
           break;
         case 0x4006:
+          target = this.apu.pulse6;
           break;
         case 0x4007:
+          target = this.apu.pulse7;
           break;
         case 0x4008:
+          target = this.apu.triangle0;
           break;
         case 0x4009:
+          target = this.apu.triangle1;
           break;
         case 0x400A:
+          target = this.apu.triangle2;
           break;
         case 0x400B:
+          target = this.apu.triangle3;
           break;
         case 0x400C:
+          target = this.apu.noise0;
           break;
         case 0x400D:
+          target = this.apu.noise1;
           break;
         case 0x400E:
+          target = this.apu.noise2;
           break;
         case 0x400F:
+          target = this.apu.noise3;
           break;
         case 0x4010:
+          target = this.apu.dmc0;
           break;
         case 0x4011:
+          target = this.apu.dmc1;
           break;
         case 0x4012:
+          target = this.apu.dmc2;
           break;
         case 0x4013:
+          target = this.apu.dmc3;
           break;
         case 0x4014:
           target = this.ppu.sprDMA;
           break;
         case 0x4015:
+          target = this.apu.status;
           break;
         case 0x4016:
           target = this.pad1.register;
           break;
         case 0x4017:
+          //target = this.apu.frame;
           break;
         case 0x4018:
           break;
