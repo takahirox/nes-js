@@ -11,7 +11,7 @@ function Ppu() {
   this.xScroll = 0;
   this.yScroll = 0;
 
-  this.cpu = null;
+  this.cpu = null;  // set by setCpu()
   this.display = null;
   this.ctrl1 = new PPUControlRegister();
   this.ctrl2 = new Register8bit();
@@ -86,7 +86,7 @@ function Ppu() {
   this.spritesMap = [];
   this.spritesMap.length = 256;
 
-  this.ram = null;
+  this.ram = null; // set by setRam();
   this.mem = null; // initialized by initMemoryController
 
   this.chrrom = null;
@@ -178,15 +178,20 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  initMemoryController: function(cpu) {
+  setCpu: function(cpu) {
     this.cpu = cpu;
-    this.ram = cpu.ram;
-    // TODO: temporal
-    this.sr.store(0x80);
+    this.setRam(cpu.ram);
+  },
+
+  /**
+   *
+   */
+  setRam: function(ram) {
+    this.ram = ram;
   },
 
   bootup: function() {
-
+    this.sr.store(0x80);
   },
 
   /**

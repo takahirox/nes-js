@@ -10,11 +10,15 @@ function Cpu() {
   this.y = new Register8bit();
   this.p = new CPUStatusRegister();
   this.ram = new Memory(64 * 1024);  // 64KB
+
+  this.ppu = null;  // set by setPpu()
+  this.apu = null;  // set by setApu()
   this.pad1 = null; // set by setJoypad1()
-  this.ppu = null;
-  this.apu = null;
-  this.rom = null;
-  this.handling = 0;
+  this.pad2 = null; // set by setJoypad2()
+
+  // cartridge ROM
+
+  this.rom = null;  // set by setRom()
 }
 
 Cpu.prototype._INTERRUPT_NMI = 0;
@@ -395,10 +399,32 @@ Cpu.prototype._OP[0xFF] = {'op': Cpu.prototype._OP_INV, 'cycle': 0, 'mode': null
 Object.assign(Cpu.prototype, {
   isCpu: true,
 
-  initMemoryController: function(ppu, apu, pad1) {
+  /**
+   *
+   */
+  setPpu: function(ppu) {
     this.ppu = ppu;
+  },
+
+  /**
+   *
+   */
+  setApu: function(apu) {
     this.apu = apu;
+  },
+
+  /**
+   *
+   */
+  setJoypad1: function(pad1) {
     this.pad1 = pad1;
+  },
+
+  /**
+   *
+   */
+  setJoypad2: function(pad2) {
+
   },
 
   setROM: function(rom) {
