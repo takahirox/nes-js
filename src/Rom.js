@@ -18,13 +18,6 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   /**
    *
    */
-  _init: function() {
-
-  },
-
-  /**
-   *
-   */
   _initCHRROM: function(mapper) {
     if(this.hasCHRROM()) {
       var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();

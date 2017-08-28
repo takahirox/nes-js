@@ -7,7 +7,6 @@
  */
 function Memory(arg) {
   this.data = new Uint8Array(arg);
-  this._init();
 }
 
 Object.assign(Memory.prototype, {
@@ -16,9 +15,9 @@ Object.assign(Memory.prototype, {
   /**
    *
    */
-  _init: function() {
+  clear: function() {
     for(var i = 0, il = this.getCapacity(); i < il; i++)
-      this.store(i, 0);
+      this.storeWithoutMapping(i, 0);
   },
 
   /**
