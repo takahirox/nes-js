@@ -3,7 +3,7 @@
  */
 function Nes() {
   this.ppu = new Ppu();
-  this.cpu = new CPU();
+  this.cpu = new Cpu();
   this.apu = new Apu();
   this.pad1 = new Joypad();
   this.pad2 = new Joypad();

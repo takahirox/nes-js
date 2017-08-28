@@ -467,7 +467,7 @@ Object.assign(Ppu.prototype, {
         this.setVBlank();
         this.display.updateScreen();
         if(this.ctrl1.isVBlank()) {
-          this.cpu.interrupt(CPU.prototype._INTERRUPT_NMI); // TODO: move to CPU
+          this.cpu.interrupt(Cpu.prototype._INTERRUPT_NMI); // TODO: move to CPU
         }
       } else if(this.scanLine == 261) {
         this.clearVBlank();
