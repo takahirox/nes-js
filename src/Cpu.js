@@ -4,10 +4,10 @@
  */
 function Cpu() {
   this.pc = new Register16bit();
-  this.sp = new Register();
-  this.a = new Register();
-  this.x = new Register();
-  this.y = new Register();
+  this.sp = new Register8bit();
+  this.a = new Register8bit();
+  this.x = new Register8bit();
+  this.y = new Register8bit();
   this.p = new CPUStatusRegister();
   this.ram = new GenericMemory(64 * 1024);  // 64KB
   this.pad1 = null; // set by setJoypad1()
@@ -550,7 +550,7 @@ Object.assign(Cpu.prototype, {
       addr = null;
       // TODO: temporal.
       if(target === null) {
-        target = new Register();
+        target = new Register8bit();
       }
     } else if(address >= 0x4020 && address < 0x6000) {
       target = this.ram;
@@ -1457,10 +1457,10 @@ Object.assign(Cpu.prototype, {
  *
  */
 function CPUStatusRegister() {
-  Register.call(this);
+  Register8bit.call(this);
 }
 
-CPUStatusRegister.prototype = Object.assign(Object.create(Register.prototype), {
+CPUStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
   isCPUStatusRegister: true,
 
   _N_BIT: 7,
@@ -1570,7 +1570,7 @@ CPUStatusRegister.prototype = Object.assign(Object.create(Register.prototype), {
 
   dump: function() {
     var buffer = '';
-    buffer += Register.prototype.dump.call(this);
+    buffer += Register8bit.prototype.dump.call(this);
     buffer += '(';
     buffer += this.isN() ? 'N' : '-';
     buffer += this.isV() ? 'V' : '-';

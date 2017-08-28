@@ -14,7 +14,7 @@ function Ppu() {
   this.cpu = null;
   this.display = null;
   this.ctrl1 = new PPUControlRegister();
-  this.ctrl2 = new Register();
+  this.ctrl2 = new Register8bit();
 
   this.sr = new PPUStatusRegister(
     function() {
@@ -23,35 +23,35 @@ function Ppu() {
     undefined
   );
 
-  this.sprAddr = new Register(
+  this.sprAddr = new Register8bit(
     undefined,
     function() {
       self._SPRRAMAddressWriteCallback();
     }
   );
 
-  this.sprIO = new Register(
+  this.sprIO = new Register8bit(
     undefined,
     function() {
       self._SPRRAMIOWriteCallback();
     }
   );
 
-  this.vRAMAddr1 = new Register(
+  this.vRAMAddr1 = new Register8bit(
     undefined,
     function() {
       self._VRAMAddress1WriteCallback();
     }
   );
 
-  this.vRAMAddr2 = new Register(
+  this.vRAMAddr2 = new Register8bit(
     undefined,
     function() {
       self._VRAMAddress2WriteCallback();
     }
   );
 
-  this.vRAMIO = new Register(
+  this.vRAMIO = new Register8bit(
     function() {
       self._VRAMIOReadCallback();
     },
@@ -60,7 +60,7 @@ function Ppu() {
     }
   );
 
-  this.sprDMA = new Register(
+  this.sprDMA = new Register8bit(
     undefined,
     function() {
       self._SPRRAMDMAWriteCallback();
@@ -70,7 +70,7 @@ function Ppu() {
   this.vram = new GenericMemory(64 * 1024);  // 64KB
   this.sprram = new GenericMemory(256);      // 256B
 
-  this.nt = new Register();
+  this.nt = new Register8bit();
   this.atL = new Register16bit();
   this.atH = new Register16bit();
   this.ptL = new Register16bit();
@@ -304,10 +304,10 @@ Object.assign(Ppu.prototype, {
       this.xScrollOffset--;
       if(this.cycle % 8 == 0) {
         this.xScrollOffset = 15 - (this.xScroll % 8);
-        this.ptL.lshift8bits();
-        this.ptH.lshift8bits();
-        this.atL.lshift8bits();
-        this.atH.lshift8bits();
+        this.ptL.lshiftByte();
+        this.ptH.lshiftByte();
+        this.atL.lshiftByte();
+        this.atH.lshiftByte();
       }
     }
   },
@@ -819,10 +819,10 @@ Object.assign(Ppu.prototype, {
  *
  */
 function PPUControlRegister() {
-  Register.call(this);
-};
+  Register8bit.call(this);
+}
 
-PPUControlRegister.prototype = Object.assign(Object.create(Register.prototype), {
+PPUControlRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
   isPPUControlRegister: true,
 
   _NMI_VBLANK_BIT: 7,
@@ -833,7 +833,7 @@ PPUControlRegister.prototype = Object.assign(Object.create(Register.prototype), 
   _INCREMENT_ADDRESS_BIT: 2,
 
   _NAME_TABLE_ADDRESS_BIT: 0,
-  _NAME_TABLE_ADDRESS_BITS_MASK: 0x3,
+  _NAME_TABLE_ADDRESS_BITS_WIDTH: 2,
 
   /**
    *
@@ -888,9 +888,7 @@ PPUControlRegister.prototype = Object.assign(Object.create(Register.prototype), 
    *
    */
   getNameTableAddress: function() {
-    return this.loadPartialBits(
-             this._NAME_TABLE_ADDRESS_BIT,
-             this._NAME_TABLE_ADDRESS_BITS_MASK);
+    return this.loadBits(this._NAME_TABLE_ADDRESS_BIT, this._NAME_TABLE_ADDRESS_BITS_WIDTH);
   }
 });
 
@@ -898,10 +896,10 @@ PPUControlRegister.prototype = Object.assign(Object.create(Register.prototype), 
  *
  */
 function PPUStatusRegister(onBeforeLoad, onAfterStore) {
-  Register.call(this, onBeforeLoad, onAfterStore);
+  Register8bit.call(this, onBeforeLoad, onAfterStore);
 }
 
-PPUStatusRegister.prototype = Object.assign(Object.create(Register.prototype), {
+PPUStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
   isPPUStatusRegister: true,
 
   _VBLANK_BIT_BIT: 7,

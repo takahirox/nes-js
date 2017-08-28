@@ -5,7 +5,7 @@
 function Joypad() {
   var self = this;
 
-  this.register = new Register(
+  this.register = new Register8bit(
     function () {
       self.onRegisterLoad();
     },

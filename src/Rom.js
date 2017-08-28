@@ -451,7 +451,7 @@ NROMMapper.prototype = Object.assign(Object.create(ROMMapper.prototype), {
  */
 function UNROMMapper(rom) {
   ROMMapper.call(this, rom);
-  this.reg = new Register();
+  this.reg = new Register8bit();
 }
 
 UNROMMapper.prototype = Object.assign(Object.create(ROMMapper.prototype), {
@@ -479,11 +479,11 @@ UNROMMapper.prototype = Object.assign(Object.create(ROMMapper.prototype), {
  */
 function MMC1Mapper(rom) {
   ROMMapper.call(this, rom);
-  this.tmpReg = new Register();
-  this.reg0 = new Register();
-  this.reg1 = new Register();
-  this.reg2 = new Register();
-  this.reg3 = new Register();
+  this.tmpReg = new Register8bit();
+  this.reg0 = new Register8bit();
+  this.reg1 = new Register8bit();
+  this.reg2 = new Register8bit();
+  this.reg3 = new Register8bit();
   this.tmpWriteCount = 0;
   this.prgNum = this.rom.header.getPRGROMBanksNum();
   this.reg0.store(0x0C);
@@ -586,13 +586,13 @@ MMC1Mapper.prototype = Object.assign(Object.create(ROMMapper.prototype), {
  */
 function Mapper76(rom) {
   ROMMapper.call(this, rom);
-  this.addrReg = new Register();
-  this.chrReg0 = new Register();
-  this.chrReg1 = new Register();
-  this.chrReg2 = new Register();
-  this.chrReg3 = new Register();
-  this.prgReg0 = new Register();
-  this.prgReg1 = new Register();
+  this.addrReg = new Register8bit();
+  this.chrReg0 = new Register8bit();
+  this.chrReg1 = new Register8bit();
+  this.chrReg2 = new Register8bit();
+  this.chrReg3 = new Register8bit();
+  this.prgReg0 = new Register8bit();
+  this.prgReg1 = new Register8bit();
   this.prgNum = this.rom.header.getPRGROMBanksNum();
 }
 

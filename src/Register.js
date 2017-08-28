@@ -2,17 +2,22 @@
  * General Register implementation.
  * Specific register for CPU and PPU are implemented in each class.
  */
-function Register(onBeforeLoad, onAfterStore) {
-  this.uint8 = new Uint8Array(this._WORD_SIZE);
-  this.uint8[0] = 0;
+
+/**
+ *
+ */
+function Register(type, onBeforeLoad, onAfterStore) {
+  this.data = new type(1);  // Uint8Array or Uint16Array
+  this.data[0] = 0;
   this.onBeforeLoad = onBeforeLoad;
   this.onAfterStore = onAfterStore;
 }
 
+Register.TYPE_8BIT = Uint8Array;
+Register.TYPE_16BIT = Uint16Array;
+
 Object.assign(Register.prototype, {
   isRegister: true,
-
-  _WORD_SIZE: 1, // 1 byte
 
   /**
    *
@@ -21,35 +26,35 @@ Object.assign(Register.prototype, {
     if (this.onBeforeLoad !== undefined)
       this.onBeforeLoad();
 
-    return this.uint8[0];
+    return this.data[0];
   },
 
   /**
    *
    */
   loadWithoutCallback: function() {
-    return this.uint8[0];
+    return this.data[0];
   },
 
   /**
    *
    */
   loadBit: function(pos) {
-    return (this.uint8[0] >> pos) & 1;
+    return (this.data[0] >> pos) & 1;
   },
 
   /**
    *
    */
-  loadPartialBits: function(offset, mask) {
-    return (this.uint8[0] >> offset) & mask;
+  loadBits: function(offset, size) {
+    return (this.data[0] >> offset) & ((1 << size) - 1);
   },
 
   /**
    *
    */
   store: function(value) {
-    this.uint8[0] = value;
+    this.data[0] = value;
 
     if(this.onAfterStore !== undefined)
       this.onAfterStore();
@@ -59,7 +64,7 @@ Object.assign(Register.prototype, {
    *
    */
   storeWithoutCallback: function(value) {
-    this.uint8[0] = value;
+    this.data[0] = value;
   },
 
   /**
@@ -67,58 +72,58 @@ Object.assign(Register.prototype, {
    */
   storeBit: function(pos, value) {
     value = value & 1;  // just in case
-    this.uint8[0] = this.uint8[0] & ~(1 << pos) | (value << pos);
+    this.data[0] = this.data[0] & ~(1 << pos) | (value << pos);
   },
 
   /**
    *
    */
-  storePartialBits: function(offset, mask, value) {
-    this.uint8[0] = this.uint8[0]
-                      & ~(mask << offset)
-                      | ((value & mask) << offset);
+  storeBits: function(offset, size, value) {
+    var mask = (1 << size) - 1;
+    value = value & mask;  // just in case
+    this.data[0] = this.data[0] & ~(mask << offset) | (value << offset);
   },
 
   /**
    *
    */
   increment: function() {
-    this.uint8[0]++;
+    this.data[0]++;
   },
 
   /**
    *
    */
   incrementBy2: function() {
-    this.uint8[0] += 2;
+    this.data[0] += 2;
   },
 
   /**
    *
    */
   add: function(value) {
-    this.uint8[0] += value;
+    this.data[0] += value;
   },
 
   /**
    *
    */
   decrement: function() {
-    this.uint8[0]--;
+    this.data[0]--;
   },
 
   /**
    *
    */
   decrementBy2: function() {
-    this.uint8[0] -= 2;
+    this.data[0] -= 2;
   },
 
   /**
    *
    */
   sub: function(value) {
-    this.uint8[0] -= value;
+    this.data[0] -= value;
   },
 
   /**
@@ -126,8 +131,9 @@ Object.assign(Register.prototype, {
    */
   lshift: function(value) {
     value = value & 1;  // just in case
-    var carry = this.uint8[0] >> 7;
-    this.uint8[0] = (this.uint8[0] << 1) | value;
+    var width = this.data.byteLength * 8;
+    var carry = this.data[0] >> (width - 1);
+    this.data[0] = (this.data[0] << 1) | value;
     return carry;
   },
 
@@ -135,135 +141,65 @@ Object.assign(Register.prototype, {
    *
    */
   dump: function() {
-    return __10to16(this.load(), 2);
+    return __10to16(this.load(), this.data.byteLength * 2);
   }
 });
 
-
-function Register16bit() {
-  this.uint8 = new Uint8Array(this._WORD_SIZE);
-  this.uint16 = new Uint16Array(this.uint8.buffer);
-  this.uint16[0] = 0;
+/**
+ *
+ */
+function Register8bit(onBeforeLoad, onAfterStore) {
+  Register.call(this, Register.TYPE_8BIT, onBeforeLoad, onAfterStore);
 }
 
-Object.assign(Register16bit.prototype, {
+Register8bit.prototype = Object.assign(Object.create(Register.prototype), {
+  isRegister8bit: true
+});
+
+/**
+ *
+ */
+function Register16bit(onBeforeLoad, onAfterStore) {
+  Register.call(this, Register.TYPE_16BIT, onBeforeLoad, onAfterStore);
+  this.bytes = new Uint8Array(this.data.buffer);
+}
+
+Register16bit.prototype = Object.assign(Object.create(Register.prototype), {
   isRegister16bit: true,
-
-  _WORD_SIZE: 2, // 2 byte
-
-  /**
-   *
-   */
-  load: function() {
-    return this.uint16[0];
-  },
-
-  /**
-   *
-   */
-  loadBit: function(bit) {
-    return (this.uint16[0] >> bit) & 1;
-  },
 
   /**
    *
    */
   loadHigherByte: function() {
-    return this.uint8[1];
+    return this.bytes[1];
   },
 
   /**
    *
    */
   loadLowerByte: function() {
-    return this.uint8[0];
-  },
-
-  /**
-   *
-   */
-  store: function(value) {
-    this.uint16[0] = value;
+    return this.bytes[0];
   },
 
   /**
    *
    */
   storeHigherByte: function(value) {
-    this.uint8[1] = value;
+    this.bytes[1] = value;
   },
 
   /**
    *
    */
   storeLowerByte: function(value) {
-    this.uint8[0] = value;
+    this.bytes[0] = value;
   },
 
   /**
    *
    */
-  storeBit: function(bit, value) {
-    value = value & 1;  // just in case
-    this.uint16[0] = this.uint16[0] & ~(1 << bit) | (value << bit);
-  },
-
-  /**
-   *
-   */
-  increment: function() {
-    this.uint16[0]++;
-  },
-
-  /**
-   *
-   */
-  incrementBy2: function() {
-    this.uint16[0] += 2;
-  },
-
-  /**
-   *
-   */
-  add: function(value) {
-    this.uint16[0] += value;
-  },
-
-  /**
-   *
-   */
-  decrement: function() {
-    this.uint16[0]--;
-  },
-
-  /**
-   *
-   */
-  sub: function(value) {
-    this.uint16[0] -= value;
-  },
-
-  /**
-   *
-   */
-  lshift: function(value) {
-    value = value & 1;  // just in case
-    var carry = this.uint16[0] >> 15;
-    this.uint16[0] = (this.uint16[0] << 1) | value;
-    return carry;
-  },
-
-  /**
-   *
-   */
-  lshift8bits: function() {
-    this.uint8[1] = this.uint8[0];
-  },
-
-  /**
-   *
-   */
-  dump: function() {
-    return __10to16(this.load(), 4);
+  lshiftByte: function() {
+    this.bytes[1] = this.bytes[0];
+    this.bytes[0] = 0;
   }
 });
