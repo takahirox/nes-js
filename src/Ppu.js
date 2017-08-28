@@ -3,6 +3,8 @@
  * Refer to https://wiki.nesdev.com/w/index.php/PPU
  */
 function Ppu() {
+  var self = this;
+
   this.count = 0;
   this.scanLine = 0;
   this.cycle = 0;
@@ -14,19 +16,56 @@ function Ppu() {
   this.ctrl1 = new PPUControlRegister();
   this.ctrl2 = new Register();
 
-  this.sr = new PPUStatusRegister(this._ID_SR_REG, this, true, false);
-  this.sprAddr = new RegisterWithCallback(this._ID_SPR_ADDR_REG, this,
-                                          false, true);
-  this.sprIO = new RegisterWithCallback(this._ID_SPR_IO_REG, this,
-                                        false, true);
-  this.vRAMAddr1 = new RegisterWithCallback(this._ID_VRAM_ADDR1_REG, this,
-                                            false, true);
-  this.vRAMAddr2 = new RegisterWithCallback(this._ID_VRAM_ADDR2_REG, this,
-                                            false, true);
-  this.vRAMIO = new RegisterWithCallback(this._ID_VRAM_IO_REG, this,
-                                         true, true);
-  this.sprDMA = new RegisterWithCallback(this._ID_SPR_DMA_REG, this,
-                                         false, true);
+  this.sr = new PPUStatusRegister(
+    function() {
+      self._StatusRegisterReadCallback();
+    },
+    undefined
+  );
+
+  this.sprAddr = new Register(
+    undefined,
+    function() {
+      self._SPRRAMAddressWriteCallback();
+    }
+  );
+
+  this.sprIO = new Register(
+    undefined,
+    function() {
+      self._SPRRAMIOWriteCallback();
+    }
+  );
+
+  this.vRAMAddr1 = new Register(
+    undefined,
+    function() {
+      self._VRAMAddress1WriteCallback();
+    }
+  );
+
+  this.vRAMAddr2 = new Register(
+    undefined,
+    function() {
+      self._VRAMAddress2WriteCallback();
+    }
+  );
+
+  this.vRAMIO = new Register(
+    function() {
+      self._VRAMIOReadCallback();
+    },
+    function() {
+      self._VRAMIOWriteCallback();
+    }
+  );
+
+  this.sprDMA = new Register(
+    undefined,
+    function() {
+      self._SPRRAMDMAWriteCallback();
+    }
+  );
 
   this.vram = new GenericMemory(64 * 1024);  // 64KB
   this.sprram = new GenericMemory(256);      // 256B
@@ -63,14 +102,6 @@ function Ppu() {
   this.spPalette = [];
   this.spPalette.length = 16;
 }
-
-Ppu.prototype._ID_SR_REG         = 0;
-Ppu.prototype._ID_SPR_ADDR_REG   = 1;
-Ppu.prototype._ID_SPR_IO_REG     = 2;
-Ppu.prototype._ID_VRAM_ADDR1_REG = 3;
-Ppu.prototype._ID_VRAM_ADDR2_REG = 4;
-Ppu.prototype._ID_VRAM_IO_REG    = 5;
-Ppu.prototype._ID_SPR_DMA_REG    = 6;
 
 Ppu._MAX_SCANLINE = 262;
 Ppu._SCANLINE_CYCLE = 341;
@@ -487,57 +518,13 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  notifyRegisterLoading: function(id) {
-    switch(id) {
-      case this._ID_SR_REG:
-        this._StatusRegisterReadCallback();
-        break;
-      case this._ID_VRAM_IO_REG:
-        this._VRAMIOReadCallback();
-        break;
-      default:
-        break;
-    }
-  },
-
-  /**
-   *
-   */
-  notifyRegisterStoring: function(id) {
-    switch(id) {
-      case this._ID_SPR_ADDR_REG:
-        this._SPRRAMAddressWriteCallback();
-        break;
-      case this._ID_SPR_IO_REG:
-        this._SPRRAMIOWriteCallback();
-        break;
-      case this._ID_VRAM_ADDR1_REG:
-        this._VRAMAddress1WriteCallback();
-        break;
-      case this._ID_VRAM_ADDR2_REG:
-        this._VRAMAddress2WriteCallback();
-        break;
-      case this._ID_VRAM_IO_REG:
-        this._VRAMIOWriteCallback();
-        break;
-      case this._ID_SPR_DMA_REG:
-        this._SPRRAMDMAWriteCallback();
-        break;
-      default:
-        break;
-    }
-  },
-
-  /**
-   *
-   */
   _VRAMAddress1WriteCallback: function() {
     if(this.VRAMAddressCount1 == 0) {
-      this.xScroll = this.vRAMAddr1.load(true);
+      this.xScroll = this.vRAMAddr1.loadWithoutCallback();
       this.VRAMAddressCount1 = 1;
     } else {
       this.VRAMAddressCount1 = 0;
-      this.yScroll = this.vRAMAddr1.load(true);
+      this.yScroll = this.vRAMAddr1.loadWithoutCallback();
     }
   },
 
@@ -546,7 +533,7 @@ Object.assign(Ppu.prototype, {
    */
   _VRAMAddress2WriteCallback: function() {
     if(this.VRAMAddressCount2 == 0) {
-      this.higherVRAMAddress = this.vRAMAddr2.load(true);
+      this.higherVRAMAddress = this.vRAMAddr2.loadWithoutCallback();
       this.VRAMAddressCount2 = 1;
     } else {
       this.VRAMAddressCount2 = 0;
@@ -557,7 +544,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   _getVRAMAddress: function() {
-    return (this.higherVRAMAddress << 8) | this.vRAMAddr2.load(true);
+    return (this.higherVRAMAddress << 8) | this.vRAMAddr2.loadWithoutCallback();
   },
 
   /**
@@ -567,14 +554,14 @@ Object.assign(Ppu.prototype, {
     var plus = this.ctrl1.isIncrementAddressSet() ? 32 : 1;
     var addr = this._getVRAMAddress() + plus;
     this.higherVRAMAddress = (addr >> 8) & 0xff;
-    this.vRAMAddr2.store(addr & 0xff, true);
+    this.vRAMAddr2.storeWithoutCallback(addr & 0xff);
   },
 
   /**
    *
    */
   _VRAMIOReadCallback: function() {
-    this.vRAMIO.store(this.load(this._getVRAMAddress()), true);
+    this.vRAMIO.storeWithoutCallback(this.load(this._getVRAMAddress()));
     this.VRAMAddressCount2 = 0;
     this._incrementVRAMAddress();
   },
@@ -583,7 +570,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   _VRAMIOWriteCallback: function() {
-    this.store(this._getVRAMAddress(), this.vRAMIO.load(true));
+    this.store(this._getVRAMAddress(), this.vRAMIO.loadWithoutCallback());
     this.VRAMAddressCount2 = 0;
     this._incrementVRAMAddress();
   },
@@ -592,7 +579,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   _StatusRegisterReadCallback: function() {
-  //  this.sr.store(this.sr.load(true) & 0x7f, true);
+  //  this.sr.store(this.sr.loadWithoutCallback() & 0x7f, true);
   },
 
   /**
@@ -606,8 +593,8 @@ Object.assign(Ppu.prototype, {
    *
    */
   _SPRRAMIOWriteCallback: function() {
-    var addr = this.sprAddr.load(true);
-    var value = this.sprIO.load(true);
+    var addr = this.sprAddr.loadWithoutCallback();
+    var value = this.sprIO.loadWithoutCallback();
     this.sprram.store(addr, value);
   },
 
@@ -615,7 +602,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   _SPRRAMDMAWriteCallback: function() {
-    var addr = this.sprDMA.load(true) * 0x100;
+    var addr = this.sprDMA.loadWithoutCallback() * 0x100;
     for(var i = 0; i < 256; i++) {
       var value = this.ram.load(addr + i);
       this.sprram.store(i, value);
@@ -626,14 +613,14 @@ Object.assign(Ppu.prototype, {
    *
    */
   setVBlank: function() {
-    this.sr.store(this.sr.load(true) | 0x80, true);
+    this.sr.storeWithoutCallback(this.sr.loadWithoutCallback() | 0x80);
   },
 
   /**
    *
    */
   clearVBlank: function() {
-    this.sr.store(this.sr.load(true) & 0x7f, true);
+    this.sr.storeWithoutCallback(this.sr.loadWithoutCallback() & 0x7f);
   },
 
   /**
@@ -910,11 +897,11 @@ PPUControlRegister.prototype = Object.assign(Object.create(Register.prototype), 
 /**
  *
  */
-function PPUStatusRegister(id, caller, l, s) {
-  RegisterWithCallback.call(this, id, caller, l, s);
+function PPUStatusRegister(onBeforeLoad, onAfterStore) {
+  Register.call(this, onBeforeLoad, onAfterStore);
 }
 
-PPUStatusRegister.prototype = Object.assign(Object.create(RegisterWithCallback.prototype), {
+PPUStatusRegister.prototype = Object.assign(Object.create(Register.prototype), {
   isPPUStatusRegister: true,
 
   _VBLANK_BIT_BIT: 7,

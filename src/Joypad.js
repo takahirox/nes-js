@@ -3,7 +3,16 @@
  * Refer to https://wiki.nesdev.com/w/index.php/Standard_controller
  */
 function Joypad() {
-  this.register = new RegisterWithCallback(0, this, true, true);
+  var self = this;
+
+  this.register = new Register(
+    function () {
+      self.onRegisterLoad();
+    },
+    function () {
+      self.onRegisterStore();
+    }
+  );
 
   this.latch = 0;
   this.currentButton = 0;
@@ -68,7 +77,7 @@ Object.assign(Joypad.prototype, {
   /**
    *
    */
-  notifyRegisterLoading: function(id) {
+  onRegisterLoad: function() {
     var button = this.latch === 1 ? 0 : this.currentButton++;
 
     // 1: a button is being pressed or after eight reads
@@ -76,13 +85,13 @@ Object.assign(Joypad.prototype, {
     var value = (button >= this.buttonNum || this.buttons[button]) ? 1 : 0;
 
     // to return the button state to CPU, writes value to the register
-    this.register.store(value, true);
+    this.register.storeWithoutCallback(value);
   },
 
   /**
    *
    */
-  notifyRegisterStoring: function() {
+  onRegisterStore: function() {
     var value = this.register.loadBit(0);
 
     if (value === 1)

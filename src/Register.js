@@ -2,9 +2,11 @@
  * General Register implementation.
  * Specific register for CPU and PPU are implemented in each class.
  */
-function Register() {
+function Register(onBeforeLoad, onAfterStore) {
   this.uint8 = new Uint8Array(this._WORD_SIZE);
   this.uint8[0] = 0;
+  this.onBeforeLoad = onBeforeLoad;
+  this.onAfterStore = onAfterStore;
 }
 
 Object.assign(Register.prototype, {
@@ -16,6 +18,16 @@ Object.assign(Register.prototype, {
    *
    */
   load: function() {
+    if (this.onBeforeLoad !== undefined)
+      this.onBeforeLoad();
+
+    return this.uint8[0];
+  },
+
+  /**
+   *
+   */
+  loadWithoutCallback: function() {
     return this.uint8[0];
   },
 
@@ -37,6 +49,16 @@ Object.assign(Register.prototype, {
    *
    */
   store: function(value) {
+    this.uint8[0] = value;
+
+    if(this.onAfterStore !== undefined)
+      this.onAfterStore();
+  },
+
+  /**
+   *
+   */
+  storeWithoutCallback: function(value) {
     this.uint8[0] = value;
   },
 
@@ -243,34 +265,5 @@ Object.assign(Register16bit.prototype, {
    */
   dump: function() {
     return __10to16(this.load(), 4);
-  }
-});
-
-
-/**
- * A class uses this class should be careful not to occur infinite loop.
- */
-function RegisterWithCallback(id, caller, callbackLoading, callbackStoring) {
-  Register.call(this);
-  this.caller = caller;
-  this.id = id;
-  // TODO: rename
-  this.callbackLoading = callbackLoading;
-  this.callbackStoring = callbackStoring;
-}
-
-RegisterWithCallback.prototype = Object.assign(Object.create(Register.prototype), {
-  isRegisterWithCallback: true,
-
-  load: function(skip) {
-    if(this.callbackLoading === true && skip !== true)
-      this.caller.notifyRegisterLoading(this.id);
-    return Register.prototype.load.call(this);
-  },
-
-  store: function(value, skip) {
-    Register.prototype.store.call(this, value);
-    if(this.callbackStoring === true && skip !== true)
-      this.caller.notifyRegisterStoring(this.id);
   }
 });
