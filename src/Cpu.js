@@ -3,13 +3,20 @@
  * TODO: consider if setROM method is necessary.
  */
 function Cpu() {
+  // registers
+
   this.pc = new Register16bit();
   this.sp = new Register8bit();
   this.a = new Register8bit();
   this.x = new Register8bit();
   this.y = new Register8bit();
   this.p = new CPUStatusRegister();
+
+  // inside RAM
+
   this.ram = new Memory(64 * 1024);  // 64KB
+
+  // other devices
 
   this.ppu = null;  // set by setPpu()
   this.apu = null;  // set by setApu()
@@ -19,6 +26,10 @@ function Cpu() {
   // cartridge ROM
 
   this.rom = null;  // set by setRom()
+
+  //
+
+  this.stallCycle = 0;
 }
 
 Cpu.prototype._INTERRUPT_NMI = 0;
@@ -640,24 +651,14 @@ Object.assign(Cpu.prototype, {
   },
 
   runCycle: function() {
-    if(this.handling <= 0) {
-
-      /*
+    if(this.stallCycle <= 0) {
       var opc = this._fetch();
       var op = this._decode(opc);
-      */
-
-      /*
-       * Note: using inlining for the performance.
-       */
-      var opc = this.load(this.pc.load());
-      this.pc.increment();
-      var op = this._OP[opc];
 
       this._operate(op);
-      this.handling = op.cycle;
+      this.stallCycle = op.cycle;
     }
-    this.handling--;
+    this.stallCycle--;
   },
 
   interrupt: function(type) {
