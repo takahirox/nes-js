@@ -435,7 +435,7 @@ Object.assign(Cpu.prototype, {
    *
    */
   setJoypad2: function(pad2) {
-
+    this.pad2 = pad2;
   },
 
   setROM: function(rom) {
@@ -565,6 +565,7 @@ Object.assign(Cpu.prototype, {
           target = this.pad1.register;
           break;
         case 0x4017:
+          target = this.pad2.register;
           //target = this.apu.frame;
           break;
         case 0x4018:
