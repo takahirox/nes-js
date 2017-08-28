@@ -1,30 +1,23 @@
 /**
  * Generic 8bit-word Memory.
- * TODO: consider to make parameter simpler.
  */
-function Memory(param) {
-  if(param instanceof ArrayBuffer) {
-    this.buffer = param;
-    this.uint8 = new Uint8Array(this.buffer);
-    this.capacity = this.uint8.byteLength;
-  } else {
-    this.capacity = param;
-    this.buffer = new ArrayBuffer(this.capacity);
-    this.uint8 = new Uint8Array(this.buffer);
-  }
+
+/**
+ * @param {ArrayBuffer|integer} arg -
+ */
+function Memory(arg) {
+  this.data = new Uint8Array(arg);
   this._init();
 }
 
 Object.assign(Memory.prototype, {
   isMemory: true,
 
-  _WORD_SIZE: 1, // 1 byte
-
   /**
    *
    */
   _init: function() {
-    for(var i = 0; i < this.capacity; i++)
+    for(var i = 0, il = this.getCapacity(); i < il; i++)
       this.store(i, 0);
   },
 
@@ -32,35 +25,35 @@ Object.assign(Memory.prototype, {
    *
    */
   getCapacity: function() {
-    return this.capacity;
+    return this.data.byteLength;
   },
 
   /**
    *
    */
   load: function(address) {
-    return this.uint8[address];
+    return this.data[address];
   },
 
   /**
    *
    */
   loadWithoutMapping: function(address) {
-    return this.uint8[address];
+    return this.data[address];
   },
 
   /**
    *
    */
   store: function(address, value) {
-    this.uint8[address] = value;
+    this.data[address] = value;
   },
 
   /**
    *
    */
   storeWithoutMapping: function(address, value) {
-    this.uint8[address] = value;
+    this.data[address] = value;
   },
 
   /**
@@ -115,7 +108,7 @@ Object.assign(Memory.prototype, {
    *
    */
   _getEndDumpAddress: function() {
-    return this.capacity;
+    return this.getCapacity();
   },
 
   /**

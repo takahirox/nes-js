@@ -41,7 +41,7 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   load: function(address) {
-    return this.uint8[this.mapper.map(address) + this._HEADER_SIZE];
+    return this.data[this.mapper.map(address) + this._HEADER_SIZE];
   },
 
   /**
@@ -346,7 +346,7 @@ CHRROM.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   load: function(address) {
-    return this.uint8[this.mapper.mapForCHRROM(address)];
+    return this.data[this.mapper.mapForCHRROM(address)];
   },
 
   /**
