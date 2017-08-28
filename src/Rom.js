@@ -13,15 +13,13 @@ function Rom(arrayBuffer) {
 Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   isRom: true,
 
-  _HEADER_SIZE: 16,  // 16bytes
-
   /**
    *
    */
   _initCHRROM: function(mapper) {
     if(this.hasCHRROM()) {
       var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();
-      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this._HEADER_SIZE;
+      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
       this.chrrom = new CHRROM(capacity, mapper);
       for(var i = 0; i < capacity; i++) {
         var value = this.loadWithoutMapping(i + offset);
@@ -34,7 +32,7 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   load: function(address) {
-    return this.data[this.mapper.map(address) + this._HEADER_SIZE];
+    return this.data[this.mapper.map(address) + this.getHeaderSize()];
   },
 
   /**
@@ -47,16 +45,25 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   /**
    *
    */
-  isNES: function() {
-    return this.header.isNES();
+  isNes: function() {
+    return this.header.isNes();
+  },
+
+  /**
+   *
+   */
+  getHeaderSize: function() {
+    return this.header.getSize();
   },
 
   /**
    *
    */
   hasCHRROM: function() {
-    return this.header.getCHRROMBanksNum() > 0;
+    return this.header.hasCHRROM();
   },
+
+  // dump methods
 
   /**
    *
@@ -69,14 +76,14 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   _getStartDumpAddress: function() {
-    return this._HEADER_SIZE;
+    return this.getHeaderSize();
   },
 
   /**
    *
    */
   _getEndDumpAddress: function() {
-    return 0x4000 + this._HEADER_SIZE;
+    return 0x4000 + this.getHeaderSize();
   }
 });
 
@@ -90,55 +97,84 @@ function RomHeader(rom) {
 Object.assign(RomHeader.prototype, {
   isRomHeader: true,
 
-  _WORD_SIZE: 1, // 1byte
+  size: 16,  // 16bytes
 
-  _SIGNATURE: 'NES',
-  _SIGNATURE_ADDRESS: 0,
-  _SIGNATURE_SIZE: 3,
+  //
 
-  _MAGIC_NUMBER: 0x1a,
-  _MAGIC_NUMBER_ADDRESS: 3,
-  _MAGIC_NUMBER_SIZE: 1,
+  VALID_SIGNATURE: 'NES',
+  VALID_MAGIC_NUMBER: 0x1a,
 
-  _PRG_ROM_BANKS_NUM_ADDRESS: 4,
-  _PRG_ROM_BANKS_NUM_SIZE: 1,
+  //
 
-  _CHR_ROM_BANKS_NUM_ADDRESS: 5,
-  _CHR_ROM_BANKS_NUM_SIZE: 1,
+  SIGNATURE_ADDRESS: 0,
+  SIGNATURE_SIZE: 3,
 
-  _CONTROL_BYTE1_ADDRESS: 6,
-  _CONTROL_BYTE1_SIZE: 1,
+  MAGIC_NUMBER_ADDRESS: 3,
+  MAGIC_NUMBER_SIZE: 1,
 
-  _CONTROL_BYTE2_ADDRESS: 7,
-  _CONTROL_BYTE2_SIZE: 1,
+  PRG_ROM_BANKS_NUM_ADDRESS: 4,
+  PRG_ROM_BANKS_NUM_SIZE: 1,
 
-  _RAM_BANKS_NUM_ADDRESS: 8,
-  _RAM_BANKS_NUM_SIZE: 1,
+  CHR_ROM_BANKS_NUM_ADDRESS: 5,
+  CHR_ROM_BANKS_NUM_SIZE: 1,
 
-  _UNUSED_ADDRESS: 9,
-  _UNUSED_SIZE: 7,
+  CONTROL_BYTE1_ADDRESS: 6,
+  CONTROL_BYTE1_SIZE: 1,
 
-  _MIRRORING_TYPE_BIT: 0,
-  _MIRRORING_TYPE_BITS_MASK: 0x1,
-  _MIRRORING_TYPE_HORIZONTAL: 0,
-  _MIRRORING_TYPE_VERTICAL: 1,
+  CONTROL_BYTE2_ADDRESS: 7,
+  CONTROL_BYTE2_SIZE: 1,
 
-  _BATTERY_BACKED_RAM_BIT: 1,
-  _BATTERY_BACKED_RAM_BITS_MASK: 0x1,
+  RAM_BANKS_NUM_ADDRESS: 8,
+  RAM_BANKS_NUM_SIZE: 1,
 
-  _512BYTES_TRAINER_BIT: 2,
-  _512BYTES_TRAINER_BITS_MASK: 0x1,
+  UNUSED_ADDRESS: 9,
+  UNUSED_SIZE: 7,
 
-  _FOUR_SCREEN_MIRRORING_BIT: 3,
-  _FOUR_SCREEN_MIRRORING_BITS_MASK: 0x1,
+  //
 
-  _MAPPER_LOWER_BIT: 4,
-  _MAPPER_LOWER_BITS_SIZE: 4, // 4bits
-  _MAPPER_LOWER_BITS_MASK: 0xf,
+  MIRRORING_TYPE_BIT: 0,
+  MIRRORING_TYPE_BITS_WIDTH: 1,
+  MIRRORING_TYPE_HORIZONTAL: 0,
+  MIRRORING_TYPE_VERTICAL: 1,
 
-  _MAPPER_HIGHER_BIT: 4,
-  _MAPPER_HIGHER_BITS_SIZE: 4, // 4bits
-  _MAPPER_HIGHER_BITS_MASK: 0xf,
+  BATTERY_BACKED_RAM_BIT: 1,
+  BATTERY_BACKED_RAM_BITS_WIDTH: 1,
+
+  TRAINER_512BYTES_BIT: 2,
+  TRAINER_512BYTES_BITS_WIDTH: 1,
+
+  FOUR_SCREEN_MIRRORING_BIT: 3,
+  FOUR_SCREEN_MIRRORING_BITS_WIDTH: 1,
+
+  MAPPER_LOWER_BIT: 4,
+  MAPPER_LOWER_BITS_WIDTH: 4,
+
+  MAPPER_HIGHER_BIT: 4,
+  MAPPER_HIGHER_BITS_WIDTH: 4,
+
+  //
+
+  /**
+   *
+   */
+  getSize: function() {
+    return this.size;
+  },
+
+  /**
+   *
+   */
+  isNes: function() {
+    if(this.getSignature() !== this.VALID_SIGNATURE)
+      return false;
+
+    if(this.getMagicNumber() !== this.VALID_MAGIC_NUMBER)
+      return false;
+
+    return true;
+  },
+
+  //
 
   /**
    *
@@ -152,9 +188,10 @@ Object.assign(RomHeader.prototype, {
    */
   getSignature: function() {
     var str = '';
-    for(var i = 0; i < this._SIGNATURE_SIZE; i++) {
-      str += String.fromCharCode(this.load(this._SIGNATURE_ADDRESS+i));
-    }
+
+    for(var i = 0; i < this.SIGNATURE_SIZE; i++)
+      str += String.fromCharCode(this.load(this.SIGNATURE_ADDRESS + i));
+
     return str;
   },
 
@@ -162,42 +199,49 @@ Object.assign(RomHeader.prototype, {
    *
    */
   getMagicNumber: function() {
-    return this.load(this._MAGIC_NUMBER_ADDRESS);
+    return this.load(this.MAGIC_NUMBER_ADDRESS);
   },
 
   /**
    *
    */
   getPRGROMBanksNum: function() {
-    return this.load(this._PRG_ROM_BANKS_NUM_ADDRESS);
+    return this.load(this.PRG_ROM_BANKS_NUM_ADDRESS);
   },
 
   /**
    *
    */
   getCHRROMBanksNum: function() {
-    return this.load(this._CHR_ROM_BANKS_NUM_ADDRESS);
+    return this.load(this.CHR_ROM_BANKS_NUM_ADDRESS);
+  },
+
+  /**
+   *
+   */
+  hasCHRROM: function() {
+    return this.getCHRROMBanksNum() > 0;
   },
 
   /**
    *
    */
   getControlByte1: function() {
-    return this.load(this._CONTROL_BYTE1_ADDRESS);
+    return this.load(this.CONTROL_BYTE1_ADDRESS);
   },
 
   /**
    *
    */
   getControlByte2: function() {
-    return this.load(this._CONTROL_BYTE2_ADDRESS);
+    return this.load(this.CONTROL_BYTE2_ADDRESS);
   },
 
   /**
    *
    */
   getRAMBanksNum: function() {
-    return this.load(this._RAM_BANKS_NUM_ADDRESS);
+    return this.load(this.RAM_BANKS_NUM_ADDRESS);
   },
 
   /**
@@ -205,33 +249,35 @@ Object.assign(RomHeader.prototype, {
    */
   getUnusedField: function() {
     var value = 0;
-    for(var i = 0; i < this._UNUSED_SIZE; i++) {
-      value = (value << 8) | this.load(this._UNUSED_ADDRESS+i);
-    }
+
+    for(var i = 0; i < this.UNUSED_SIZE; i++)
+      value = (value << 8) | this.load(this.UNUSED_ADDRESS + i);
+
     return value;
   },
+
+  //
 
   /**
    *
    */
-  _getPartialBits: function(value, bit, mask) {
-    return (value >> bit) & mask;
+  extractBits: function(value, offset, size) {
+    return (value >> offset) & ((1 << size) - 1);
   },
 
   /**
    *
    */
   getMirroringType: function() {
-    return this._getPartialBits(this.getControlByte1(),
-                                this._MIRRORING_TYPE_BIT,
-                                this._MIRRORING_TYPE_BITS_MASK);
+    return this.extractBits(this.getControlByte1(),
+             this.MIRRORING_TYPE_BIT, this.MIRRORING_TYPE_BITS_WIDTH);
   },
 
   /**
    *
    */
   getMirroringTypeAsStrings: function() {
-    return (this.getMirroringType() == this._MIRRORING_TYPE_HORIZONTAL)
+    return (this.getMirroringType() === this.MIRRORING_TYPE_HORIZONTAL)
              ? 'horizontal' : 'vertical';
   },
 
@@ -239,51 +285,35 @@ Object.assign(RomHeader.prototype, {
    *
    */
   getBatteryBackedRAM: function() {
-    return this._getPartialBits(this.getControlByte1(),
-                                this._BATTERY_BACKED_RAM_BIT,
-                                this._BATTERY_BACKED_RAM_BITS_MASK);
+    return this.extractBits(this.getControlByte1(),
+             this.BATTERY_BACKED_RAM_BIT, this.BATTERY_BACKED_RAM_BITS_WIDTH);
   },
 
   /**
    *
    */
-  get512BytesTrainer: function() {
-    return this._getPartialBits(this.getControlByte1(),
-                                this._512BYTES_TRAINER_BIT,
-                                this._512BYTES_TRAINER_BITS_MASK);
+  getTrainer512Bytes: function() {
+    return this.extractBits(this.getControlByte1(),
+             this.TRAINER_512BYTES_BIT, this.TRAINER_512BYTES_BITS_WIDTH);
   },
 
   /**
    *
    */
   getFourScreenMirroring: function() {
-    return this._getPartialBits(this.getControlByte1(),
-                                this._FOUR_SCREEN_MIRRORING_BIT,
-                                this._FOUR_SCREEN_MIRRORING_BITS_MASK);
+    return this.extractBits(this.getControlByte1(),
+             this.FOUR_SCREEN_MIRRORING_BIT, this.FOUR_SCREEN_MIRRORING_BITS_WIDTH);
   },
 
   /**
    *
    */
   getMapperNum: function() {
-    var lowerBits = this._getPartialBits(this.getControlByte1(),
-                                         this._MAPPER_LOWER_BIT,
-                                         this._MAPPER_LOWER_BITS_MASK);
-    var higherBits = this._getPartialBits(this.getControlByte2(),
-                                          this._MAPPER_HIGHER_BIT,
-                                          this._MAPPER_HIGHER_BITS_MASK);
-    return (higherBits << this._MAPPER_LOWER_BITS_SIZE) | lowerBits;
-  },
-
-  /**
-   *
-   */
-  isNES: function() {
-    if(this._SIGNATURE != this.getSignature())
-      return false;
-    if(this.getMagicNumber() != this._MAGIC_NUMBER)
-      return false;
-    return true;
+    var lowerBits = this.extractBits(this.getControlByte1(),
+                      this.MAPPER_LOWER_BIT, this.MAPPER_LOWER_BITS_WIDTH);
+    var higherBits = this.extractBits(this.getControlByte2(),
+                       this.MAPPER_HIGHER_BIT, this.MAPPER_HIGHER_BITS_WIDTH);
+    return (higherBits << this.MAPPER_LOWER_BITS_SIZE) | lowerBits;
   },
 
   /**
@@ -293,7 +323,7 @@ Object.assign(RomHeader.prototype, {
     var buffer = '';
 
     buffer += '0x ';
-    for(var i = 0; i < Rom.prototype._HEADER_SIZE; i++) {
+    for(var i = 0; i < this.getSize(); i++) {
       buffer += __10to16(this.load(i), 2, true) + ' ';
     }
     buffer += '\n\n';
@@ -315,7 +345,7 @@ Object.assign(RomHeader.prototype, {
     buffer += 'Battery-backed RAM: ' +
                  __10to16(this.getBatteryBackedRAM()) + '\n';
     buffer += '512-byte trainer: ' +
-                __10to16(this.get512BytesTrainer()) + '\n';
+                __10to16(this.getTrainer512Bytes()) + '\n';
     buffer += 'Four screen mirroring: ' +
                  __10to16(this.getFourScreenMirroring()) + '\n';
     buffer += 'Mapper number: ' + __10to16(this.getMapperNum(), 2) +

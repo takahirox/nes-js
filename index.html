@@ -144,15 +144,12 @@
 
         __putMessage(rom.header.dump());
 
-        if(!rom.isNES()) {
+        if(!rom.isNes()) {
           __putMessage('this doesn\'t seem iNES format.');
           return;
         }
 
         __putMessage('this seems iNES format.');
-
-        if(! rom.isNES())
-          return;
 
         // TODO: temporal
         var canvas = document.getElementById('mainCanvas');
