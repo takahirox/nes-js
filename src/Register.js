@@ -87,6 +87,13 @@ Object.assign(Register.prototype, {
   /**
    *
    */
+  clear: function() {
+    this.data[0] = 0;
+  },
+
+  /**
+   *
+   */
   increment: function() {
     this.data[0]++;
   },
