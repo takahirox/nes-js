@@ -479,7 +479,16 @@ Object.assign(Cpu.prototype, {
    */
   bootup: function() {
     this.p.store(0x34);
+    this.a.clear();
+    this.x.clear();
+    this.y.clear();
     this.sp.store(0xFD);
+
+    for(var i = 0; i < 0xF; i++)
+      this.store(0x4000 + i, 0);
+
+    this.store(0x4015, 0);
+    this.store(0x4017, 0);
     this.interrupt(this.INTERRUPTS.RESET);
   },
 
@@ -515,7 +524,7 @@ Object.assign(Cpu.prototype, {
    *
    */
   interrupt: function(type) {
-    if(type === this.INTERRUPTS.IRQ && this.p.isI())
+    if(type === this.INTERRUPTS.IRQ && !this.interruptEnabled())
       return;
 
     this.pushStack2Bytes(this.pc.load());
@@ -799,14 +808,16 @@ Object.assign(Cpu.prototype, {
     this.pc.store(this.load2Bytes(this.INTERRUPT_HANDLER_ADDRESSES[type]));
   },
 
+  //
+
   /**
    *
    */
-  loadMemoryWithAddressingMode: function(op) {
+  loadWithAddressingMode: function(op) {
     if(op.mode.id === this.ADDRESSINGS.ACCUMULATOR.id)
       return this.a.load();
 
-    var address = this.getMemoryAddressWithAddressingMode(op);
+    var address = this.getAddressWithAddressingMode(op);
     var value = this.load(address);
 
     // expects that relative addressing mode is used only for load.
@@ -819,13 +830,13 @@ Object.assign(Cpu.prototype, {
     return value;
   },
 
-  storeMemoryWithAddressingMode: function(op, value) {
+  storeWithAddressingMode: function(op, value) {
     if(op.mode.id === this.ADDRESSINGS.ACCUMULATOR.id) {
       this.a.store(value);
       return;
     }
 
-    var address = this.getMemoryAddressWithAddressingMode(op);
+    var address = this.getAddressWithAddressingMode(op);
     this.store(address, value);
   },
 
@@ -836,7 +847,7 @@ Object.assign(Cpu.prototype, {
     if(op.mode.id == this.ADDRESSINGS.ACCUMULATOR.id) {
       src = this.a.load();
     } else {
-      address = this.getMemoryAddressWithAddressingMode(op);
+      address = this.getAddressWithAddressingMode(op);
       src = this.load(address);
     }
 
@@ -849,7 +860,7 @@ Object.assign(Cpu.prototype, {
     }
   },
 
-  getMemoryAddressWithAddressingMode: function(op) {
+  getAddressWithAddressingMode: function(op) {
     var address = null;
 
     switch(op.mode.id) {
@@ -920,22 +931,38 @@ Object.assign(Cpu.prototype, {
     return address;
   },
 
+  /**
+   *
+   */
+  interruptEnabled: function() {
+    return !this.p.isI();
+  },
+
+  /**
+   *
+   */
   updateN: function(value) {
-    if((value & 0x80) == 0)
+    if((value & 0x80) === 0)
       this.p.clearN();
     else
       this.p.setN();
   },
 
+  /**
+   *
+   */
   updateZ: function(value) {
-    if((value & 0xff) == 0)
+    if((value & 0xff) === 0)
       this.p.setZ();
     else
       this.p.clearZ();
   },
 
+  /**
+   *
+   */
   updateC: function(value) {
-    if((value & 0x100) == 0)
+    if((value & 0x100) === 0)
       this.p.clearC();
     else
       this.p.setC();
@@ -970,7 +997,7 @@ Object.assign(Cpu.prototype, {
   },
 
   doBranch: function(op, flag) {
-    var result = this.loadMemoryWithAddressingMode(op);
+    var result = this.loadWithAddressingMode(op);
     if(flag)
       this.pc.add(result);
   },
@@ -979,7 +1006,7 @@ Object.assign(Cpu.prototype, {
     switch(op.instruction.id) {
       case this.INSTRUCTIONS.ADC.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var c = this.p.isC() ? 1 : 0;
         var result = src1 + src2 + c;
         this.a.store(result);
@@ -994,7 +1021,7 @@ Object.assign(Cpu.prototype, {
 
       case this.INSTRUCTIONS.AND.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var result = src1 & src2;
         this.a.store(result);
         this.updateN(result);
@@ -1028,7 +1055,7 @@ Object.assign(Cpu.prototype, {
       // TODO: check logic.
       case this.INSTRUCTIONS.BIT.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var result = src1 & src2;
         this.updateN(src2);
         this.updateZ(result);
@@ -1097,7 +1124,7 @@ Object.assign(Cpu.prototype, {
             src1 = this.y.load();
             break;
         }
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var result = src1 - src2;
         this.updateN(result);
         this.updateZ(result);
@@ -1138,7 +1165,7 @@ Object.assign(Cpu.prototype, {
 
       case this.INSTRUCTIONS.EOR.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var result = src1 ^ src2;
         this.a.store(result);
         this.updateN(result);
@@ -1176,13 +1203,13 @@ Object.assign(Cpu.prototype, {
 
       // TODO: check the logic.
       case this.INSTRUCTIONS.JMP.id:
-        var address = this.getMemoryAddressWithAddressingMode(op);
+        var address = this.getAddressWithAddressingMode(op);
         this.pc.store(address);
         break;
 
       // TODO: check the logic.
       case this.INSTRUCTIONS.JSR.id:
-        var address = this.getMemoryAddressWithAddressingMode(op);
+        var address = this.getAddressWithAddressingMode(op);
         this.pc.decrement();
         this.pushStack2Bytes(this.pc.load());
         this.pc.store(address);
@@ -1191,7 +1218,7 @@ Object.assign(Cpu.prototype, {
       case this.INSTRUCTIONS.LDA.id:
       case this.INSTRUCTIONS.LDX.id:
       case this.INSTRUCTIONS.LDY.id:
-        var result = this.loadMemoryWithAddressingMode(op);
+        var result = this.loadWithAddressingMode(op);
         var reg;
         switch(op.instruction.id) {
           case this.INSTRUCTIONS.LDA.id:
@@ -1229,7 +1256,7 @@ Object.assign(Cpu.prototype, {
 
       case this.INSTRUCTIONS.ORA.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var result = src1 | src2;
         this.a.store(result);
         this.updateN(result);
@@ -1306,7 +1333,7 @@ Object.assign(Cpu.prototype, {
 
       case this.INSTRUCTIONS.SBC.id:
         var src1 = this.a.load();
-        var src2 = this.loadMemoryWithAddressingMode(op);
+        var src2 = this.loadWithAddressingMode(op);
         var c = this.p.isC() ? 0 : 1;
         var result = src1 - src2 - c;
         this.a.store(result);
@@ -1352,7 +1379,7 @@ Object.assign(Cpu.prototype, {
             reg = this.y;
             break;
         }
-        this.storeMemoryWithAddressingMode(op, reg.load());
+        this.storeWithAddressingMode(op, reg.load());
         break;
 
       case this.INSTRUCTIONS.TAX.id:
@@ -1431,10 +1458,10 @@ Object.assign(Cpu.prototype, {
       str += __10to16(pc - ROM.prototype._HEADER_SIZE, 4) + ' ';
       str += __10to16(opc, 2) + ' ';
       str += op.instruction.name + ' ';
-      str += this._dumpMemoryAddressingMode(op,
-                                            rom,
-                                            (pc + 1) & 0xffff)
-               + ' ';
+      str += this.dumpMemoryAddressingMode(op,
+                                           rom,
+                                           (pc + 1) & 0xffff)
+             + ' ';
 
       while(str.length < 30) {
         str += ' ' ;
@@ -1468,9 +1495,9 @@ Object.assign(Cpu.prototype, {
     buffer += 'y:'  + this.y.dump()  + ' ';
 
     buffer += op.instruction.name + ' ' +
-                this._dumpMemoryAddressingMode(op,
-                                               this,
-                                               (this.pc.load() + 1) & 0xffff)
+                this.dumpMemoryAddressingMode(op,
+                                              this,
+                                              (this.pc.load() + 1) & 0xffff)
                 + ' ';
 
     while(buffer.length < 90) {
@@ -1486,7 +1513,7 @@ Object.assign(Cpu.prototype, {
     return this.ram.dump();
   },
 
-  _dumpMemoryAddressingMode: function(op, mem, pc) {
+  dumpMemoryAddressingMode: function(op, mem, pc) {
     var buffer = '';
     var ramDump = (mem instanceof Cpu) ? true : false;
 
@@ -1633,99 +1660,99 @@ CPUStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype
   C_BIT: 0,
 
   isN: function() {
-    return this.loadBit(this.N_BIT);
+    return this.isBitSet(this.N_BIT);
   },
 
   setN: function() {
-    this.storeBit(this.N_BIT, 1);
+    this.setBit(this.N_BIT);
   },
 
   clearN: function() {
-    this.storeBit(this.N_BIT, 0);
+    this.clearBit(this.N_BIT);
   },
 
   isV: function() {
-    return this.loadBit(this.V_BIT);
+    return this.isBitSet(this.V_BIT);
   },
 
   setV: function() {
-    this.storeBit(this.V_BIT, 1);
+    this.setBit(this.V_BIT);
   },
 
   clearV: function() {
-    this.storeBit(this.V_BIT, 0);
+    this.clearBit(this.V_BIT);
   },
 
   isA: function() {
-    return this.loadBit(this.A_BIT);
+    return this.IsBitSet(this.A_BIT);
   },
 
   setA: function() {
-    this.storeBit(this.A_BIT, 1);
+    this.setBit(this.A_BIT);
   },
 
   clearA: function() {
-    this.storeBit(this.A_BIT, 0);
+    this.clearBit(this.A_BIT);
   },
 
   isB: function() {
-    return this.loadBit(this.B_BIT);
+    return this.isBitSet(this.B_BIT);
   },
 
   setB: function() {
-    this.storeBit(this.B_BIT, 1);
+    this.setBit(this.B_BIT);
   },
 
   clearB: function() {
-    this.storeBit(this.B_BIT, 0);
+    this.clearBit(this.B_BIT);
   },
 
   isD: function() {
-    return this.loadBit(this.D_BIT);
+    return this.isBitSet(this.D_BIT);
   },
 
   setD: function() {
-    this.storeBit(this.D_BIT, 1);
+    this.setBit(this.D_BIT);
   },
 
   clearD: function() {
-    this.storeBit(this.D_BIT, 0);
+    this.clearBit(this.D_BIT);
   },
 
   isI: function() {
-    return this.loadBit(this.I_BIT);
+    return this.isBitSet(this.I_BIT);
   },
 
   setI: function() {
-    this.storeBit(this.I_BIT, 1);
+    this.setBit(this.I_BIT);
   },
 
   clearI: function() {
-    this.storeBit(this.I_BIT, 0);
+    this.clearBit(this.I_BIT);
   },
 
   isZ: function() {
-    return this.loadBit(this.Z_BIT);
+    return this.isBitSet(this.Z_BIT);
   },
 
   setZ: function() {
-    this.storeBit(this.Z_BIT, 1);
+    this.setBit(this.Z_BIT);
   },
 
   clearZ: function() {
-    this.storeBit(this.Z_BIT, 0);
+    this.clearBit(this.Z_BIT);
   },
 
   isC: function() {
-    return this.loadBit(this.C_BIT);
+    return this.isBitSet(this.C_BIT);
   },
 
   setC: function() {
-    this.storeBit(this.C_BIT, 1);
+    this.setBit(this.C_BIT);
   },
 
   clearC: function() {
-    this.storeBit(this.C_BIT, 0);
+    this.clearBit(this.C_BIT);
   },
 
   dump: function() {
