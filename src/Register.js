@@ -94,6 +94,27 @@ Object.assign(Register.prototype, {
   /**
    *
    */
+  setBit: function(pos) {
+    this.storeBit(pos, 1);
+  },
+
+  /**
+   *
+   */
+  clearBit: function(pos) {
+    this.storeBit(pos, 0);
+  },
+
+  /**
+   *
+   */
+  isBitSet: function(pos) {
+    return this.loadBit(pos) === 1;
+  },
+
+  /**
+   *
+   */
   increment: function() {
     this.data[0]++;
   },
