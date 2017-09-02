@@ -22,6 +22,13 @@ Object.assign(Register.prototype, {
   /**
    *
    */
+  getWidth: function() {
+    return this.data.byteLength * 8;
+  },
+
+  /**
+   *
+   */
   load: function() {
     if (this.onBeforeLoad !== undefined)
       this.onBeforeLoad();
@@ -157,10 +164,10 @@ Object.assign(Register.prototype, {
   /**
    *
    */
-  lshift: function(value) {
+  shift: function(value) {
     value = value & 1;  // just in case
-    var width = this.data.byteLength * 8;
-    var carry = this.data[0] >> (width - 1);
+    var width = this.getWidth();
+    var carry = this.loadBit(width - 1);
     this.data[0] = (this.data[0] << 1) | value;
     return carry;
   },
@@ -169,7 +176,7 @@ Object.assign(Register.prototype, {
    *
    */
   dump: function() {
-    return __10to16(this.load(), this.data.byteLength * 2);
+    return __10to16(this.load(), this.getWidth() / 4);
   }
 });
 
@@ -221,13 +228,5 @@ Register16bit.prototype = Object.assign(Object.create(Register.prototype), {
    */
   storeLowerByte: function(value) {
     this.bytes[0] = value;
-  },
-
-  /**
-   *
-   */
-  lshiftByte: function() {
-    this.bytes[1] = this.bytes[0];
-    this.bytes[0] = 0;
   }
 });

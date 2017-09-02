@@ -555,28 +555,28 @@ Object.assign(Cpu.prototype, {
     if(address >= 0x2000 && address < 0x4000) {
       switch(address & 0x7) {
         case 0:
-          return this.ppu.ctrl1;
+          return this.ppu.ppuctrl;
 
         case 1:
-          return this.ppu.ctrl2;
+          return this.ppu.ppumask;
 
         case 2:
-          return this.ppu.sr;
+          return this.ppu.ppustatus;
 
         case 3:
-          return this.ppu.sprAddr;
+          return this.ppu.oamaddr;
 
         case 4:
-          return this.ppu.sprIO;
+          return this.ppu.oamdata;
 
         case 5:
-          return this.ppu.vRAMAddr1;
+          return this.ppu.ppuscroll;
 
         case 6:
-          return this.ppu.vRAMAddr2;
+          return this.ppu.ppuaddr;
 
         case 7:
-          return this.ppu.vRAMIO;
+          return this.ppu.ppudata;
       }
     }
 
@@ -646,7 +646,7 @@ Object.assign(Cpu.prototype, {
           return this.apu.dmc3;
 
         case 0x4014:
-          return this.ppu.sprDMA;
+          return this.ppu.oamdma;
 
         case 0x4015:
           return this.apu.status;
