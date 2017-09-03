@@ -7,7 +7,7 @@ function Rom(arrayBuffer) {
   this.chrrom = null;
   this.mapperFactory = new MapperFactory();
   this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
-  this._initCHRROM(this.mapper);
+  this.initChrRom(this.mapper);
 }
 
 Rom.prototype = Object.assign(Object.create(Memory.prototype), {
@@ -16,15 +16,14 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   /**
    *
    */
-  _initCHRROM: function(mapper) {
-    if(this.hasCHRROM()) {
-      var capacity = 16 * 1024 * this.header.getCHRROMBanksNum();
-      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-      this.chrrom = new CHRROM(capacity, mapper);
-      for(var i = 0; i < capacity; i++) {
-        var value = this.loadWithoutMapping(i + offset);
-        this.chrrom.storeWithoutMapping(i, value);
-      }
+  initChrRom: function(mapper) {
+    var capacity = 0x2000 * this.header.getCHRROMBanksNum();
+    var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
+    this.chrrom = new CHRROM(capacity, mapper);
+
+    for(var i = 0; i < capacity; i++) {
+      var value = this.loadWithoutMapping(i + offset);
+      this.chrrom.storeWithoutMapping(i, value);
     }
   },
 
@@ -32,7 +31,7 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   load: function(address) {
-    return this.data[this.mapper.map(address) + this.getHeaderSize()];
+    return this.data[this.mapper.map(address) - 0x8000 + this.getHeaderSize()];
   },
 
   /**
@@ -59,8 +58,8 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   /**
    *
    */
-  hasCHRROM: function() {
-    return this.header.hasCHRROM();
+  hasChrRom: function() {
+    return this.header.hasChrRom();
   },
 
   // dump methods
@@ -83,7 +82,7 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    *
    */
   _getEndDumpAddress: function() {
-    return 0x4000 + this.getHeaderSize();
+    return this.getCapacity();
   }
 });
 
@@ -219,7 +218,7 @@ Object.assign(RomHeader.prototype, {
   /**
    *
    */
-  hasCHRROM: function() {
+  hasChrRom: function() {
     return this.getCHRROMBanksNum() > 0;
   },
 
@@ -370,12 +369,5 @@ CHRROM.prototype = Object.assign(Object.create(Memory.prototype), {
    */
   load: function(address) {
     return this.data[this.mapper.mapForCHRROM(address)];
-  },
-
-  /**
-   *
-   */
-  store: function(address, value) {
-
   }
 });

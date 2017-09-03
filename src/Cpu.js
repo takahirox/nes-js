@@ -655,8 +655,8 @@ Object.assign(Cpu.prototype, {
           return this.pad1.register;
 
         case 0x4017:
-          return this.pad2.register;
-          // return this.apu.frame;
+          //return this.pad2.register;
+          return this.apu.frame;
 
         case 0x4018:
         case 0x4019:
@@ -681,7 +681,6 @@ Object.assign(Cpu.prototype, {
       return this.ram;
 
     // 0x8000 - 0xFFFF: ROM
-
     if(address >= 0x8000 && address < 0x10000)
       return this.rom;
   },
@@ -723,7 +722,7 @@ Object.assign(Cpu.prototype, {
     // 0x8000 - 0xFFFF: ROM
 
     if(address >= 0x8000 && address < 0x10000)
-      return address - 0x8000;
+      return address;
   },
 
   // load/store methods
@@ -1435,7 +1434,7 @@ Object.assign(Cpu.prototype, {
   disassembleROM: function() {
     var buffer = '';
     var rom = this.rom;
-    var pc = ROM.prototype._HEADER_SIZE;
+    var pc = rom.getHeaderSize();
     var previousIsZero = false;
     var skipZero = false;
 
@@ -1455,7 +1454,7 @@ Object.assign(Cpu.prototype, {
         buffer += '...\n';
       skipZero = false;
 
-      str += __10to16(pc - ROM.prototype._HEADER_SIZE, 4) + ' ';
+      str += __10to16(pc - rom.getHeaderSize(), 4) + ' ';
       str += __10to16(opc, 2) + ' ';
       str += op.instruction.name + ' ';
       str += this.dumpMemoryAddressingMode(op,

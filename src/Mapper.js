@@ -50,6 +50,8 @@ Object.assign(MapperFactory.prototype, {
  */
 function Mapper(rom) {
   this.rom = rom;
+  this.prgBankNum = rom.header.getPRGROMBanksNum();
+  this.chrBankNum = rom.header.getCHRROMBanksNum();
 }
 
 Object.assign(Mapper.prototype, {
@@ -81,7 +83,6 @@ Object.assign(Mapper.prototype, {
  */
 function NROMMapper(rom) {
   Mapper.call(this, rom);
-  this.prgNum = rom.header.getPRGROMBanksNum();
 }
 
 NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -91,8 +92,14 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-    if(this.prgNum == 1 && address >= 0x4000)
+
+    // 0x8000 - 0xBFFF: First 16 KB of ROM
+    // 0xC000 - 0xFFFF: Last 16 KB of ROM (NROM-256) or
+    //                  mirror of 0x8000 - 0xBFFF (NROM-128).
+
+    if(this.prgBankNum === 1 && address >= 0xC000)
       address -= 0x4000;
+
     return address;
   }
 });
@@ -102,14 +109,17 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function MMC1Mapper(rom) {
   Mapper.call(this, rom);
-  this.tmpReg = new Register8bit();
-  this.reg0 = new Register8bit();
-  this.reg1 = new Register8bit();
-  this.reg2 = new Register8bit();
-  this.reg3 = new Register8bit();
-  this.tmpWriteCount = 0;
-  this.prgNum = this.rom.header.getPRGROMBanksNum();
-  this.reg0.store(0x0C);
+
+  this.controlRegister = new Register8bit();
+  this.chrBank0Register = new Register8bit();
+  this.chrBank1Register = new Register8bit();
+  this.prgBankRegister = new Register8bit();
+
+  this.latch = new Register8bit();
+
+  this.registerWriteCount = 0;
+
+  this.controlRegister.store(0x0C);
 }
 
 MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -119,20 +129,36 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-    var bank;
-    var offset;
-    if(this.reg0.loadBit(3)) {
-      offset = address & 0x3FFF;
-      if(this.reg0.loadBit(2)) {
-        bank = (address < 0x4000) ? this.reg3.load() & 0x0f : this.prgNum-1;
-      } else {
-        bank = (address < 0x4000) ? 0 : this.reg3.load() & 0x0f;
-      }
-    } else {
-      offset = address & 0x7FFF;
-      bank = this.reg3.load() & 0x0f;
+    var bank = 0;
+    var offset = address & 0x3FFF;
+    var bankNum = this.prgBankRegister.load() & 0x0F;
+
+    switch(this.controlRegister.loadBits(2, 2)) {
+      case 0:
+      case 1:
+
+        // switch 32KB at 0x8000, ignoring low bit of bank number
+
+        offset = offset | (address & 0x4000);
+        bank = bankNum & 0x0E;
+        break;
+
+      case 2:
+
+        // fix first bank at 0x8000 and switch 16KB bank at 0xC000
+
+        bank = (address < 0xC000) ? 0 : bankNum;
+        break;
+
+      case 3:
+
+        // fix last bank at 0xC000 and switch 16KB bank at 0x8000
+
+        bank = (address >= 0xC000) ? this.prgBankNum - 1 : bankNum;
+        break;
     }
-    return bank * 0x4000 + offset;
+
+    return bank * 0x4000 + offset + 0x8000;
   },
 
   /**
@@ -140,14 +166,21 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    */
   mapForCHRROM: function(address) {
     var bank;
-    var offset;
-    if(this.reg0.loadBit(4)) {
-      bank = ((address < 0x1000) ? this.reg1.load() : this.reg2.load()) & 0xf;
-      offset = address & 0x0FFF;
+    var offset = address & 0x0FFF;
+
+    if(this.controlRegister.loadBit(4) === 0) {
+
+      // switch 8KB at a time
+
+      bank = (this.chrBank0Register.load() & 0x1E);
+      offset = offset | (address & 0x1000);
     } else {
-      bank = (this.reg1.load() & 0xf) * 2;
-      offset = address & 0x1FFF;
+
+      // switch two separate 4KB banks
+
+      bank = ((address < 0x1000) ? this.chrBank0Register.load() : this.chrBank1Register.load()) & 0x1F;
     }
+
     return bank * 0x1000 + offset;
   },
 
@@ -156,49 +189,35 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    */
   store: function(address, value) {
     if(value & 0x80) {
-      this.tmpWriteCount = 0;
-      this.tmpReg.store(0);
-      switch(address & 0x6000) {
-        case 0x0000:
-          this.reg0.store(0x0C);
-          break;
-        case 0x2000:
-          this.reg1.store(0x00);
-          break;
-        case 0x4000:
-          this.reg2.store(0x00);
-          break;
-        case 0x6000:
-          this.reg3.store(0x00);
-          break;
-        default:
-          // throw exception?
-          break;
-      }
+      this.registerWriteCount = 0;
+      this.latch.clear();
     } else {
-      this.tmpReg.storeBit(this.tmpWriteCount, value & 1);
-      this.tmpWriteCount++;
-      if(this.tmpWriteCount >= 5) {
-        var val = this.tmpReg.load();
+      this.latch.store(((value & 1) << 4) | (this.latch.load() >> 1));
+      this.registerWriteCount++;
+
+      if(this.registerWriteCount >= 5) {
+        var val = this.latch.load();
+
         switch(address & 0x6000) {
           case 0x0000:
-            this.reg0.store(val);
+            this.controlRegister.store(val);
             break;
+
           case 0x2000:
-            this.reg1.store(val);
+            this.chrBank0Register.store(val);
             break;
+
           case 0x4000:
-            this.reg2.store(val);
+            this.chrBank1Register.store(val);
             break;
+
           case 0x6000:
-            this.reg3.store(val);
-            break;
-          default:
-            // throw exception?
+            this.prgBankRegister.store(val);
             break;
         }
-        this.tmpWriteCount = 0;
-        this.tmpReg.store(0);
+
+        this.registerWriteCount = 0;
+        this.latch.clear();
       }
     }
   }
@@ -219,9 +238,9 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-    var bank = (address < 0x4000) ? this.reg.load() : 7;
+    var bank = (address < 0xC000) ? this.reg.load() : 7;
     var offset = address & 0x3fff;
-    return 1024 * 16 * bank + offset;
+    return 0x4000 * bank + offset + 0x8000;
   },
 
   /**
@@ -266,7 +285,6 @@ function Mapper76(rom) {
   this.chrReg3 = new Register8bit();
   this.prgReg0 = new Register8bit();
   this.prgReg1 = new Register8bit();
-  this.prgNum = this.rom.header.getPRGROMBanksNum();
 }
 
 Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -286,10 +304,10 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
         bank = this.prgReg1.load();
         break;
       case 0x4000:
-        bank = this.prgNum - 2;
+        bank = this.prgBankNum - 2;
         break;
       case 0x6000:
-        bank = this.prgNum - 1;
+        bank = this.prgBankNum - 1;
         break;
     }
     return bank * 0x2000 + offset;

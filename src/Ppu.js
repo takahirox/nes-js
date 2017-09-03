@@ -212,7 +212,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   setROM: function(rom) {
-    if(rom.hasCHRROM()) {
+    if(rom.hasChrRom()) {
       this.chrrom = rom.chrrom;
       this.hasCHRROM = true;
     }
@@ -261,46 +261,60 @@ Object.assign(Ppu.prototype, {
    *
    */
   load: function(address) {
-    if(address < 0x2000 && this.hasCHRROM) {
+    address = address & 0x3FFF;  // just in case
+
+    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it has
+
+    if(address < 0x2000 && this.hasCHRROM)
       return this.chrrom.load(address);
-    }
 
-    var addr = address;
+    // 0x0000 - 0x0FFF: pattern table 0
+    // 0x1000 - 0x1FFF: pattern table 1
+    // 0x2000 - 0x23FF: nametable 0
+    // 0x2400 - 0x27FF: nametable 1
+    // 0x2800 - 0x2BFF: nametable 2
+    // 0x2C00 - 0x2FFF: nametable 3
+    // 0x3000 - 0x3EFF: Mirrors of 0x2000 - 0x2EFF
+    // 0x3F00 - 0x3F1F: Palette RAM indices
+    // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
-    if(addr >= 0x4000) {
-      addr = addr & 0x3FFF;
-    }
-    if(addr >= 0x3F00 && addr < 0x4000) {
-      addr = addr & 0x3F1F;
-    }
-    if(addr >= 0x2000 && addr < 0x3F00) {
-      addr = addr & 0x2FFF;
-    }
+    if(address >= 0x3F00 && address < 0x4000)
+      address = address & 0x3F1F;
 
-    return this.vRam.load(addr);
+    if(address >= 0x2000 && address < 0x3F00)
+      address = address & 0x2FFF;
+
+    return this.vRam.load(address);
   },
 
   /**
    *
    */
   store: function(address, value) {
-    if(address < 0x2000 && this.hasCHRROM) {
+    address = address & 0x3FFF;  // just in case
+
+    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it has
+
+    if(address < 0x2000 && this.hasCHRROM)
       return this.chrrom.store(address, value);
-    }
 
-    var addr = address;
+    // 0x0000 - 0x0FFF: pattern table 0
+    // 0x1000 - 0x1FFF: pattern table 1
+    // 0x2000 - 0x23FF: nametable 0
+    // 0x2400 - 0x27FF: nametable 1
+    // 0x2800 - 0x2BFF: nametable 2
+    // 0x2C00 - 0x2FFF: nametable 3
+    // 0x3000 - 0x3EFF: Mirrors of 0x2000 - 0x2EFF
+    // 0x3F00 - 0x3F1F: Palette RAM indices
+    // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
-    if(addr >= 0x4000) {
-      addr = addr & 0x3FFF;
-    }
-    if(addr >= 0x3F00 && addr < 0x4000) {
-      addr = addr & 0x3F1F;
-    }
-    if(addr >= 0x2000 && addr < 0x3F00) {
-      addr = addr & 0x2FFF;
-    }
+    if(address >= 0x3F00 && address < 0x4000)
+      address = address & 0x3F1F;
 
-    return this.vRam.store(addr, value);
+    if(address >= 0x2000 && address < 0x3F00)
+      address = address & 0x2FFF;
+
+    return this.vRam.store(address, value);
   },
 
   // rendering
@@ -325,15 +339,23 @@ Object.assign(Ppu.prototype, {
 
     var c = 0xff000000;
 
-    if (backgroundVisible === true && spritesVisible === true)
+    if(backgroundVisible === true && spritesVisible === true)
       c = (spritePixel !== 0) ? spritePixel : backgroundPixel;
-    else if (backgroundVisible === true && spritesVisible === false)
+    else if(backgroundVisible === true && spritesVisible === false)
       c = backgroundPixel;
-    else if (backgroundVisible === false && spritesVisible === true)
+    else if(backgroundVisible === false && spritesVisible === true)
       if(spritePixel !== 0)
         c = spritePixel;
 
-    if (spriteId === 0 && spritePixel !== 0 && backgroundPixel !== 0)
+    // TODO: fix me
+    if(this.ppumask.emphasisRed() === true)
+      c = c | 0x00FF0000;
+    if(this.ppumask.emphasisGreen() === true)
+      c = c | 0x0000FF00;
+    if(this.ppumask.emphasisBlue() === true)
+      c = c | 0x000000FF;
+
+    if(spriteId === 0 && spritePixel !== 0 && backgroundPixel !== 0)
       this.ppustatus.setZeroHit();
 
     this.display.renderPixel(x, y, c);
@@ -512,10 +534,13 @@ Object.assign(Ppu.prototype, {
     switch(this.ppuctrl.getNameTableAddress()) {
       case 0:
         return x < 256 ? 0x2000 : 0x2400;
+
       case 1:
         return x < 256 ? 0x2400 : 0x2000;
+
       case 2:
         return x < 256 ? 0x2800 : 0x2C00;
+
       default:
         return x < 256 ? 0x2C00 : 0x2800;
     }
@@ -569,7 +594,7 @@ Object.assign(Ppu.prototype, {
     var evenAccess = true;
 
     return function onPpuScrollRegisterStore() {
-      if (evenAccess === true)
+      if(evenAccess === true)
         this.xScrollLatch = this.ppuscroll.loadWithoutCallback();
       else
         this.yScrollLatch = this.ppuscroll.loadWithoutCallback();
@@ -695,7 +720,7 @@ Object.assign(Ppu.prototype, {
     for(var i = 0, il = this.spritesManager2.getNum(); i < il; i++) {
       var s = this.spritesManager2.get(i);
 
-      if (s.isEmpty())
+      if(s.isEmpty())
         break;
 
       var bx = s.getXPosition();
@@ -968,21 +993,21 @@ PpuMaskRegister.prototype = Object.assign(Object.create(Register8bit.prototype),
   /**
    *
    */
-  isEmphasizeRed: function() {
+  emphasisRed: function() {
     return this.isBitSet(this.EMPHASIZE_RED_BIT);
   },
 
   /**
    *
    */
-  isEmphasizeGreen: function() {
+  emphasisGreen: function() {
     return this.isBitSet(this.EMPHASIZE_GREEN_BIT);
   },
 
   /**
    *
    */
-  isEmphasizeBlue: function() {
+  emphasisBlue: function() {
     return this.isBitSet(this.EMPHASIZE_BLUE_BIT);
   }
 });
@@ -1254,20 +1279,6 @@ Object.assign(Sprite.prototype, {
    */
   doFlipVertically: function() {
     return ((this.getByte2() >> 7) & 1) ? true : false;
-  },
-
-  /**
-   *
-   */
-  beforeY: function(y) {
-    return this.getYPosition() > y;
-  },
-
-  /**
-   *
-   */
-  afterY: function(y, length) {
-    return this.getYPosition() + length <= y;
   },
 
   /**
