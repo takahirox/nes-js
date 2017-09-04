@@ -39,13 +39,15 @@ function Cpu() {
 Cpu.INTERRUPTS = {
   NMI:   0,
   RESET: 1,
-  IRQ:   2
+  IRQ:   2,
+  BRK:   3  // not interrupt but instruction
 };
 
 Cpu.INTERRUPT_HANDLER_ADDRESSES = [];
 Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.NMI]   = 0xFFFA;
 Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.RESET] = 0xFFFC;
 Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.IRQ]   = 0xFFFE;
+Cpu.INTERRUPT_HANDLER_ADDRESSES[Cpu.INTERRUPTS.BRK]   = 0xFFFE;
 
 // Instructions
 
@@ -527,9 +529,12 @@ Object.assign(Cpu.prototype, {
     if(type === this.INTERRUPTS.IRQ && this.p.isI() === true)
       return;
 
-    this.pushStack2Bytes(this.pc.load());
-    this.pushStack(this.p.load());
-    this.p.setI();
+    if(type !== this.INTERRUPTS.RESET) {
+      this.pushStack2Bytes(this.pc.load());
+      this.pushStack(this.p.load());
+      this.p.setI();
+    }
+
     this.jumpToInterruptHandler(type);
   },
 
@@ -1070,13 +1075,10 @@ Object.assign(Cpu.prototype, {
         break;
 
       case this.INSTRUCTIONS.BRK.id:
-        this.pc.increment(); // necessary?
+        this.pc.increment(); // seems like necessary
         this.p.setA();
         this.p.setB();
-        this.pushStack2Bytes(this.pc.load());
-        this.pushStack(this.p.load());
-        this.p.setI();
-        this.jumpToInterruptHandler(this.INTERRUPTS.IRQ);
+        this.interrupt(this.INTERRUPTS.BRK);
         break;
 
       case this.INSTRUCTIONS.BVC.id:
