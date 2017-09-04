@@ -19,6 +19,8 @@ function Nes() {
 
   this.ppu.setCpu(this.cpu);
 
+  this.apu.setCpu(this.cpu);
+
   //
 
   this.state = this.STATES.POWER_OFF;

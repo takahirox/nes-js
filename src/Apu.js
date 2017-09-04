@@ -3,7 +3,14 @@
  * Refer to https://wiki.nesdev.com/w/index.php/APU
  */
 function Apu() {
+  var self = this;
+
+  // other devices
+
+  this.cpu = null;  // set by .setCpu();
+
   // CPU memory address mapped registers
+
   this.pulse0 = new Register8bit();     // 0x4000
   this.pulse1 = new Register8bit();     // 0x4001
   this.pulse2 = new Register8bit();     // 0x4002
@@ -32,14 +39,34 @@ function Apu() {
 Object.assign(Apu.prototype, {
   isApu: true,
 
+  /**
+   *
+   */
+  setCpu: function(cpu) {
+    this.cpu = cpu;
+  },
+
+  /**
+   *
+   */
   bootup: function() {
 
   },
 
+  /**
+   *
+   */
   reset: function() {
 
   },
 
+  // register callback functions
+
+  // dump
+
+  /**
+   *
+   */
   dump: function() {
 
   }
