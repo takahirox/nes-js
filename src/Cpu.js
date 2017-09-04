@@ -524,7 +524,7 @@ Object.assign(Cpu.prototype, {
    *
    */
   interrupt: function(type) {
-    if(type === this.INTERRUPTS.IRQ && !this.interruptEnabled())
+    if(type === this.INTERRUPTS.IRQ && this.p.isI() === true)
       return;
 
     this.pushStack2Bytes(this.pc.load());
@@ -933,13 +933,6 @@ Object.assign(Cpu.prototype, {
   /**
    *
    */
-  interruptEnabled: function() {
-    return !this.p.isI();
-  },
-
-  /**
-   *
-   */
   updateN: function(value) {
     if((value & 0x80) === 0)
       this.p.clearN();
@@ -1076,11 +1069,14 @@ Object.assign(Cpu.prototype, {
         this.doBranch(op, !this.p.isN());
         break;
 
-      // TODO: check logic.
       case this.INSTRUCTIONS.BRK.id:
         this.pc.increment(); // necessary?
+        this.p.setA();
         this.p.setB();
-        this.interrupt(this.INTERRUPTS.IRQ);
+        this.pushStack2Bytes(this.pc.load());
+        this.pushStack(this.p.load());
+        this.p.setI();
+        this.jumpToInterruptHandler(this.INTERRUPTS.IRQ);
         break;
 
       case this.INSTRUCTIONS.BVC.id:
