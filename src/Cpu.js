@@ -530,6 +530,9 @@ Object.assign(Cpu.prototype, {
       return;
 
     if(type !== this.INTERRUPTS.RESET) {
+      if(type !== this.INTERRUPTS.BRK)
+        this.p.clearB();
+
       this.pushStack2Bytes(this.pc.load());
       this.pushStack(this.p.load());
       this.p.setI();
