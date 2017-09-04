@@ -10,7 +10,7 @@ function Cpu() {
   this.a = new Register8bit();
   this.x = new Register8bit();
   this.y = new Register8bit();
-  this.p = new CPUStatusRegister();
+  this.p = new CpuStatusRegister();
 
   // CPU inside RAM
 
@@ -1638,12 +1638,12 @@ Object.assign(Cpu.prototype, {
 /**
  *
  */
-function CPUStatusRegister() {
+function CpuStatusRegister() {
   Register8bit.call(this);
 }
 
-CPUStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
-  isCPUStatusRegister: true,
+CpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
+  isCpuStatusRegister: true,
 
   N_BIT: 7,
   V_BIT: 6,
