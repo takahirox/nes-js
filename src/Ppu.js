@@ -28,7 +28,13 @@ function Ppu() {
 
   this.ppuctrl = new PpuControlRegister();  // 0x2000
   this.ppumask = new PpuMaskRegister();     // 0x2001
-  this.ppustatus = new PpuStatusRegister(); // 0x2002
+
+  this.ppustatus = new PpuStatusRegister(   // 0x2002
+    function(value) {
+      self.onPpuStatusRegisterLoad(value)
+    }
+  );
+
   this.oamaddr = new Register8bit();        // 0x2003
 
   this.oamdata = new Register8bit(          // 0x2004
@@ -89,6 +95,11 @@ function Ppu() {
   this.xScrollLatch = 0;
   this.yScrollLatch = 0;
 
+  //
+
+  this.scrollRegisterFirstStore = true;
+  this.addressRegisterFirstStore = true;
+
   // sprites
 
   this.spritesManager = new SpritesManager(this.oamRam);
@@ -108,8 +119,6 @@ function Ppu() {
 
   this.chrrom = null;
   this.hasCHRROM = false;
-
-  this.VRAMAddressCount2 = 0;
 }
 
 //
@@ -674,29 +683,31 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  onPpuScrollRegisterStore: function() {
-    var evenAccess = true;
+  onPpuStatusRegisterLoad: function(value) {
+    this.scrollRegisterFirstStore = true;
+    this.addressRegisterFirstStore = true;
+  },
 
-    return function onPpuScrollRegisterStore(value) {
-      if(evenAccess === true)
-        this.xScrollLatch = value;
-      else
-        this.yScrollLatch = value;
+  /**
+   *
+   */
+  onPpuScrollRegisterStore: function(value) {
+    if(this.scrollRegisterFirstStore === true)
+      this.xScrollLatch = value;
+    else
+      this.yScrollLatch = value;
 
-      evenAccess = ! evenAccess;
-    };
-  }(),
+    this.scrollRegisterFirstStore = !this.scrollRegisterFirstStore;
+  },
 
   /**
    *
    */
   onPpuAddrRegisterStore: function(value) {
-    if(this.VRAMAddressCount2 == 0) {
+    if(this.addressRegisterFirstStore === true)
       this.vRamAddressHigherByteLatch = value;
-      this.VRAMAddressCount2 = 1;
-    } else {
-      this.VRAMAddressCount2 = 0;
-    }
+
+    this.addressRegisterFirstStore = !this.addressRegisterFirstStore;
   },
 
   /**
@@ -704,7 +715,7 @@ Object.assign(Ppu.prototype, {
    */
   onPpuDataRegisterLoad: function() {
     this.ppudata.storeWithoutCallback(this.load(this.getVRAMAddress()));
-    this.VRAMAddressCount2 = 0;
+    this.addressRegisterFirstStore = true;
     this.incrementVRAMAddress();
   },
 
@@ -713,7 +724,7 @@ Object.assign(Ppu.prototype, {
    */
   onPpuDataRegisterStore: function(value) {
     this.store(this.getVRAMAddress(), value);
-    this.VRAMAddressCount2 = 0;
+    this.addressRegisterFirstStore = true;
     this.incrementVRAMAddress();
   },
 
@@ -731,9 +742,11 @@ Object.assign(Ppu.prototype, {
   onOamDmaRegisterStore: function(value) {
     var ram = this.cpu.ram;
     var addr = value * 0x100;
-    for(var i = 0; i < 256; i++) {
+
+    for(var i = 0; i < 256; i++)
       this.oamRam.store(i, ram.load(addr + i));
-    }
+
+    this.cpu.stallCycle += 514;
   },
 
   // sprites
@@ -1093,6 +1106,20 @@ PpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype
   VBLANK_BIT: 7,
   SPRITE_ZERO_HIT_BIT: 6,
   SPRITE_OVERFLOW_BIT: 5,
+
+  //
+
+  /**
+   *
+   */
+  load: function() {
+    if (this.onBeforeLoad !== undefined)
+      this.onBeforeLoad(this.data[0]);
+
+    var value = this.data[0];
+    this.clearVBlank();
+    return value;
+  },
 
   //
 
