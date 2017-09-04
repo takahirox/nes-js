@@ -280,10 +280,25 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function CNROMMapper(rom) {
   Mapper.call(this, rom);
+  this.reg = new Register8bit();
 }
 
 CNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
-  isCNROMMapper: true
+  isCNROMMapper: true,
+
+  /**
+   *
+   */
+  mapForCHRROM: function(address) {
+    return this.reg.load() * 0x2000 + (address & 0x1FFF);
+  },
+
+  /**
+   *
+   */
+  store: function(address, value) {
+    this.reg.store(value & 0x3);
+  }
 });
 
 /**
