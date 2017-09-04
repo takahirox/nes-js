@@ -15,11 +15,12 @@ function Ppu() {
   // other devices
 
   this.cpu = null;  // set by .setCpu()
+  this.rom = null;  // set by .setRom()
   this.display = null;  // set by .setDisplay();
 
   // inside memory
 
-  this.vRam = new Memory(64 * 1024);  // 64KB
+  this.vRam = new Memory(16 * 1024);  // 16KB
   this.oamRam = new Memory(256);      // 256B, primary OAM memory
   this.oamRam2 = new Memory(32);      // 32B, secondary OAM memory
 
@@ -32,22 +33,22 @@ function Ppu() {
 
   this.oamdata = new Register8bit(          // 0x2004
     undefined,
-    function() {
-      self.onOamDataRegisterStore();
+    function(value) {
+      self.onOamDataRegisterStore(value);
     }
   );
 
   this.ppuscroll = new Register8bit(        // 0x2005
     undefined,
-    function() {
-      self.onPpuScrollRegisterStore();
+    function(value) {
+      self.onPpuScrollRegisterStore(value);
     }
   );
 
   this.ppuaddr = new Register8bit(          // 0x2006
     undefined,
-    function() {
-      self.onPpuAddrRegisterStore();
+    function(value) {
+      self.onPpuAddrRegisterStore(value);
     }
   );
 
@@ -55,15 +56,15 @@ function Ppu() {
     function() {
       self.onPpuDataRegisterLoad();
     },
-    function() {
-      self.onPpuDataRegisterStore();
+    function(value) {
+      self.onPpuDataRegisterStore(value);
     }
   );
 
   this.oamdma = new Register8bit(           // 0x4014
     undefined,
-    function() {
-      self.onOamDmaRegisterStore();
+    function(value) {
+      self.onOamDmaRegisterStore(value);
     }
   );
 
@@ -93,20 +94,6 @@ function Ppu() {
   this.spritesManager = new SpritesManager(this.oamRam);
   this.spritesManager2 = new SpritesManager(this.oamRam2);
 
-  this.spriteBitmapHighRegisters = [];
-  this.spriteBitmapLowRegisters = [];
-  this.spriteAttributeLatches = [];
-  this.spriteXPositionRegisters = [];
-  this.spriteActiveCycles = [];
-
-  for(var i = 0; i < 8; i++) {
-    this.spriteBitmapHighRegisters[i] = new Register8bit();
-    this.spriteBitmapLowRegisters[i] = new Register8bit();
-    this.spriteAttributeLatches[i] = 0;
-    this.spriteXPositionRegisters[i] = new Register8bit();
-    this.spriteActiveCycles[i] = 0;
-  }
-
   // for one scan line
 
   this.spritePixels = [];
@@ -124,6 +111,11 @@ function Ppu() {
 
   this.VRAMAddressCount2 = 0;
 }
+
+//
+
+
+//
 
 Object.assign(Ppu.prototype, {
   isPpu: true,
@@ -211,7 +203,8 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  setROM: function(rom) {
+  setRom: function(rom) {
+    this.rom = rom;
     if(rom.hasChrRom()) {
       this.chrrom = rom.chrrom;
       this.hasCHRROM = true;
@@ -263,7 +256,7 @@ Object.assign(Ppu.prototype, {
   load: function(address) {
     address = address & 0x3FFF;  // just in case
 
-    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it has
+    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.hasCHRROM)
       return this.chrrom.load(address);
@@ -278,11 +271,11 @@ Object.assign(Ppu.prototype, {
     // 0x3F00 - 0x3F1F: Palette RAM indices
     // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
-    if(address >= 0x3F00 && address < 0x4000)
-      address = address & 0x3F1F;
-
     if(address >= 0x2000 && address < 0x3F00)
       address = address & 0x2FFF;
+
+    if(address >= 0x3F00 && address < 0x4000)
+      address = address & 0x3F1F;
 
     return this.vRam.load(address);
   },
@@ -293,7 +286,7 @@ Object.assign(Ppu.prototype, {
   store: function(address, value) {
     address = address & 0x3FFF;  // just in case
 
-    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it has
+    // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.hasCHRROM)
       return this.chrrom.store(address, value);
@@ -308,11 +301,11 @@ Object.assign(Ppu.prototype, {
     // 0x3F00 - 0x3F1F: Palette RAM indices
     // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
-    if(address >= 0x3F00 && address < 0x4000)
-      address = address & 0x3F1F;
-
     if(address >= 0x2000 && address < 0x3F00)
       address = address & 0x2FFF;
+
+    if(address >= 0x3F00 && address < 0x4000)
+      address = address & 0x3F1F;
 
     return this.vRam.store(address, value);
   },
@@ -339,6 +332,8 @@ Object.assign(Ppu.prototype, {
 
     var c = 0xff000000;
 
+    // TODO: fix me, consider priority
+
     if(backgroundVisible === true && spritesVisible === true)
       c = (spritePixel !== 0) ? spritePixel : backgroundPixel;
     else if(backgroundVisible === true && spritesVisible === false)
@@ -348,12 +343,15 @@ Object.assign(Ppu.prototype, {
         c = spritePixel;
 
     // TODO: fix me
+
     if(this.ppumask.emphasisRed() === true)
       c = c | 0x00FF0000;
     if(this.ppumask.emphasisGreen() === true)
       c = c | 0x0000FF00;
     if(this.ppumask.emphasisBlue() === true)
       c = c | 0x000000FF;
+
+    // TODO: fix me
 
     if(spriteId === 0 && spritePixel !== 0 && backgroundPixel !== 0)
       this.ppustatus.setZeroHit();
@@ -372,6 +370,8 @@ Object.assign(Ppu.prototype, {
     var msb = (this.attributeTableHighRegister.loadBit(offset) << 1) |
                 this.attributeTableLowRegister.loadBit(offset);
     var index = (msb << 2) | lsb;
+
+    // TODO: fix me
 
     if(this.ppumask.isGreyscale() === true)
       index = index & 0x30;
@@ -448,9 +448,9 @@ Object.assign(Ppu.prototype, {
   fetchNameTable: function() {
     var x = this.getFetchedX();
     var y = this.getFetchedY();
-    var tileX = x >> 3;
-    var tileY = y >> 3;
-    var index = (tileY % 30) * 32 + (tileX % 32);
+    var tileX = (x % 256) >> 3;
+    var tileY = (y % 240) >> 3;
+    var index = tileY * 32 + tileX;
     this.nameTableLatch = this.load(this.getNameTableAddress(x, y) + index);
   },
 
@@ -461,21 +461,22 @@ Object.assign(Ppu.prototype, {
     var x = this.getFetchedX();
     var y = this.getFetchedY();
     var ay = (y >= 240) ? y - 240 : y;
-    var tileX = x >> 5;
-    var tileY = ay >> 5;
-    var index = (tileY % 8) * 8 + (tileX % 8);
-    var b = this.load(this.getNameTableAddress(x, y) + 0x3C0 + index);
+    var cellX = (x % 256) >> 5;
+    var cellY = (ay % 240) >> 5;
+    var index = cellY * 8 + cellX;
+    var byte = this.load(this.getNameTableAddress(x, y) + 0x3C0 + index);
 
     var topbottom = (ay % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
     var rightleft = (x % 32) >> 4;  // (x % 32) > 15 ? 1 : 0; // right, left
     var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                  // topright, topleft
-    var value = (b >> (position * 2)) & 0x3;
-    var h = value >> 1;
-    var l = value & 1;
 
-    this.attributeTableHighLatch = h ? 0xff : 0;
-    this.attributeTableLowLatch = l ? 0xff : 0;
+    var value = (byte >> (position << 1)) & 0x3;
+    var highBit = value >> 1;
+    var lowBit = value & 1;
+
+    this.attributeTableHighLatch = highBit === 1 ? 0xff : 0;
+    this.attributeTableLowLatch = lowBit === 1 ? 0xff : 0;
   },
 
   /**
@@ -505,9 +506,9 @@ Object.assign(Ppu.prototype, {
    * cycle 321 - 336: first two tiles of the next scan line
    */
   getFetchedX: function() {
-    var x = ((this.cycle - 1) & ~0x7);
+    var x = (this.cycle - 1);
     x += (this.cycle <= 256) ? 16 : -320;
-    return x + this.xScrollLatch;
+    return (x + this.xScrollLatch);
   },
 
   /**
@@ -524,25 +525,89 @@ Object.assign(Ppu.prototype, {
       else
         y = this.scanLine + 1;
     }
-    return y + this.yScrollLatch;
+
+    // yScrollLatch 240 to 255 are treated as -16 through -1
+
+    return y + (this.yScrollLatch < 240 ? this.yScrollLatch : this.yScrollLatch - 256);
   },
 
   /**
-   *
+   * TODO: Fix me
    */
   getNameTableAddress: function(x, y) {
-    switch(this.ppuctrl.getNameTableAddress()) {
-      case 0:
-        return x < 256 ? 0x2000 : 0x2400;
+    x = x % 512;  // just in case
+    y = y % 480;  // just in case
 
-      case 1:
-        return x < 256 ? 0x2400 : 0x2000;
+    switch(this.rom.getMirroringType()) {
+      case this.rom.MIRRORINGS.SINGLE_SCREEN:
+        switch(this.ppuctrl.getNameTableAddress()) {
+          case 0:
+            return 0x2000;
 
-      case 2:
-        return x < 256 ? 0x2800 : 0x2C00;
+          case 1:
+            return 0x2400;
 
-      default:
-        return x < 256 ? 0x2C00 : 0x2800;
+          case 2:
+            return 0x2800;
+
+          case 3:
+            return 0x2C00;
+        }
+
+        break;
+
+      case this.rom.MIRRORINGS.HORIZONTAL:
+        switch(this.ppuctrl.getNameTableAddress()) {
+          case 0:
+            return y < 240 ? 0x2000 : 0x2800;
+
+          case 1:
+            return y < 240 ? 0x2400 : 0x2C00;
+
+          case 2:
+            return y < 240 ? 0x2800 : 0x2000;
+
+          default:
+            return y < 240 ? 0x2C00 : 0x2400;
+        }
+
+        break;
+
+      case this.rom.MIRRORINGS.VERTICAL:
+        switch(this.ppuctrl.getNameTableAddress()) {
+          case 0:
+            return x < 256 ? 0x2000 : 0x2400;
+
+          case 1:
+            return x < 256 ? 0x2400 : 0x2000;
+
+          case 2:
+            return x < 256 ? 0x2000 : 0x2400;
+
+          default:
+            return x < 256 ? 0x2400 : 0x2000;
+        }
+
+        break;
+
+      // not yet
+
+      case this.rom.MIRRORINGS.FOUR_SCREEN:
+        switch(this.ppuctrl.getNameTableAddress()) {
+          case 0:
+            return 0x2000;
+
+          case 1:
+            return 0x2400;
+
+          case 2:
+            return 0x2800;
+
+          case 3:
+            return 0x2C00;
+        }
+
+        break;
     }
   },
 
@@ -585,35 +650,7 @@ Object.assign(Ppu.prototype, {
     }
   },
 
-  // register load/store callback
-
-  /**
-   *
-   */
-  onPpuScrollRegisterStore: function() {
-    var evenAccess = true;
-
-    return function onPpuScrollRegisterStore() {
-      if(evenAccess === true)
-        this.xScrollLatch = this.ppuscroll.loadWithoutCallback();
-      else
-        this.yScrollLatch = this.ppuscroll.loadWithoutCallback();
-
-      evenAccess = ! evenAccess;
-    };
-  }(),
-
-  /**
-   *
-   */
-  onPpuAddrRegisterStore: function() {
-    if(this.VRAMAddressCount2 == 0) {
-      this.vRamAddressHigherByteLatch = this.ppuaddr.loadWithoutCallback();
-      this.VRAMAddressCount2 = 1;
-    } else {
-      this.VRAMAddressCount2 = 0;
-    }
-  },
+  //
 
   /**
    *
@@ -632,6 +669,36 @@ Object.assign(Ppu.prototype, {
     this.ppuaddr.storeWithoutCallback(addr & 0xff);
   },
 
+  // register load/store callback
+
+  /**
+   *
+   */
+  onPpuScrollRegisterStore: function() {
+    var evenAccess = true;
+
+    return function onPpuScrollRegisterStore(value) {
+      if(evenAccess === true)
+        this.xScrollLatch = value;
+      else
+        this.yScrollLatch = value;
+
+      evenAccess = ! evenAccess;
+    };
+  }(),
+
+  /**
+   *
+   */
+  onPpuAddrRegisterStore: function(value) {
+    if(this.VRAMAddressCount2 == 0) {
+      this.vRamAddressHigherByteLatch = value;
+      this.VRAMAddressCount2 = 1;
+    } else {
+      this.VRAMAddressCount2 = 0;
+    }
+  },
+
   /**
    *
    */
@@ -644,8 +711,8 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  onPpuDataRegisterStore: function() {
-    this.store(this.getVRAMAddress(), this.ppudata.loadWithoutCallback());
+  onPpuDataRegisterStore: function(value) {
+    this.store(this.getVRAMAddress(), value);
     this.VRAMAddressCount2 = 0;
     this.incrementVRAMAddress();
   },
@@ -653,18 +720,17 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  onOamDataRegisterStore: function() {
+  onOamDataRegisterStore: function(value) {
     var addr = this.oamaddr.loadWithoutCallback();
-    var value = this.oamdata.loadWithoutCallback();
     this.oamRam.store(addr, value);
   },
 
   /**
    *
    */
-  onOamDmaRegisterStore: function() {
+  onOamDmaRegisterStore: function(value) {
     var ram = this.cpu.ram;
-    var addr = this.oamdma.loadWithoutCallback() * 0x100;
+    var addr = value * 0x100;
     for(var i = 0; i < 256; i++) {
       this.oamRam.store(i, ram.load(addr + i));
     }

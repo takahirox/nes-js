@@ -75,6 +75,14 @@ Object.assign(Mapper.prototype, {
    *
    */
   store: function(address, value) {
+  },
+
+  /**
+   *
+   */
+  getMirroringType: function() {
+    return this.rom.header.isHorizontalMirroring() === true
+             ? this.rom.MIRRORINGS.HORIZONTAL : this.rom.MIRRORINGS.VERTICAL;
   }
 });
 
@@ -92,7 +100,6 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-
     // 0x8000 - 0xBFFF: First 16 KB of ROM
     // 0xC000 - 0xFFFF: Last 16 KB of ROM (NROM-256) or
     //                  mirror of 0x8000 - 0xBFFF (NROM-128).
@@ -119,7 +126,7 @@ function MMC1Mapper(rom) {
 
   this.registerWriteCount = 0;
 
-  this.controlRegister.store(0x0C);
+  this.controlRegister.store(0x0C);  // seems like 0xC would be default value
 }
 
 MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -219,6 +226,23 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
         this.registerWriteCount = 0;
         this.latch.clear();
       }
+    }
+  },
+
+  /**
+   * TODO: Fix me
+   */
+  getMirroringType: function() {
+    switch(this.controlRegister.loadBits(0, 2)) {
+      case 0:
+      case 1:
+        return this.rom.MIRRORINGS.SINGLE_SCREEN;
+
+      case 2:
+        return this.rom.MIRRORINGS.VERTICAL;
+
+      case 3:
+        return this.rom.MIRRORINGS.HORIZONTAL;
     }
   }
 });

@@ -51,8 +51,8 @@ Object.assign(Nes.prototype, {
     38: Joypad.BUTTONS.UP,      // up arrow
     39: Joypad.BUTTONS.RIGHT,   // right arrow
     40: Joypad.BUTTONS.DOWN,    // down arrow
-    88: Joypad.BUTTONS.B,       // x
-    90: Joypad.BUTTONS.A        // z
+    88: Joypad.BUTTONS.A,       // x
+    90: Joypad.BUTTONS.B        // z
   },
 
   // event listeners
@@ -85,8 +85,8 @@ Object.assign(Nes.prototype, {
    */
   setRom: function(rom) {
     this.rom = rom;
-    this.cpu.setROM(rom);
-    this.ppu.setROM(rom);
+    this.cpu.setRom(rom);
+    this.ppu.setRom(rom);
   },
 
   /**

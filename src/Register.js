@@ -31,7 +31,7 @@ Object.assign(Register.prototype, {
    */
   load: function() {
     if (this.onBeforeLoad !== undefined)
-      this.onBeforeLoad();
+      this.onBeforeLoad(this.data[0]);
 
     return this.data[0];
   },
@@ -63,8 +63,8 @@ Object.assign(Register.prototype, {
   store: function(value) {
     this.data[0] = value;
 
-    if(this.onAfterStore !== undefined)
-      this.onAfterStore();
+    if(this.onAfterStore !== undefined && value !== undefined)
+      this.onAfterStore(value);
   },
 
   /**

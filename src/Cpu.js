@@ -468,7 +468,7 @@ Object.assign(Cpu.prototype, {
   /**
    *
    */
-  setROM: function(rom) {
+  setRom: function(rom) {
     this.rom = rom;
   },
 

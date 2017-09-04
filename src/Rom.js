@@ -4,27 +4,44 @@
 function Rom(arrayBuffer) {
   Memory.call(this, arrayBuffer);
   this.header = new RomHeader(this);
-  this.chrrom = null;
   this.mapperFactory = new MapperFactory();
   this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
-  this.initChrRom(this.mapper);
+  this.chrrom = this.createChrRom(this.mapper);
 }
+
+//
+
+Rom.MIRRORINGS = {
+  SINGLE_SCREEN: 0,
+  HORIZONTAL: 1,
+  VERTICAL: 2,
+  FOUR_SCREEN: 3
+};
+
+//
 
 Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   isRom: true,
 
+  //
+
+  MIRRORINGS: Rom.MIRRORINGS,
+
+  //
+
   /**
    *
    */
-  initChrRom: function(mapper) {
+  createChrRom: function(mapper) {
     var capacity = 0x2000 * this.header.getCHRROMBanksNum();
     var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-    this.chrrom = new CHRROM(capacity, mapper);
+    var chrRom = new CHRROM(capacity, mapper);
 
     for(var i = 0; i < capacity; i++) {
-      var value = this.loadWithoutMapping(i + offset);
-      this.chrrom.storeWithoutMapping(i, value);
+      chrRom.storeWithoutMapping(i, this.loadWithoutMapping(i + offset));
     }
+
+    return chrRom;
   },
 
   /**
@@ -60,6 +77,13 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
    */
   hasChrRom: function() {
     return this.header.hasChrRom();
+  },
+
+  /**
+   *
+   */
+  getMirroringType: function() {
+    return this.mapper.getMirroringType();
   },
 
   // dump methods
@@ -283,6 +307,13 @@ Object.assign(RomHeader.prototype, {
   /**
    *
    */
+  isHorizontalMirroring: function() {
+    return this.getMirroringType() === this.MIRRORING_TYPE_HORIZONTAL;
+  },
+
+  /**
+   *
+   */
   getBatteryBackedRAM: function() {
     return this.extractBits(this.getControlByte1(),
              this.BATTERY_BACKED_RAM_BIT, this.BATTERY_BACKED_RAM_BITS_WIDTH);
@@ -312,7 +343,7 @@ Object.assign(RomHeader.prototype, {
                       this.MAPPER_LOWER_BIT, this.MAPPER_LOWER_BITS_WIDTH);
     var higherBits = this.extractBits(this.getControlByte2(),
                        this.MAPPER_HIGHER_BIT, this.MAPPER_HIGHER_BITS_WIDTH);
-    return (higherBits << this.MAPPER_LOWER_BITS_SIZE) | lowerBits;
+    return (higherBits << this.MAPPER_LOWER_BITS_WIDTH) | lowerBits;
   },
 
   /**
