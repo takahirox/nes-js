@@ -33,6 +33,7 @@ function Apu() {
   this.dmc3 = new Register8bit();       // 0x4013
   this.status = new Register8bit();     // 0x4015
   this.frame = new Register8bit();      // 0x4017
+
   this.unusedRegister = new Register8bit();
 }
 
@@ -57,6 +58,13 @@ Object.assign(Apu.prototype, {
    *
    */
   reset: function() {
+
+  },
+
+  /**
+   *
+   */
+  runCycle: function() {
 
   },
 

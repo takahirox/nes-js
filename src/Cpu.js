@@ -491,6 +491,7 @@ Object.assign(Cpu.prototype, {
 
     this.store(0x4015, 0);
     this.store(0x4017, 0);
+
     this.interrupt(this.INTERRUPTS.RESET);
   },
 
@@ -505,11 +506,11 @@ Object.assign(Cpu.prototype, {
    *
    */
   runCycle: function() {
-    if(!this.isStall()) {
+    if(this.isStall() !== true) {
       var opc = this.fetch();
       var op = this.decode(opc);
 
-      this.operate(op);
+      this.operate(op, opc);
       this.stallCycle = op.cycle;
     }
     this.stallCycle--;
@@ -552,7 +553,7 @@ Object.assign(Cpu.prototype, {
     address = address & 0xFFFF;  // just in case
 
     // 0x0000 - 0x07FF: 2KB internal RAM
-    // 0x8000 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
+    // 0x0800 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
 
     if(address >= 0x0000 && address < 0x2000)
       return this.ram;
@@ -932,7 +933,7 @@ Object.assign(Cpu.prototype, {
         break;
 
       default:
-        // TODO: throw Exception?
+        throw new Error('Cpu: Unkown addressing mode.');
         break;
     }
     return address;
@@ -1002,7 +1003,7 @@ Object.assign(Cpu.prototype, {
       this.pc.add(result);
   },
 
-  operate: function(op) {
+  operate: function(op, opc) {
     switch(op.instruction.id) {
       case this.INSTRUCTIONS.ADC.id:
         var src1 = this.a.load();
@@ -1425,6 +1426,7 @@ Object.assign(Cpu.prototype, {
         break;
 
       default:
+        throw new Error('Cpu.operate: Invalid instruction, pc=' + __10to16(this.pc.load() - 1) + ' opc=' + __10to16(opc, 2) + ' name=' + op.instruction.name);
         // throw exception?
         break;
     }

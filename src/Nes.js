@@ -138,7 +138,7 @@ Object.assign(Nes.prototype, {
   run: function() {
     this.measureFps();
 
-    var cycles = 341 * 262 / 3; // TODO: temporal
+    var cycles = (341 * 262 / 3) | 0; // TODO: temporal
     for(var i = 0; i < cycles; i++) {
       this.runCycle();
     }
@@ -155,6 +155,8 @@ Object.assign(Nes.prototype, {
     this.ppu.runCycle();
     this.ppu.runCycle();
     this.ppu.runCycle();
+    this.apu.runCycle();
+    this.apu.runCycle();
   },
 
   /**

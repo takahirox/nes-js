@@ -146,6 +146,8 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
 
         // switch 32KB at 0x8000, ignoring low bit of bank number
 
+        // TODO: Fix me
+
         offset = offset | (address & 0x4000);
         bank = bankNum & 0x0E;
         break;
@@ -309,7 +311,60 @@ function MMC3Mapper(rom) {
 }
 
 MMC3Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
-  isMMC3Mapper: true
+  isMMC3Mapper: true,
+
+  /**
+   *
+   */
+  map: function(address) {
+    // TODO: Fix me
+
+    return address;
+  },
+
+  /**
+   *
+   */
+  mapForCHRROM: function(address) {
+    // TODO: Fix me
+
+    return address;
+  },
+
+  /**
+   *
+   */
+  store: function(address, value) {
+    // TODO: Fix me
+
+    address = address & 0xFFFF;  // just in case
+
+    if(address >= 0x8000 && address < 0xA000) {
+      if(address & 1 === 0) {
+
+      } else {
+
+      }
+    } else if(address >= 0xA000 && address < 0xC000) {
+      if(address & 1 === 0) {
+
+      } else {
+
+      }
+    } else if(address >= 0xC000 && address < 0xE000) {
+      if(address & 1 === 0) {
+
+      } else {
+
+      }
+    } else {
+      if(address & 1 === 0) {
+
+      } else {
+
+      }
+    }
+  }
 });
 
 /**

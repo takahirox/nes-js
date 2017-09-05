@@ -35,11 +35,10 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   createChrRom: function(mapper) {
     var capacity = 0x2000 * this.header.getCHRROMBanksNum();
     var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-    var chrRom = new CHRROM(capacity, mapper);
+    var chrRom = new ChrRom(capacity, mapper);
 
-    for(var i = 0; i < capacity; i++) {
+    for(var i = 0; i < capacity; i++)
       chrRom.storeWithoutMapping(i, this.loadWithoutMapping(i + offset));
-    }
 
     return chrRom;
   },
@@ -387,13 +386,13 @@ Object.assign(RomHeader.prototype, {
 /**
  *
  */
-function CHRROM(capacity, mapper) {
+function ChrRom(capacity, mapper) {
   Memory.call(this, capacity);
   this.mapper = mapper;
 }
 
-CHRROM.prototype = Object.assign(Object.create(Memory.prototype), {
-  isCHRROM: true,
+ChrRom.prototype = Object.assign(Object.create(Memory.prototype), {
+  isChrRom: true,
 
   /**
    *

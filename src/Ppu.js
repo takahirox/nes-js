@@ -515,7 +515,7 @@ Object.assign(Ppu.prototype, {
    * cycle 321 - 336: first two tiles of the next scan line
    */
   getFetchedX: function() {
-    var x = (this.cycle - 1);
+    var x = (this.cycle - 1) & ~0x7;
     x += (this.cycle <= 256) ? 16 : -320;
     return (x + this.xScrollLatch);
   },
