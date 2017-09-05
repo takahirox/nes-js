@@ -1,5 +1,5 @@
 /**
- * Ricoh 2C02
+ * RP2A03
  * Refer to https://wiki.nesdev.com/w/index.php/PPU
  */
 function Ppu() {
@@ -286,6 +286,22 @@ Object.assign(Ppu.prototype, {
     if(address >= 0x3F00 && address < 0x4000)
       address = address & 0x3F1F;
 
+    // Addresses for palette
+    // 0x3F10/0x3F14/0x3F18/0x3F1C are mirrors of
+    // 0x3F00/0x3F04/0x3F08/0x3F0C.
+
+    if(address === 0x3F10)
+      address = 0x3F00;
+
+    if(address === 0x3F14)
+      address = 0x3F04;
+
+    if(address === 0x3F18)
+      address = 0x3F08;
+
+    if(address === 0x3F1C)
+      address = 0x3F0C;
+
     return this.vRam.load(address);
   },
 
@@ -315,6 +331,22 @@ Object.assign(Ppu.prototype, {
 
     if(address >= 0x3F00 && address < 0x4000)
       address = address & 0x3F1F;
+
+    // Addresses for palette
+    // 0x3F10/0x3F14/0x3F18/0x3F1C are mirrors of
+    // 0x3F00/0x3F04/0x3F08/0x3F0C.
+
+    if(address === 0x3F10)
+      address = 0x3F00;
+
+    if(address === 0x3F14)
+      address = 0x3F04;
+
+    if(address === 0x3F18)
+      address = 0x3F08;
+
+    if(address === 0x3F1C)
+      address = 0x3F0C;
 
     return this.vRam.store(address, value);
   },
