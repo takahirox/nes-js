@@ -3,6 +3,7 @@
  * Refer to https://wiki.nesdev.com/w/index.php/CPU
  */
 function Cpu() {
+
   // registers
 
   this.pc = new Register16bit();
@@ -130,9 +131,7 @@ Cpu.ADDRESSINGS = {
 };
 
 // Operations (the combinations of interuction and addressing mode)
-
-// decodes in advance cuz it's much easier than implementing decoder.
-// be careful that some 6502 related documents include some mistakes.
+// Decoding in advance because it's much easier than implementing decoder.
 
 Cpu.OPS = [
   /* 0x00 */ {'instruction': Cpu.INSTRUCTIONS.BRK, 'cycle': 7, 'mode': Cpu.ADDRESSINGS.IMPLIED},
@@ -496,10 +495,12 @@ Object.assign(Cpu.prototype, {
   },
 
   /**
-   *
+   * Refer to https://wiki.nesdev.com/w/index.php/CPU_power_up_state
    */
   reset: function() {
-
+    this.sp.sub(3);
+    this.p.setI();
+    this.interrupt(this.INTERRUPTS.RESET);
   },
 
   /**
@@ -513,6 +514,7 @@ Object.assign(Cpu.prototype, {
       this.operate(op, opc);
       this.stallCycle = op.cycle;
     }
+
     this.stallCycle--;
   },
 
@@ -534,6 +536,8 @@ Object.assign(Cpu.prototype, {
       if(type !== this.INTERRUPTS.BRK)
         this.p.clearB();
 
+      this.p.setA();
+
       this.pushStack2Bytes(this.pc.load());
       this.pushStack(this.p.load());
       this.p.setI();
@@ -542,211 +546,113 @@ Object.assign(Cpu.prototype, {
     this.jumpToInterruptHandler(type);
   },
 
-  // private methods
-
-  // CPU Memory mapping
-
-  /**
-   *
-   */
-  mapDevice: function(address) {
-    address = address & 0xFFFF;  // just in case
-
-    // 0x0000 - 0x07FF: 2KB internal RAM
-    // 0x0800 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
-
-    if(address >= 0x0000 && address < 0x2000)
-      return this.ram;
-
-    // 0x2000 - 0x2007: PPU registers
-    // 0x2008 - 0x3FFF: Mirrors of 0x2000 - 0x2007 (repeats every 8 bytes)
-
-    if(address >= 0x2000 && address < 0x4000) {
-      switch(address & 0x7) {
-        case 0:
-          return this.ppu.ppuctrl;
-
-        case 1:
-          return this.ppu.ppumask;
-
-        case 2:
-          return this.ppu.ppustatus;
-
-        case 3:
-          return this.ppu.oamaddr;
-
-        case 4:
-          return this.ppu.oamdata;
-
-        case 5:
-          return this.ppu.ppuscroll;
-
-        case 6:
-          return this.ppu.ppuaddr;
-
-        case 7:
-          return this.ppu.ppudata;
-      }
-    }
-
-    // 0x4000 - 0x4017: APU and I/O registers
-    // 0x4018 - 0x401F: APU and I/O functionality that is normally disabled
-
-    if(address >= 0x4000 && address < 0x4020) {
-      switch(address) {
-        case 0x4000:
-          return this.apu.pulse0;
-
-        case 0x4001:
-          return this.apu.pulse1;
-
-        case 0x4002:
-          return this.apu.pulse2;
-
-        case 0x4003:
-          return this.apu.pulse3;
-
-        case 0x4004:
-          return this.apu.pulse4;
-
-        case 0x4005:
-          return this.apu.pulse5;
-
-        case 0x4006:
-          return this.apu.pulse6;
-
-        case 0x4007:
-          return this.apu.pulse7;
-
-        case 0x4008:
-          return this.apu.triangle0;
-
-        case 0x4009:
-          return this.apu.triangle1;
-
-        case 0x400A:
-          return this.apu.triangle2;
-
-        case 0x400B:
-          return this.apu.triangle3;
-
-        case 0x400C:
-          return this.apu.noise0;
-
-        case 0x400D:
-          return this.apu.noise1;
-
-        case 0x400E:
-          return this.apu.noise2;
-
-        case 0x400F:
-          return this.apu.noise3;
-
-        case 0x4010:
-          return this.apu.dmc0;
-
-        case 0x4011:
-          return this.apu.dmc1;
-
-        case 0x4012:
-          return this.apu.dmc2;
-
-        case 0x4013:
-          return this.apu.dmc3;
-
-        case 0x4014:
-          return this.ppu.oamdma;
-
-        case 0x4015:
-          return this.apu.status;
-
-        case 0x4016:
-          return this.pad1.register;
-
-        case 0x4017:
-          //return this.pad2.register;
-          return this.apu.frame;
-
-        case 0x4018:
-        case 0x4019:
-        case 0x401A:
-        case 0x401B:
-        case 0x401C:
-        case 0x401D:
-        case 0x401E:
-        case 0x401F:
-          return this.apu.unusedRegister;
-      }
-    }
-
-    // cartridge space
-
-    if(address >= 0x4020 && address < 0x6000)
-      return this.ram;
-
-    // 0x6000 - 0x7FFF: Battery Backed Save or Work RAM
-
-    if(address >= 0x6000 && address < 0x8000)
-      return this.ram;
-
-    // 0x8000 - 0xFFFF: ROM
-    if(address >= 0x8000 && address < 0x10000)
-      return this.rom;
-  },
-
-  /**
-   *
-   */
-  mapAddress: function(address) {
-    address = address & 0xFFFF;  // just in case
-
-    // 0x0000 - 0x07FF: 2KB internal RAM
-    // 0x8000 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
-
-    if(address >= 0x0000 && address < 0x2000)
-      return address & 0x07FF;
-
-    // 0x2000 - 0x2007: PPU registers
-    // 0x2008 - 0x3FFF: Mirrors of 0x2000 - 0x2007 (repeats every 8 bytes)
-
-    if(address >= 0x2000 && address < 0x4000)
-      return null;
-
-    // 0x4000 - 0x4017: APU and I/O registers
-    // 0x4018 - 0x401F: APU and I/O functionality that is normally disabled
-
-    if(address >= 0x4000 && address < 0x4020)
-      return null;
-
-    // cartridge space
-
-    if(address >= 0x4020 && address < 0x6000)
-      return address;
-
-    // 0x6000 - 0x7FFF: Battery Backed Save or Work RAM
-
-    if(address >= 0x6000 && address < 0x8000)
-      return address;
-
-    // 0x8000 - 0xFFFF: ROM
-
-    if(address >= 0x8000 && address < 0x10000)
-      return address;
-  },
-
   // load/store methods
 
   /**
    *
    */
   load: function(address) {
-    var target = this.mapDevice(address);
+    address = address & 0xFFFF;  // just in case
 
-    if (target.isRegister === true)
-      return target.load();
+    // 0x0000 - 0x07FF: 2KB internal RAM
+    // 0x0800 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
 
-    return target.load(this.mapAddress(address));
+    if(address >= 0 && address < 0x2000)
+      return this.ram.load(address & 0x07FF);
+
+    // 0x2000 - 0x2007: PPU registers
+    // 0x2008 - 0x3FFF: Mirrors of 0x2000 - 0x2007 (repeats every 8 bytes)
+
+    if(address >= 0x2000 && address < 0x4000)
+      return this.ppu.loadRegister(address & 0x2007);
+
+    // 0x4000 - 0x4017: APU, PPU and I/O registers
+    // 0x4018 - 0x401F: APU and I/O functionality that is normally disabled
+
+    if(address >= 0x4000 && address < 0x4014)
+      return this.apu.loadRegister(address);
+
+    if(address === 0x4014)
+      return this.ppu.loadRegister(address);
+
+    if(address === 0x4015)
+      return this.apu.loadRegister(address);
+
+    if(address === 0x4016)
+      return this.pad1.loadRegister();
+
+    if(address >= 0x4017 && address < 0x4020)
+      return this.apu.loadRegister(address);
+
+    // cartridge space
+
+    if(address >= 0x4020 && address < 0x6000)
+      return this.ram.load(address);
+
+    // 0x6000 - 0x7FFF: Battery Backed Save or Work RAM
+
+    if(address >= 0x6000 && address < 0x8000)
+      return this.ram.load(address);
+
+    // 0x8000 - 0xFFFF: ROM
+    if(address >= 0x8000 && address < 0x10000)
+      return this.rom.load(address);
   },
+
+  /**
+   *
+   */
+  store: function(address, value) {
+    address = address & 0xFFFF;  // just in case
+
+    // 0x0000 - 0x07FF: 2KB internal RAM
+    // 0x0800 - 0x1FFF: Mirrors of 0x0000 - 0x07FF (repeats every 0x800 bytes)
+
+    if(address >= 0 && address < 0x2000)
+      return this.ram.store(address & 0x07FF, value);
+
+    // 0x2000 - 0x2007: PPU registers
+    // 0x2008 - 0x3FFF: Mirrors of 0x2000 - 0x2007 (repeats every 8 bytes)
+
+    if(address >= 0x2000 && address < 0x4000)
+      return this.ppu.storeRegister(address & 0x2007, value);
+
+    // 0x4000 - 0x4017: APU, PPU and I/O registers
+    // 0x4018 - 0x401F: APU and I/O functionality that is normally disabled
+
+    if(address >= 0x4000 && address < 0x4014)
+      return this.apu.storeRegister(address, value);
+
+    if(address === 0x4014)
+      return this.ppu.storeRegister(address, value);
+
+    if(address === 0x4015)
+      return this.apu.storeRegister(address, value);
+
+    if(address === 0x4016)
+      return this.pad1.storeRegister(value);
+
+    if(address >= 0x4017 && address < 0x4020)
+      return this.apu.storeRegister(address, value);
+
+    // cartridge space
+
+    if(address >= 0x4020 && address < 0x6000)
+      return this.ram.store(address, value);
+
+    // 0x6000 - 0x7FFF: Battery Backed Save or Work RAM
+
+    if(address >= 0x6000 && address < 0x8000)
+      return this.ram.store(address, value);
+
+    // 0x8000 - 0xFFFF: ROM
+    if(address >= 0x8000 && address < 0x10000)
+      return this.rom.store(address, value);
+  },
+
+  // private methods
+
+  // load/store methods
 
   /**
    *
@@ -769,18 +675,6 @@ Object.assign(Cpu.prototype, {
     var addr1 = address;
     var addr2 = (address & 0xff00) | ((address + 1) & 0xff);
     return this.load(addr1) | (this.load(addr2) << 8);
-  },
-
-  /**
-   *
-   */
-  store: function(address, value) {
-    var target = this.mapDevice(address);
-
-    if (target.isRegister === true)
-      return target.store(value);
-
-    target.store(this.mapAddress(address), value);
   },
 
   /**
@@ -1272,7 +1166,6 @@ Object.assign(Cpu.prototype, {
             reg = this.a;
             break;
           case this.INSTRUCTIONS.PHP.id:
-            // TODO: check this logic. when to clear?
             this.p.setA();
             this.p.setB();
             reg = this.p;
@@ -1427,7 +1320,6 @@ Object.assign(Cpu.prototype, {
 
       default:
         throw new Error('Cpu.operate: Invalid instruction, pc=' + __10to16(this.pc.load() - 1) + ' opc=' + __10to16(opc, 2) + ' name=' + op.instruction.name);
-        // throw exception?
         break;
     }
   },
@@ -1635,7 +1527,7 @@ Object.assign(Cpu.prototype, {
         break;
 
       default:
-        // TODO: throw Exception?
+        throw new Error('Cpu: Unkown addressing mode.');
         break;
     }
     return buffer;
@@ -1645,12 +1537,14 @@ Object.assign(Cpu.prototype, {
 /**
  *
  */
-function CpuStatusRegister() {
-  Register8bit.call(this);
+function CpuStatusRegister(onBeforeLoad, onAfterStore) {
+  Register8bit.call(this, onBeforeLoad, onAfterStore);
 }
 
 CpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
   isCpuStatusRegister: true,
+
+  //
 
   N_BIT: 7,
   V_BIT: 6,
@@ -1660,6 +1554,8 @@ CpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype
   I_BIT: 2,
   Z_BIT: 1,
   C_BIT: 0,
+
+  //
 
   isN: function() {
     return this.isBitSet(this.N_BIT);
@@ -1756,6 +1652,8 @@ CpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype
   clearC: function() {
     this.clearBit(this.C_BIT);
   },
+
+  // dump
 
   dump: function() {
     var buffer = '';

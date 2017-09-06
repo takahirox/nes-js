@@ -3,7 +3,6 @@
  * Refer to https://wiki.nesdev.com/w/index.php/PPU
  */
 function Ppu() {
-  var self = this;
 
   //
 
@@ -28,53 +27,15 @@ function Ppu() {
 
   this.ppuctrl = new PpuControlRegister();  // 0x2000
   this.ppumask = new PpuMaskRegister();     // 0x2001
-
-  this.ppustatus = new PpuStatusRegister(   // 0x2002
-    function(value) {
-      self.onPpuStatusRegisterLoad(value)
-    }
-  );
-
+  this.ppustatus = new PpuStatusRegister(); // 0x2002
   this.oamaddr = new Register8bit();        // 0x2003
+  this.oamdata = new Register8bit();        // 0x2004
+  this.ppuscroll = new Register8bit();      // 0x2005
+  this.ppuaddr = new Register8bit();        // 0x2006
+  this.ppudata = new Register8bit();        // 0x2007
+  this.oamdma = new Register8bit();         // 0x4014
 
-  this.oamdata = new Register8bit(          // 0x2004
-    undefined,
-    function(value) {
-      self.onOamDataRegisterStore(value);
-    }
-  );
-
-  this.ppuscroll = new Register8bit(        // 0x2005
-    undefined,
-    function(value) {
-      self.onPpuScrollRegisterStore(value);
-    }
-  );
-
-  this.ppuaddr = new Register8bit(          // 0x2006
-    undefined,
-    function(value) {
-      self.onPpuAddrRegisterStore(value);
-    }
-  );
-
-  this.ppudata = new Register8bit(          // 0x2007
-    function() {
-      self.onPpuDataRegisterLoad();
-    },
-    function(value) {
-      self.onPpuDataRegisterStore(value);
-    }
-  );
-
-  this.oamdma = new Register8bit(           // 0x4014
-    undefined,
-    function(value) {
-      self.onOamDmaRegisterStore(value);
-    }
-  );
-
-  // shift registers
+  // inside shift registers
 
   this.nameTableRegister = new Register8bit();
   this.attributeTableLowRegister = new Register16bit();
@@ -97,8 +58,7 @@ function Ppu() {
 
   //
 
-  this.scrollRegisterFirstStore = true;
-  this.addressRegisterFirstStore = true;
+  this.registerFirstStore = true;
 
   // sprites
 
@@ -255,6 +215,123 @@ Object.assign(Ppu.prototype, {
     this.countUpCycle();
   },
 
+  /**
+   * Called from Cpu
+   */
+  loadRegister: function(address) {
+    switch(address) {
+
+      // ppustatus load
+
+      case 0x2002:
+        var value = this.ppustatus.load();
+        this.ppustatus.clearVBlank();
+        this.registerFirstStore = true;
+        return value;
+
+      // oamdata load
+
+      case 0x2004:
+        return this.oamRam.load(this.oamaddr.load());
+
+      // ppudata load
+
+      case 0x2007:
+
+        // TODO: support ppudata read buffer
+
+        var value = this.load(this.getVRAMAddress());
+        this.incrementVRAMAddress();
+        return value;
+    }
+
+    return 0;
+  },
+
+  /**
+   * Called from Cpu.
+   */
+  storeRegister: function(address, value) {
+    switch(address) {
+
+      // ppuctrl store
+
+      case 0x2000:
+        this.ppuctrl.store(value);
+        break;
+
+      // ppumask store
+
+      case 0x2001:
+        this.ppumask.store(value);
+        break;
+
+      // oamaddr store
+
+      case 0x2003:
+        this.oamaddr.store(value);
+        break;
+
+      // oamdata store
+
+      case 0x2004:
+        this.oamdata.store(value);
+        this.oamRam.store(this.oamaddr.load(), value);
+        this.oamaddr.increment();
+        break;
+
+      // ppuscroll store
+
+      case 0x2005:
+        this.ppuscroll.store(value);
+
+        if(this.registerFirstStore === true)
+          this.xScrollLatch = value;
+        else
+          this.yScrollLatch = value;
+
+        this.registerFirstStore = !this.registerFirstStore;
+
+        break;
+
+      // ppuaddr store
+
+      case 0x2006:
+        if(this.registerFirstStore === true)
+          this.vRamAddressHigherByteLatch = value;
+        else
+          this.ppuaddr.store(value);
+
+        this.registerFirstStore = !this.registerFirstStore;
+
+        break;
+
+      // ppudata store
+
+      case 0x2007:
+        this.ppudata.store(value);
+
+        this.store(this.getVRAMAddress(), value);
+        this.incrementVRAMAddress();
+
+        break;
+
+      // oamdma store
+
+      case 0x4014:
+        this.oamdma.store(value);
+
+        var offset = value * 0x100;
+
+        for(var i = this.oamaddr.load(); i < 256; i++)
+          this.oamRam.store(i, this.cpu.load(offset + i));
+
+        this.cpu.stallCycle += 514;
+
+        break;
+    }
+  },
+
   // private methods
 
   // load/store methods
@@ -268,7 +345,7 @@ Object.assign(Ppu.prototype, {
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.hasCHRROM)
-      return this.chrrom.load(address);
+      return this.rom.chrrom.load(address);
 
     // 0x0000 - 0x0FFF: pattern table 0
     // 0x1000 - 0x1FFF: pattern table 1
@@ -314,7 +391,7 @@ Object.assign(Ppu.prototype, {
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.hasCHRROM)
-      return this.chrrom.store(address, value);
+      return this.rom.chrrom.store(address, value);
 
     // 0x0000 - 0x0FFF: pattern table 0
     // 0x1000 - 0x1FFF: pattern table 1
@@ -557,9 +634,14 @@ Object.assign(Ppu.prototype, {
    * cycle 321 - 336: the next scan line
    */
   getFetchedY: function() {
+    // TODO: Fix me
+
     var y;
     if(this.cycle <= 256) {
-      y = this.scanLine;
+      if(this.scanLine === 261)
+        y = 0;
+      else
+        y = this.scanLine;
     } else {
       if(this.scanLine === 261)
         y = 0;
@@ -663,7 +745,7 @@ Object.assign(Ppu.prototype, {
         this.ppustatus.setVBlank();
         this.display.updateScreen();
 
-        if(this.ppuctrl.isVBlank())
+        if(this.ppuctrl.isVBlank() === true)
           this.cpu.interrupt(this.cpu.INTERRUPTS.NMI);
       } else if(this.scanLine === 261) {
         this.ppustatus.clearVBlank();
@@ -710,77 +792,6 @@ Object.assign(Ppu.prototype, {
     this.ppuaddr.storeWithoutCallback(addr & 0xff);
   },
 
-  // register load/store callback
-
-  /**
-   *
-   */
-  onPpuStatusRegisterLoad: function(value) {
-    this.scrollRegisterFirstStore = true;
-    this.addressRegisterFirstStore = true;
-  },
-
-  /**
-   *
-   */
-  onPpuScrollRegisterStore: function(value) {
-    if(this.scrollRegisterFirstStore === true)
-      this.xScrollLatch = value;
-    else
-      this.yScrollLatch = value;
-
-    this.scrollRegisterFirstStore = !this.scrollRegisterFirstStore;
-  },
-
-  /**
-   *
-   */
-  onPpuAddrRegisterStore: function(value) {
-    if(this.addressRegisterFirstStore === true)
-      this.vRamAddressHigherByteLatch = value;
-
-    this.addressRegisterFirstStore = !this.addressRegisterFirstStore;
-  },
-
-  /**
-   *
-   */
-  onPpuDataRegisterLoad: function() {
-    this.ppudata.storeWithoutCallback(this.load(this.getVRAMAddress()));
-    this.addressRegisterFirstStore = true;
-    this.incrementVRAMAddress();
-  },
-
-  /**
-   *
-   */
-  onPpuDataRegisterStore: function(value) {
-    this.store(this.getVRAMAddress(), value);
-    this.addressRegisterFirstStore = true;
-    this.incrementVRAMAddress();
-  },
-
-  /**
-   *
-   */
-  onOamDataRegisterStore: function(value) {
-    var addr = this.oamaddr.loadWithoutCallback();
-    this.oamRam.store(addr, value);
-  },
-
-  /**
-   *
-   */
-  onOamDmaRegisterStore: function(value) {
-    var ram = this.cpu.ram;
-    var addr = value * 0x100;
-
-    for(var i = 0; i < 256; i++)
-      this.oamRam.store(i, ram.load(addr + i));
-
-    this.cpu.stallCycle += 514;
-  },
-
   // sprites
 
   /**
@@ -825,7 +836,7 @@ Object.assign(Ppu.prototype, {
       this.spriteIds[i] = -1;
     }
 
-    var height = this.ppuctrl.isSpriteSize16() ? 16 : 8;
+    var height = this.ppuctrl.isSpriteSize16() === true ? 16 : 8;
     var n = 0;
 
     for(var i = 0, il = this.spritesManager2.getNum(); i < il; i++) {
@@ -992,35 +1003,35 @@ PpuControlRegister.prototype = Object.assign(Object.create(Register8bit.prototyp
    *
    */
   isIncrementAddressSet: function() {
-    return this.loadBit(this.INCREMENT_ADDRESS_BIT);
+    return this.isBitSet(this.INCREMENT_ADDRESS_BIT);
   },
 
   /**
    *
    */
   isVBlank: function() {
-    return this.loadBit(this.NMI_VBLANK_BIT);
+    return this.isBitSet(this.NMI_VBLANK_BIT);
   },
 
   /**
    *
    */
   setVBlank: function() {
-    this.storeBit(this.NMI_VBLANK_BIT, 1);
+    this.setBit(this.NMI_VBLANK_BIT);
   },
 
   /**
    *
    */
   clearVBlank: function() {
-    this.storeBit(this.NMI_VBLANK_BIT, 0);
+    this.clearBit(this.NMI_VBLANK_BIT);
   },
 
   /**
    *
    */
   isSpriteSize16: function() {
-    return this.loadBit(this.SPRITES_SIZE_BIT);
+    return this.isBitSet(this.SPRITES_SIZE_BIT);
   },
 
   /**
@@ -1065,6 +1076,8 @@ PpuMaskRegister.prototype = Object.assign(Object.create(Register8bit.prototype),
   EMPHASIZE_RED_BIT: 5,
   EMPHASIZE_GREEN_BIT: 6,
   EMPHASIZE_BLUE_BIT: 7,
+
+  //
 
   /**
    *
@@ -1138,20 +1151,6 @@ PpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype
   VBLANK_BIT: 7,
   SPRITE_ZERO_HIT_BIT: 6,
   SPRITE_OVERFLOW_BIT: 5,
-
-  //
-
-  /**
-   *
-   */
-  load: function() {
-    if (this.onBeforeLoad !== undefined)
-      this.onBeforeLoad(this.data[0]);
-
-    var value = this.data[0];
-    this.clearVBlank();
-    return value;
-  },
 
   //
 

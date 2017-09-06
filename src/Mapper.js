@@ -117,10 +117,10 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
 function MMC1Mapper(rom) {
   Mapper.call(this, rom);
 
-  this.controlRegister = new Register8bit();
-  this.chrBank0Register = new Register8bit();
-  this.chrBank1Register = new Register8bit();
-  this.prgBankRegister = new Register8bit();
+  this.controlRegister = new Register8bit();  // register 0
+  this.chrBank0Register = new Register8bit(); // register 1
+  this.chrBank1Register = new Register8bit(); // register 2
+  this.prgBankRegister = new Register8bit();  // register 3
 
   this.latch = new Register8bit();
 
@@ -200,6 +200,9 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
     if(value & 0x80) {
       this.registerWriteCount = 0;
       this.latch.clear();
+
+      if((address & 0x6000) === 0)
+        this.controlRegister.storeBits(2, 2, 3)
     } else {
       this.latch.store(((value & 1) << 4) | (this.latch.load() >> 1));
       this.registerWriteCount++;
@@ -299,7 +302,7 @@ CNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   store: function(address, value) {
-    this.reg.store(value & 0x3);
+    this.reg.store(value & 0xF);
   }
 });
 
