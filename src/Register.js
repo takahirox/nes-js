@@ -166,8 +166,7 @@ Object.assign(Register.prototype, {
    */
   shift: function(value) {
     value = value & 1;  // just in case
-    var width = this.getWidth();
-    var carry = this.loadBit(width - 1);
+    var carry = this.loadBit(this.getWidth() - 1);
     this.data[0] = (this.data[0] << 1) | value;
     return carry;
   },
