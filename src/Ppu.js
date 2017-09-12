@@ -59,6 +59,7 @@ function Ppu() {
   //
 
   this.registerFirstStore = true;
+  this.vRamReadBuffer = 0;
 
   // sprites
 
@@ -74,11 +75,6 @@ function Ppu() {
     this.spritePixels[i] = 0;
     this.spriteIds[i] = -1;
   }
-
-  //
-
-  this.chrrom = null;
-  this.hasCHRROM = false;
 }
 
 //
@@ -174,10 +170,6 @@ Object.assign(Ppu.prototype, {
    */
   setRom: function(rom) {
     this.rom = rom;
-    if(rom.hasChrRom()) {
-      this.chrrom = rom.chrrom;
-      this.hasCHRROM = true;
-    }
   },
 
   /**
@@ -215,6 +207,8 @@ Object.assign(Ppu.prototype, {
     this.countUpCycle();
   },
 
+  // load/store methods
+
   /**
    * Called from Cpu
    */
@@ -238,10 +232,18 @@ Object.assign(Ppu.prototype, {
 
       case 0x2007:
 
-        // TODO: support ppudata read buffer
+        var vRamAddress = this.getVRamAddress();
+        var value;
 
-        var value = this.load(this.getVRAMAddress());
-        this.incrementVRAMAddress();
+        if(vRamAddress >= 0 && vRamAddress < 0x3F00) {
+          value = this.vRamReadBuffer;
+          this.vRamReadBuffer = this.load(this.getVRamAddress());
+        } else {
+          value = this.load(this.getVRamAddress());
+          this.vRamReadBuffer = value;
+        }
+
+        this.incrementVRamAddress();
         return value;
     }
 
@@ -286,9 +288,9 @@ Object.assign(Ppu.prototype, {
         this.ppuscroll.store(value);
 
         if(this.registerFirstStore === true)
-          this.xScrollLatch = value;
+          this.xScrollLatch = value & 0xFF;
         else
-          this.yScrollLatch = value;
+          this.yScrollLatch = value & 0xFF;
 
         this.registerFirstStore = !this.registerFirstStore;
 
@@ -298,7 +300,7 @@ Object.assign(Ppu.prototype, {
 
       case 0x2006:
         if(this.registerFirstStore === true)
-          this.vRamAddressHigherByteLatch = value;
+          this.vRamAddressHigherByteLatch = value & 0x3F;
         else
           this.ppuaddr.store(value);
 
@@ -311,8 +313,8 @@ Object.assign(Ppu.prototype, {
       case 0x2007:
         this.ppudata.store(value);
 
-        this.store(this.getVRAMAddress(), value);
-        this.incrementVRAMAddress();
+        this.store(this.getVRamAddress(), value);
+        this.incrementVRamAddress();
 
         break;
 
@@ -332,10 +334,6 @@ Object.assign(Ppu.prototype, {
     }
   },
 
-  // private methods
-
-  // load/store methods
-
   /**
    *
    */
@@ -344,7 +342,7 @@ Object.assign(Ppu.prototype, {
 
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
-    if(address < 0x2000 && this.hasCHRROM)
+    if(address < 0x2000 && this.rom.hasChrRom() === true)
       return this.rom.chrrom.load(address);
 
     // 0x0000 - 0x0FFF: pattern table 0
@@ -358,7 +356,7 @@ Object.assign(Ppu.prototype, {
     // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
     if(address >= 0x2000 && address < 0x3F00)
-      address = address & 0x2FFF;
+      return this.vRam.load(this.getNameTableAddressWithMirroring(address & 0x2FFF));
 
     if(address >= 0x3F00 && address < 0x4000)
       address = address & 0x3F1F;
@@ -390,8 +388,10 @@ Object.assign(Ppu.prototype, {
 
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
-    if(address < 0x2000 && this.hasCHRROM)
-      return this.rom.chrrom.store(address, value);
+    if(address < 0x2000 && this.rom.hasChrRom() === true) {
+      this.rom.chrrom.store(address, value);
+      return;
+    }
 
     // 0x0000 - 0x0FFF: pattern table 0
     // 0x1000 - 0x1FFF: pattern table 1
@@ -403,8 +403,10 @@ Object.assign(Ppu.prototype, {
     // 0x3F00 - 0x3F1F: Palette RAM indices
     // 0x3F20 - 0x3FFF: Mirrors of 0x3F00 - 0x3F1F
 
-    if(address >= 0x2000 && address < 0x3F00)
-      address = address & 0x2FFF;
+    if(address >= 0x2000 && address < 0x3F00) {
+      this.vRam.store(this.getNameTableAddressWithMirroring(address & 0x2FFF), value);
+      return;
+    }
 
     if(address >= 0x3F00 && address < 0x4000)
       address = address & 0x3F1F;
@@ -426,6 +428,58 @@ Object.assign(Ppu.prototype, {
       address = 0x3F0C;
 
     return this.vRam.store(address, value);
+  },
+
+  // private methods
+
+  getNameTableAddressWithMirroring: function(address) {
+    address = address & 0x2FFF;  // just in case
+
+    var baseAddress = 0;
+
+    switch(this.rom.getMirroringType()) {
+      case this.rom.MIRRORINGS.SINGLE_SCREEN:
+        baseAddress = 0x2000;
+        break;
+
+      case this.rom.MIRRORINGS.HORIZONTAL:
+        if(address >= 0x2000 && address < 0x2400)
+          baseAddress = 0x2000;
+        else if(address >= 0x2400 && address < 0x2800)
+          baseAddress = 0x2000;
+        else if(address >= 0x2800 && address < 0x2C00)
+          baseAddress = 0x2400;
+        else
+          baseAddress = 0x2400;
+
+        break;
+
+      case this.rom.MIRRORINGS.VERTICAL:
+        if(address >= 0x2000 && address < 0x2400)
+          baseAddress = 0x2000;
+        else if(address >= 0x2400 && address < 0x2800)
+          baseAddress = 0x2400;
+        else if(address >= 0x2800 && address < 0x2C00)
+          baseAddress = 0x2000;
+        else
+          baseAddress = 0x2400;
+
+        break;
+
+      case this.rom.MIRRORINGS.FOUR_SCREEN:
+        if(address >= 0x2000 && address < 0x2400)
+          baseAddress = 0x2000;
+        else if(address >= 0x2400 && address < 0x2800)
+          baseAddress = 0x2400;
+        else if(address >= 0x2800 && address < 0x2C00)
+          baseAddress = 0x2800;
+        else
+          baseAddress = 0x2C00;
+
+        break;
+    }
+
+    return baseAddress | (address & 0x3FF);
   },
 
   // rendering
@@ -471,7 +525,8 @@ Object.assign(Ppu.prototype, {
 
     // TODO: fix me
 
-    if(spriteId === 0 && spritePixel !== 0 && backgroundPixel !== 0)
+    if(backgroundVisible === true && spritesVisible === true &&
+       spriteId === 0 && spritePixel !== 0 && backgroundPixel !== 0)
       this.ppustatus.setZeroHit();
 
     this.display.renderPixel(x, y, c);
@@ -569,7 +624,14 @@ Object.assign(Ppu.prototype, {
     var tileX = (x % 256) >> 3;
     var tileY = (y % 240) >> 3;
     var index = tileY * 32 + tileX;
-    this.nameTableLatch = this.load(this.getNameTableAddress(x, y) + index);
+
+    if(x >= 256)
+      index += 0x400;
+
+    if(y >= 240)
+      index += 0x800;
+
+    this.nameTableLatch = this.load(this.getBaseNameTableAddress() + index);
   },
 
   /**
@@ -582,7 +644,14 @@ Object.assign(Ppu.prototype, {
     var cellX = (x % 256) >> 5;
     var cellY = (ay % 240) >> 5;
     var index = cellY * 8 + cellX;
-    var byte = this.load(this.getNameTableAddress(x, y) + 0x3C0 + index);
+
+    if(x >= 256)
+      index += 0x400;
+
+    if(y >= 240)
+      index += 0x800;
+
+    var byte = this.load(this.getBaseNameTableAddress() + 0x3C0 + index);
 
     var topbottom = (ay % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
     var rightleft = (x % 32) >> 4;  // (x % 32) > 15 ? 1 : 0; // right, left
@@ -655,82 +724,21 @@ Object.assign(Ppu.prototype, {
   },
 
   /**
-   * TODO: Fix me
+   *
    */
-  getNameTableAddress: function(x, y) {
-    x = x % 512;  // just in case
-    y = y % 480;  // just in case
+  getBaseNameTableAddress: function() {
+    switch(this.ppuctrl.getNameTableAddress()) {
+      case 0:
+        return 0x2000;
 
-    switch(this.rom.getMirroringType()) {
-      case this.rom.MIRRORINGS.SINGLE_SCREEN:
-        switch(this.ppuctrl.getNameTableAddress()) {
-          case 0:
-            return 0x2000;
+      case 1:
+        return 0x2400;
 
-          case 1:
-            return 0x2400;
+      case 2:
+        return 0x2800;
 
-          case 2:
-            return 0x2800;
-
-          case 3:
-            return 0x2C00;
-        }
-
-        break;
-
-      case this.rom.MIRRORINGS.HORIZONTAL:
-        switch(this.ppuctrl.getNameTableAddress()) {
-          case 0:
-            return y < 240 ? 0x2000 : 0x2800;
-
-          case 1:
-            return y < 240 ? 0x2400 : 0x2C00;
-
-          case 2:
-            return y < 240 ? 0x2800 : 0x2000;
-
-          default:
-            return y < 240 ? 0x2C00 : 0x2400;
-        }
-
-        break;
-
-      case this.rom.MIRRORINGS.VERTICAL:
-        switch(this.ppuctrl.getNameTableAddress()) {
-          case 0:
-            return x < 256 ? 0x2000 : 0x2400;
-
-          case 1:
-            return x < 256 ? 0x2400 : 0x2000;
-
-          case 2:
-            return x < 256 ? 0x2000 : 0x2400;
-
-          default:
-            return x < 256 ? 0x2400 : 0x2000;
-        }
-
-        break;
-
-      // not yet
-
-      case this.rom.MIRRORINGS.FOUR_SCREEN:
-        switch(this.ppuctrl.getNameTableAddress()) {
-          case 0:
-            return 0x2000;
-
-          case 1:
-            return 0x2400;
-
-          case 2:
-            return 0x2800;
-
-          case 3:
-            return 0x2C00;
-        }
-
-        break;
+      case 3:
+        return 0x2C00;
     }
   },
 
@@ -745,12 +753,19 @@ Object.assign(Ppu.prototype, {
         this.ppustatus.setVBlank();
         this.display.updateScreen();
 
-        if(this.ppuctrl.isVBlank() === true)
-          this.cpu.interrupt(this.cpu.INTERRUPTS.NMI);
+        //if(this.ppuctrl.enabledNmi() === true)
+        //  this.cpu.interrupt(this.cpu.INTERRUPTS.NMI);
       } else if(this.scanLine === 261) {
         this.ppustatus.clearVBlank();
         this.ppustatus.clearZeroHit();
         this.ppustatus.clearOverflow();
+      }
+    }
+
+    if(this.cycle === 10) {
+      if(this.scanLine === 241) {
+        if(this.ppuctrl.enabledNmi() === true)
+          this.cpu.interrupt(this.cpu.INTERRUPTS.NMI);
       }
     }
   },
@@ -778,16 +793,16 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  getVRAMAddress: function() {
+  getVRamAddress: function() {
     return (this.vRamAddressHigherByteLatch << 8) | this.ppuaddr.loadWithoutCallback();
   },
 
   /**
    *
    */
-  incrementVRAMAddress: function() {
+  incrementVRamAddress: function() {
     var plus = this.ppuctrl.isIncrementAddressSet() ? 32 : 1;
-    var addr = this.getVRAMAddress() + plus;
+    var addr = this.getVRamAddress() + plus;
     this.vRamAddressHigherByteLatch = (addr >> 8) & 0xff;
     this.ppuaddr.storeWithoutCallback(addr & 0xff);
   },
@@ -1009,22 +1024,8 @@ PpuControlRegister.prototype = Object.assign(Object.create(Register8bit.prototyp
   /**
    *
    */
-  isVBlank: function() {
+  enabledNmi: function() {
     return this.isBitSet(this.NMI_VBLANK_BIT);
-  },
-
-  /**
-   *
-   */
-  setVBlank: function() {
-    this.setBit(this.NMI_VBLANK_BIT);
-  },
-
-  /**
-   *
-   */
-  clearVBlank: function() {
-    this.clearBit(this.NMI_VBLANK_BIT);
   },
 
   /**
