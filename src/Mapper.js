@@ -267,8 +267,8 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-    var bank = (address < 0xC000) ? this.reg.load() : 7;
-    var offset = address & 0x3fff;
+    var bank = (address < 0xC000) ? this.reg.load() : this.prgBankNum - 1;
+    var offset = address & 0x3FFF;
     return 0x4000 * bank + offset + 0x8000;
   },
 
@@ -276,7 +276,7 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   store: function(address, value) {
-    this.reg.store(value & 0x7);
+    this.reg.store(value & 0xF);
   }
 });
 
