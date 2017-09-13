@@ -51,15 +51,16 @@ function Ppu() {
   this.patternTableLowLatch = 0;
   this.patternTableHighLatch = 0
 
-  this.vRamAddressHigherByteLatch = 0;
+  //
 
-  this.xScrollLatch = 0;
-  this.yScrollLatch = 0;
+  this.fineXScroll = 0;
+  this.currentVRamAddress = 0;
+  this.temporalVRamAddress = 0;
 
   //
 
-  this.registerFirstStore = true;
   this.vRamReadBuffer = 0;
+  this.registerFirstStore = true;
 
   // sprites
 
@@ -204,6 +205,7 @@ Object.assign(Ppu.prototype, {
     this.fetch();
     this.evaluateSprites();
     this.updateFlags();
+    this.countUpScrollCounters();
     this.countUpCycle();
   },
 
@@ -231,15 +233,14 @@ Object.assign(Ppu.prototype, {
       // ppudata load
 
       case 0x2007:
-
-        var vRamAddress = this.getVRamAddress();
         var value;
 
-        if(vRamAddress >= 0 && vRamAddress < 0x3F00) {
+        if((this.currentVRamAddress & 0x3FFF) >= 0 &&
+            (this.currentVRamAddress & 0x3FFF) < 0x3F00) {
           value = this.vRamReadBuffer;
-          this.vRamReadBuffer = this.load(this.getVRamAddress());
+          this.vRamReadBuffer = this.load(this.currentVRamAddress);
         } else {
-          value = this.load(this.getVRamAddress());
+          value = this.load(this.currentVRamAddress);
           this.vRamReadBuffer = value;
         }
 
@@ -260,6 +261,8 @@ Object.assign(Ppu.prototype, {
 
       case 0x2000:
         this.ppuctrl.store(value);
+        this.temporalVRamAddress &= ~0xC00;
+        this.temporalVRamAddress |= (value & 0x3) << 10;
         break;
 
       // ppumask store
@@ -287,10 +290,15 @@ Object.assign(Ppu.prototype, {
       case 0x2005:
         this.ppuscroll.store(value);
 
-        if(this.registerFirstStore === true)
-          this.xScrollLatch = value & 0xFF;
-        else
-          this.yScrollLatch = value & 0xFF;
+        if(this.registerFirstStore === true) {
+          this.fineXScroll = value & 0x7;
+          this.temporalVRamAddress &= ~0x1F;
+          this.temporalVRamAddress |= (value >> 3) & 0x1F;
+        } else {
+          this.temporalVRamAddress &= ~0x73E0;
+          this.temporalVRamAddress |= (value & 0xF8) << 2;
+          this.temporalVRamAddress |= (value & 0x7) << 12;
+        }
 
         this.registerFirstStore = !this.registerFirstStore;
 
@@ -299,10 +307,15 @@ Object.assign(Ppu.prototype, {
       // ppuaddr store
 
       case 0x2006:
-        if(this.registerFirstStore === true)
-          this.vRamAddressHigherByteLatch = value & 0x3F;
-        else
+        if(this.registerFirstStore === true) {
+          this.temporalVRamAddress &= ~0x7F00;
+          this.temporalVRamAddress |= (value & 0x3F) << 8;
+        } else {
           this.ppuaddr.store(value);
+          this.temporalVRamAddress &= ~0xFF;
+          this.temporalVRamAddress |= (value & 0xFF);
+          this.currentVRamAddress = this.temporalVRamAddress;
+        }
 
         this.registerFirstStore = !this.registerFirstStore;
 
@@ -313,7 +326,7 @@ Object.assign(Ppu.prototype, {
       case 0x2007:
         this.ppudata.store(value);
 
-        this.store(this.getVRamAddress(), value);
+        this.store(this.currentVRamAddress, value);
         this.incrementVRamAddress();
 
         break;
@@ -536,7 +549,7 @@ Object.assign(Ppu.prototype, {
    *
    */
   getBackgroundPixel: function() {
-    var offset = 15 - (this.xScrollLatch % 8);
+    var offset = 15 - this.fineXScroll;
 
     var lsb = (this.patternTableHighRegister.loadBit(offset) << 1) |
                 this.patternTableLowRegister.loadBit(offset);
@@ -616,45 +629,27 @@ Object.assign(Ppu.prototype, {
   },
 
   /**
-   *
+   * Refer to http://wiki.nesdev.com/w/index.php/PPU_scrolling
    */
   fetchNameTable: function() {
-    var x = this.getFetchedX();
-    var y = this.getFetchedY();
-    var tileX = (x % 256) >> 3;
-    var tileY = (y % 240) >> 3;
-    var index = tileY * 32 + tileX;
-
-    if(x >= 256)
-      index += 0x400;
-
-    if(y >= 240)
-      index += 0x800;
-
-    this.nameTableLatch = this.load(this.getBaseNameTableAddress() + index);
+    this.nameTableLatch = this.load(0x2000 | (this.currentVRamAddress & 0x0FFF));
   },
 
   /**
    *
    */
   fetchAttributeTable: function() {
-    var x = this.getFetchedX();
-    var y = this.getFetchedY();
-    var ay = (y >= 240) ? y - 240 : y;
-    var cellX = (x % 256) >> 5;
-    var cellY = (ay % 240) >> 5;
-    var index = cellY * 8 + cellX;
+    var v = this.currentVRamAddress;
+    var address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
 
-    if(x >= 256)
-      index += 0x400;
+    var byte = this.load(address);
 
-    if(y >= 240)
-      index += 0x800;
+    var coarseX = v & 0x1F;
+    var coarseY = (v >> 5) & 0x1F
 
-    var byte = this.load(this.getBaseNameTableAddress() + 0x3C0 + index);
+    var topbottom = (coarseY % 4) >= 2 ? 1 : 0; // bottom, top
+    var rightleft = (coarseX % 4) >= 2 ? 1 : 0; // right, left
 
-    var topbottom = (ay % 32) >> 4; // (y % 32) > 15 ? 1 : 0; // bottom, top
-    var rightleft = (x % 32) >> 4;  // (x % 32) > 15 ? 1 : 0; // right, left
     var position = (topbottom << 1) | rightleft; // bottomright, bottomleft,
                                                  // topright, topleft
 
@@ -670,9 +665,9 @@ Object.assign(Ppu.prototype, {
    *
    */
   fetchPatternTableLow: function() {
-    var y = this.getFetchedY() % 8;
+    var fineY = (this.currentVRamAddress >> 12) & 0x7;
     var index = this.ppuctrl.getBackgroundPatternTableNum() * 0x1000 +
-                  this.nameTableRegister.load() * 0x10 + y
+                  this.nameTableRegister.load() * 0x10 + fineY;
 
     this.patternTableLowLatch = this.load(index);
   },
@@ -681,65 +676,11 @@ Object.assign(Ppu.prototype, {
    *
    */
   fetchPatternTableHigh: function() {
-    var y = this.getFetchedY() % 8;
+    var fineY = (this.currentVRamAddress >> 12) & 0x7;
     var index = this.ppuctrl.getBackgroundPatternTableNum() * 0x1000 +
-                  this.nameTableRegister.load() * 0x10 + y
+                  this.nameTableRegister.load() * 0x10 + fineY;
 
     this.patternTableHighLatch = this.load(index + 0x8);
-  },
-
-  /**
-   * cycle   1 - 256: two next tile of the same scan line
-   * cycle 321 - 336: first two tiles of the next scan line
-   */
-  getFetchedX: function() {
-    var x = (this.cycle - 1) & ~0x7;
-    x += (this.cycle <= 256) ? 16 : -320;
-    return (x + this.xScrollLatch);
-  },
-
-  /**
-   * cycle   1 - 256: the same scan line
-   * cycle 321 - 336: the next scan line
-   */
-  getFetchedY: function() {
-    // TODO: Fix me
-
-    var y;
-    if(this.cycle <= 256) {
-      if(this.scanLine === 261)
-        y = 0;
-      else
-        y = this.scanLine;
-    } else {
-      if(this.scanLine === 261)
-        y = 0;
-      else
-        y = this.scanLine + 1;
-    }
-
-    // yScrollLatch 240 to 255 are treated as -16 through -1
-
-    return y + (this.yScrollLatch < 240 ? this.yScrollLatch : this.yScrollLatch - 256);
-  },
-
-  /**
-   *
-   */
-  getBaseNameTableAddress: function() {
-    switch(this.ppuctrl.getNameTableAddress()) {
-      case 0:
-        return 0x2000;
-
-      case 1:
-        return 0x2400;
-
-      case 2:
-        return 0x2800;
-
-      case 3:
-        return 0x2C00;
-    }
   },
 
   //
@@ -771,6 +712,69 @@ Object.assign(Ppu.prototype, {
   },
 
   /**
+   *
+   */
+  countUpScrollCounters: function() {
+    if(this.ppumask.isBackgroundVisible() === false && this.ppumask.isSpritesVisible() === false)
+      return;
+
+    if(this.scanLine >= 240 && this.scanLine <= 260)
+      return;
+
+    if(this.scanLine === 261) {
+      if(this.cycle >= 280 && this.cycle <= 304) {
+        this.currentVRamAddress &= ~0x7BE0;
+        this.currentVRamAddress |= (this.temporalVRamAddress & 0x7BE0)
+      }
+    }
+
+    if(this.cycle === 0 || (this.cycle >= 258 && this.cycle <= 320))
+      return;
+
+    if((this.cycle % 8) === 0) {
+      var v = this.currentVRamAddress;
+
+      if((v & 0x1F) === 31) {
+        v &= ~0x1F;
+        v ^= 0x400;
+      } else {
+        v++;
+      }
+
+      this.currentVRamAddress = v;
+    }
+
+    if(this.cycle === 256) {
+      var v = this.currentVRamAddress;
+
+      if((v & 0x7000) !== 0x7000) {
+        v += 0x1000;
+      } else {
+        v &= ~0x7000;
+        var y = (v & 0x3E0) >> 5;
+
+        if(y === 29) {
+          y = 0;
+          v ^= 0x800;
+        } else if(y === 31) {
+          y = 0;
+        } else {
+          y++;
+        }
+
+        v = (v & ~0x3E0) | (y << 5);
+      }
+
+      this.currentVRamAddress = v;
+    }
+
+    if(this.cycle === 257) {
+      this.currentVRamAddress &= ~0x41F;
+      this.currentVRamAddress |= (this.temporalVRamAddress & 0x41F)
+    }
+  },
+
+  /**
    * cycle:    0 - 340
    * scanLine: 0 - 261
    */
@@ -793,18 +797,10 @@ Object.assign(Ppu.prototype, {
   /**
    *
    */
-  getVRamAddress: function() {
-    return (this.vRamAddressHigherByteLatch << 8) | this.ppuaddr.loadWithoutCallback();
-  },
-
-  /**
-   *
-   */
   incrementVRamAddress: function() {
-    var plus = this.ppuctrl.isIncrementAddressSet() ? 32 : 1;
-    var addr = this.getVRamAddress() + plus;
-    this.vRamAddressHigherByteLatch = (addr >> 8) & 0xff;
-    this.ppuaddr.storeWithoutCallback(addr & 0xff);
+    this.currentVRamAddress += this.ppuctrl.isIncrementAddressSet() ? 32 : 1;
+    this.currentVRamAddress &= 0x7FFF;
+    this.ppuaddr.store(this.currentVRamAddress & 0xFF);
   },
 
   // sprites
