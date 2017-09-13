@@ -71,10 +71,12 @@ function Ppu() {
 
   this.spritePixels = [];
   this.spriteIds = [];
+  this.spritePriorities = [];
 
   for(var i = 0; i < 256; i++) {
-    this.spritePixels[i] = 0;
+    this.spritePixels[i] = -1;
     this.spriteIds[i] = -1;
+    this.spritePriorities[i] = -1;
   }
 }
 
@@ -514,18 +516,19 @@ Object.assign(Ppu.prototype, {
     var backgroundPixel = this.getBackgroundPixel();
     var spritePixel = this.spritePixels[x];
     var spriteId = this.spriteIds[x];
+    var spritePriority = this.spritePriorities[x];
 
-    var c = 0xff000000;
+    var c = this.PALETTES[this.load(0x3F00)];
 
-    // TODO: fix me, consider priority
-
-    if(backgroundVisible === true && spritesVisible === true)
-      c = (spritePixel !== 0) ? spritePixel : backgroundPixel;
-    else if(backgroundVisible === true && spritesVisible === false)
+    // TODO: fix me
+    if(backgroundVisible === true && spritesVisible === true) {
+      c = (spritePixel !== -1 && spritePriority === 0) ? spritePixel : backgroundPixel;
+    } else if(backgroundVisible === true && spritesVisible === false) {
       c = backgroundPixel;
-    else if(backgroundVisible === false && spritesVisible === true)
-      if(spritePixel !== 0)
+    } else if(backgroundVisible === false && spritesVisible === true) {
+      if(spritePixel !== -1)
         c = spritePixel;
+    }
 
     // TODO: fix me
 
@@ -843,8 +846,9 @@ Object.assign(Ppu.prototype, {
     var ay = this.scanLine - 1;
 
     for(var i = 0, il = this.spritePixels.length; i < il; i++) {
-      this.spritePixels[i] = 0;
+      this.spritePixels[i] = -1;
       this.spriteIds[i] = -1;
+      this.spritePriorities[i] = -1;
     }
 
     var height = this.ppuctrl.isSpriteSize16() === true ? 16 : 8;
@@ -876,9 +880,10 @@ Object.assign(Ppu.prototype, {
         if(lsb !== 0) {
           var pIndex = (msb << 2) | lsb;
 
-          if(this.spritePixels[x] === 0) {
+          if(this.spritePixels[x] === -1) {
             this.spritePixels[x] = this.PALETTES[this.load(0x3F10 + pIndex)];
             this.spriteIds[x] = s.getId();
+            this.spritePriorities[x] = s.getPriority();
           }
         }
       }
