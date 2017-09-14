@@ -358,7 +358,7 @@ Object.assign(Ppu.prototype, {
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.rom.hasChrRom() === true)
-      return this.rom.chrrom.load(address);
+      return this.rom.load(address);
 
     // 0x0000 - 0x0FFF: pattern table 0
     // 0x1000 - 0x1FFF: pattern table 1
@@ -404,7 +404,7 @@ Object.assign(Ppu.prototype, {
     // 0x0000 - 0x1FFF is mapped with cartridge's CHR-ROM if it exists
 
     if(address < 0x2000 && this.rom.hasChrRom() === true) {
-      this.rom.chrrom.store(address, value);
+      this.rom.store(address, value);
       return;
     }
 

@@ -6,7 +6,6 @@ function Rom(arrayBuffer) {
   this.header = new RomHeader(this);
   this.mapperFactory = new MapperFactory();
   this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
-  this.chrrom = this.createChrRom(this.mapper);
 }
 
 //
@@ -32,22 +31,14 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
   /**
    *
    */
-  createChrRom: function(mapper) {
-    var capacity = 0x2000 * this.header.getCHRROMBanksNum();
-    var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-    var chrRom = new ChrRom(capacity, mapper);
-
-    for(var i = 0; i < capacity; i++)
-      chrRom.storeWithoutMapping(i, this.loadWithoutMapping(i + offset));
-
-    return chrRom;
-  },
-
-  /**
-   *
-   */
   load: function(address) {
-    return this.data[this.mapper.map(address) - 0x8000 + this.getHeaderSize()];
+    if(address < 0x2000) {
+      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
+      return this.data[this.mapper.mapForChrRom(address) + offset];
+    } else {
+      var offset = -0x8000 + this.getHeaderSize();
+      return this.data[this.mapper.map(address) + offset];
+    }
   },
 
   /**
@@ -380,24 +371,5 @@ Object.assign(RomHeader.prototype, {
     buffer += 'Mapper number: ' + __10to16(this.getMapperNum(), 2) +
                 '(' + this.rom.mapperFactory.getName(this.getMapperNum()) + ')';
     return buffer;
-  }
-});
-
-/**
- *
- */
-function ChrRom(capacity, mapper) {
-  Memory.call(this, capacity);
-  this.mapper = mapper;
-}
-
-ChrRom.prototype = Object.assign(Object.create(Memory.prototype), {
-  isChrRom: true,
-
-  /**
-   *
-   */
-  load: function(address) {
-    return this.data[this.mapper.mapForCHRROM(address)];
   }
 });

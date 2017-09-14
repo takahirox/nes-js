@@ -67,7 +67,7 @@ Object.assign(Mapper.prototype, {
   /**
    *
    */
-  mapForCHRROM: function(address) {
+  mapForChrRom: function(address) {
     return address;
   },
 
@@ -173,7 +173,7 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
   /**
    *
    */
-  mapForCHRROM: function(address) {
+  mapForChrRom: function(address) {
     var bank;
     var offset = address & 0x0FFF;
 
@@ -294,7 +294,7 @@ CNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
   /**
    *
    */
-  mapForCHRROM: function(address) {
+  mapForChrRom: function(address) {
     return this.reg.load() * 0x2000 + (address & 0x1FFF);
   },
 
@@ -328,7 +328,7 @@ MMC3Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
   /**
    *
    */
-  mapForCHRROM: function(address) {
+  mapForChrRom: function(address) {
     // TODO: Fix me
 
     return address;
@@ -413,7 +413,7 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
   /**
    *
    */
-  mapForCHRROM: function(address) {
+  mapForChrRom: function(address) {
     var bank;
     var offset = address & 0x7FF;
     switch(address & 0x1800) {
