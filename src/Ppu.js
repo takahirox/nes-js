@@ -521,8 +521,16 @@ Object.assign(Ppu.prototype, {
     var c = this.PALETTES[this.load(0x3F00)];
 
     // TODO: fix me
+
     if(backgroundVisible === true && spritesVisible === true) {
-      c = (spritePixel !== -1 && spritePriority === 0) ? spritePixel : backgroundPixel;
+      if(spritePixel === -1) {
+        c = backgroundPixel;
+      } else {
+        if(backgroundPixel === c)
+          c = spritePixel
+        else
+          c = spritePriority === 0 ? spritePixel : backgroundPixel;
+      }
     } else if(backgroundVisible === true && spritesVisible === false) {
       c = backgroundPixel;
     } else if(backgroundVisible === false && spritesVisible === true) {
