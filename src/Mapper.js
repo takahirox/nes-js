@@ -12,13 +12,14 @@ function MapperFactory() {
 Object.assign(MapperFactory.prototype, {
   isMapperFactory: true,
 
-  MAPPERS: [
-    /* 0 */ {'name': 'NROM',  class: NROMMapper},
-    /* 1 */ {'name': 'MMC1',  class: MMC1Mapper},
-    /* 2 */ {'name': 'UNROM', class: UNROMMapper},
-    /* 3 */ {'name': 'CNROM', class: CNROMMapper},
-    /* 4 */ {'name': 'MMC3',  class: MMC3Mapper}
-  ],
+  MAPPERS: {
+    0:  {'name': 'NROM',      class: NROMMapper},
+    1:  {'name': 'MMC1',      class: MMC1Mapper},
+    2:  {'name': 'UNROM',     class: UNROMMapper},
+    3:  {'name': 'CNROM',     class: CNROMMapper},
+    4:  {'name': 'MMC3',      class: MMC3Mapper},
+    76: {'name': 'Mapper76',  class: Mapper76}
+  },
 
   /**
    *
@@ -393,21 +394,26 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
   map: function(address) {
     var bank;
     var offset = address & 0x1FFF;
-    switch(address & 0x6000) {
-      case 0x0000:
+
+    switch(address & 0xE000) {
+      case 0x8000:
         bank = this.prgReg0.load();
         break;
-      case 0x2000:
+
+      case 0xA000:
         bank = this.prgReg1.load();
         break;
-      case 0x4000:
-        bank = this.prgBankNum - 2;
+
+      case 0xC000:
+        bank = this.prgBankNum * 2 - 2;
         break;
-      case 0x6000:
-        bank = this.prgBankNum - 1;
+
+      case 0xE000:
+        bank = this.prgBankNum * 2 - 1;
         break;
     }
-    return bank * 0x2000 + offset;
+
+    return bank * 0x2000 + offset + 0x8000;
   },
 
   /**
@@ -416,20 +422,25 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
   mapForChrRom: function(address) {
     var bank;
     var offset = address & 0x7FF;
+
     switch(address & 0x1800) {
       case 0x0000:
         bank = this.chrReg0.load();
         break;
+
       case 0x0800:
         bank = this.chrReg1.load();
         break;
+
       case 0x1000:
         bank = this.chrReg2.load();
         break;
+
       case 0x1800:
         bank = this.chrReg3.load();
         break;
     }
+
     return bank * 0x800 + offset;
   },
 
@@ -437,34 +448,46 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   store: function(address, value) {
-    if(address == 1) {
-      var reg;
-      switch(this.addrReg.load()) {
-        case 0:
-        case 1:
-          return;
-        case 2:
-          reg = this.chrReg0;
-          break;
-        case 3:
-          reg = this.chrReg1;
-          break;
-        case 4:
-          reg = this.chrReg2;
-          break;
-        case 5:
-          reg = this.chrReg3;
-          break;
-        case 6:
-          reg = this.prgReg0;
-          break;
-        case 7:
-          reg = this.prgReg1;
-          break;
-      }
-      reg.store(value & 0x3F);
-    } else {
-      this.addrReg.store(value & 7);
+    switch(address & 0xE001) {
+      case 0x8000:
+        this.addrReg.store(value & 0x7);
+        break;
+
+      case 0x8001:
+        var reg;
+
+        switch(this.addrReg.load()) {
+          case 0:
+          case 1:
+            return;
+
+          case 2:
+            reg = this.chrReg0;
+            break;
+
+          case 3:
+            reg = this.chrReg1;
+            break;
+
+          case 4:
+            reg = this.chrReg2;
+            break;
+
+          case 5:
+            reg = this.chrReg3;
+            break;
+
+          case 6:
+            reg = this.prgReg0;
+            break;
+
+          case 7:
+            reg = this.prgReg1;
+            break;
+        }
+
+        reg.store(value & 0x3F);
+        break;
     }
   }
 });
