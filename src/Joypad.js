@@ -1,3 +1,6 @@
+import {Register8bit} from './Register.js';
+
+
 /**
  * Standard joypad implementation.
  * Refer to https://wiki.nesdev.com/w/index.php/Standard_controller
@@ -101,3 +104,6 @@ Object.assign(Joypad.prototype, {
 
   }
 });
+
+
+export {Joypad};

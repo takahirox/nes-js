@@ -1,0 +1,31 @@
+{
+  "name": "nes-js",
+  "version": "0.0.1",
+  "description": "JavaScript NES emulator",
+  "main": "index.js",
+  "scripts": {
+    "all": "npm run build && npm run build-uglify",
+    "build": "webpack index.js build/nes.js",
+    "build-uglify": "webpack -p index.js build/nes.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takahirox/nes-js.git"
+  },
+  "keywords": [
+    "emu",
+    "emulator",
+    "nes",
+    "webaudio"
+  ],
+  "author": "Takahiro <hogehoge@gachapin.jp> (https://github.com/takahirox)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/takahirox/nes-js/issues"
+  },
+  "homepage": "https://github.com/takahirox/nes-js#readme",
+  "devDependencies": {
+    "webpack": "^3.6.0"
+  }
+}
+

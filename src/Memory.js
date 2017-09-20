@@ -1,3 +1,6 @@
+import {__10to16} from './Utility.js';
+
+
 /**
  * Generic 8bit-word Memory.
  */
@@ -124,3 +127,6 @@ Object.assign(Memory.prototype, {
     return sum === 0;
   }
 });
+
+
+export {Memory};

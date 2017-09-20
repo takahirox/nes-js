@@ -14,12 +14,21 @@ function Display(canvas) {
 Object.assign(Display.prototype, {
   isDisplay: true,
 
+  /**
+   *
+   */
   renderPixel: function(x, y, c) {
     var index = y * this.width + x;
     this.uint32[index] = c;
   },
 
+  /**
+   *
+   */
   updateScreen: function() {
     this.ctx.putImageData(this.data, 0, 0);
   }
 });
+
+
+export {Display};

@@ -1,18 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script type="text/javascript" src="src/Utility.js"></script>
-    <script type="text/javascript" src="src/Register.js"></script>
-    <script type="text/javascript" src="src/Memory.js"></script>
-    <script type="text/javascript" src="src/Joypad.js"></script>
-    <script type="text/javascript" src="src/Rom.js"></script>
-    <script type="text/javascript" src="src/Mapper.js"></script>
-    <script type="text/javascript" src="src/Cpu.js"></script>
-    <script type="text/javascript" src="src/Ppu.js"></script>
-    <script type="text/javascript" src="src/Apu.js"></script>
-    <script type="text/javascript" src="src/Nes.js"></script>
-    <script type="text/javascript" src="src/Display.js"></script>
-    <script type="text/javascript" src="src/Audio.js"></script>
+    <script type="text/javascript" src="build/nes.js"></script>
     <script type="text/javascript">
       var __nes;
 
@@ -140,7 +129,7 @@
        *
        */
       function __run(arrayBuffer) {
-        var rom = new Rom(arrayBuffer);
+        var rom = new NesJs.Rom(arrayBuffer);
 
         __putMessage(rom.header.dump());
 
@@ -151,7 +140,7 @@
 
         __putMessage('this seems iNES format.');
 
-        var nes = new Nes();
+        var nes = new NesJs.Nes();
 
         nes.addEventListener('fps', function(fps) {
           document.getElementById('fps').innerText = fps.toFixed(2);
@@ -159,8 +148,8 @@
 
         nes.setRom(rom);
 
-        nes.setDisplay(new Display(document.getElementById('mainCanvas')));
-        nes.setAudio(new Audio());
+        nes.setDisplay(new NesJs.Display(document.getElementById('mainCanvas')));
+        nes.setAudio(new NesJs.Audio());
 
         window.onkeydown = function(e) { nes.handleKeyDown(e) };
         window.onkeyup = function(e) { nes.handleKeyUp(e) };

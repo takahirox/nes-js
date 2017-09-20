@@ -491,3 +491,6 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
     }
   }
 });
+
+
+export {Mapper, MapperFactory};

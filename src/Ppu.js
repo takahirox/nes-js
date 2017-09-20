@@ -1,3 +1,7 @@
+import {Register8bit, Register16bit} from './Register.js';
+import {Memory} from './Memory.js';
+import {__10to16} from './Utility.js';
+
 /**
  * RP2A03
  * Refer to https://wiki.nesdev.com/w/index.php/PPU
@@ -1422,3 +1426,6 @@ Object.assign(Sprite.prototype, {
     return (y >= this.getYPosition()) && (y < this.getYPosition() + length);
   }
 });
+
+
+export {Ppu};

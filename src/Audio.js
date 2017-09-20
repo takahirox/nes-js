@@ -67,3 +67,6 @@ Object.assign(Audio.prototype, {
     this.buffer[this.bufferIndex++] = data;
   }
 });
+
+
+export {Audio};

@@ -10,3 +10,6 @@ function __10to16(num, figure, noPrefix) {
   }
   return prefix + str;
 };
+
+
+export {__10to16};

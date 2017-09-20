@@ -1,3 +1,8 @@
+import {Cpu} from './Cpu.js';
+import {Ppu} from './Ppu.js';
+import {Apu} from './Apu.js';
+import {Joypad} from './Joypad.js';
+
 /**
  *
  */
@@ -244,3 +249,6 @@ Object.assign(Nes.prototype, {
     return this.ppu.dumpSPRRAM();
   }
 });
+
+
+export {Nes};

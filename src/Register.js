@@ -1,3 +1,6 @@
+import {__10to16} from './Utility.js';
+
+
 /**
  * General Register implementation.
  * Specific register for CPU and PPU are implemented in each class.
@@ -207,3 +210,5 @@ Register16bit.prototype = Object.assign(Object.create(Register.prototype), {
     this.bytes[0] = value;
   }
 });
+
+export { Register8bit, Register16bit };

@@ -1,3 +1,6 @@
+import {Register8bit} from './Register.js';
+
+
 /**
  * RP2A03(NTSC)
  * Audio Processing Unit implementation. Consists of
@@ -1442,3 +1445,6 @@ ApuFrameRegister.prototype = Object.assign(Object.create(Register8bit.prototype)
     return this.isBitSet(this.IRQ_BIT);
   }
 });
+
+
+export {Apu};
