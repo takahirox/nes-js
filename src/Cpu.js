@@ -1537,8 +1537,8 @@ Object.assign(Cpu.prototype, {
 /**
  *
  */
-function CpuStatusRegister(onBeforeLoad, onAfterStore) {
-  Register8bit.call(this, onBeforeLoad, onAfterStore);
+function CpuStatusRegister() {
+  Register8bit.call(this);
 }
 
 CpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {

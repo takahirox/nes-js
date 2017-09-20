@@ -6,11 +6,9 @@
 /**
  *
  */
-function Register(type, onBeforeLoad, onAfterStore) {
+function Register(type) {
   this.data = new type(1);  // Uint8Array or Uint16Array
   this.data[0] = 0;
-  this.onBeforeLoad = onBeforeLoad;
-  this.onAfterStore = onAfterStore;
 }
 
 Register.TYPE_8BIT = Uint8Array;
@@ -30,16 +28,6 @@ Object.assign(Register.prototype, {
    *
    */
   load: function() {
-    if (this.onBeforeLoad !== undefined)
-      this.onBeforeLoad(this.data[0]);
-
-    return this.data[0];
-  },
-
-  /**
-   *
-   */
-  loadWithoutCallback: function() {
     return this.data[0];
   },
 
@@ -61,16 +49,6 @@ Object.assign(Register.prototype, {
    *
    */
   store: function(value) {
-    this.data[0] = value;
-
-    if(this.onAfterStore !== undefined && value !== undefined)
-      this.onAfterStore(value);
-  },
-
-  /**
-   *
-   */
-  storeWithoutCallback: function(value) {
     this.data[0] = value;
   },
 
@@ -182,8 +160,8 @@ Object.assign(Register.prototype, {
 /**
  *
  */
-function Register8bit(onBeforeLoad, onAfterStore) {
-  Register.call(this, Register.TYPE_8BIT, onBeforeLoad, onAfterStore);
+function Register8bit() {
+  Register.call(this, Register.TYPE_8BIT);
 }
 
 Register8bit.prototype = Object.assign(Object.create(Register.prototype), {
@@ -193,8 +171,8 @@ Register8bit.prototype = Object.assign(Object.create(Register.prototype), {
 /**
  *
  */
-function Register16bit(onBeforeLoad, onAfterStore) {
-  Register.call(this, Register.TYPE_16BIT, onBeforeLoad, onAfterStore);
+function Register16bit() {
+  Register.call(this, Register.TYPE_16BIT);
   this.bytes = new Uint8Array(this.data.buffer);
 }
 

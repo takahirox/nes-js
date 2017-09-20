@@ -1069,8 +1069,8 @@ PpuControlRegister.prototype = Object.assign(Object.create(Register8bit.prototyp
 /**
  *
  */
-function PpuMaskRegister(onBeforeLoad, onAfterStore) {
-  Register8bit.call(this, onBeforeLoad, onAfterStore);
+function PpuMaskRegister() {
+  Register8bit.call(this);
 }
 
 PpuMaskRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
@@ -1149,8 +1149,8 @@ PpuMaskRegister.prototype = Object.assign(Object.create(Register8bit.prototype),
 /**
  *
  */
-function PpuStatusRegister(onBeforeLoad, onAfterStore) {
-  Register8bit.call(this, onBeforeLoad, onAfterStore);
+function PpuStatusRegister() {
+  Register8bit.call(this);
 }
 
 PpuStatusRegister.prototype = Object.assign(Object.create(Register8bit.prototype), {
