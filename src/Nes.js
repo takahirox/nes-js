@@ -101,6 +101,13 @@ Object.assign(Nes.prototype, {
   /**
    *
    */
+  setAudio: function(audio) {
+    this.apu.setAudio(audio);
+  },
+
+  /**
+   *
+   */
   bootup: function() {
     this.cpu.bootup();
     this.ppu.bootup();
@@ -155,7 +162,6 @@ Object.assign(Nes.prototype, {
     this.ppu.runCycle();
     this.ppu.runCycle();
     this.ppu.runCycle();
-    this.apu.runCycle();
     this.apu.runCycle();
   },
 

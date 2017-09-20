@@ -151,9 +151,6 @@
 
         __putMessage('this seems iNES format.');
 
-        // TODO: temporal
-        var canvas = document.getElementById('mainCanvas');
-
         var nes = new Nes();
 
         nes.addEventListener('fps', function(fps) {
@@ -162,8 +159,8 @@
 
         nes.setRom(rom);
 
-        var display = new Display(canvas);
-        nes.setDisplay(display);
+        nes.setDisplay(new Display(document.getElementById('mainCanvas')));
+        nes.setAudio(new Audio());
 
         window.onkeydown = function(e) { nes.handleKeyDown(e) };
         window.onkeyup = function(e) { nes.handleKeyUp(e) };
