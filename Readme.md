@@ -13,6 +13,7 @@ This is JavaScript NES(Famicom) emulator which runs on browser.
 ## Features
 
 - iNES format rom image support
+- Renders with Canvas
 - Audio support with WebAudio
 - Runs on browser
 
