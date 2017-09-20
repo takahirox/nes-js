@@ -129,19 +129,17 @@
        *
        */
       function __run(arrayBuffer) {
-        var rom = new NesJs.Rom(arrayBuffer);
-
-        __putMessage('');
-        __putMessage('Rom Header info');
-        __putMessage(rom.header.dump());
-
-        if(!rom.isNes()) {
-          __putMessage('This doesn\'t seem iNES format.');
+        try {
+          var rom = new NesJs.Rom(arrayBuffer);
+        } catch(e) {
+          __putMessage('');
+          __putMessage(e.toString());
           return;
         }
 
         __putMessage('');
-        __putMessage('This seems iNES format.');
+        __putMessage('Rom Header info');
+        __putMessage(rom.header.dump());
 
         var nes = new NesJs.Nes();
 
