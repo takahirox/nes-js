@@ -149,7 +149,12 @@
         nes.setRom(rom);
 
         nes.setDisplay(new NesJs.Display(document.getElementById('mainCanvas')));
-        nes.setAudio(new NesJs.Audio());
+
+        try {
+          nes.setAudio(new NesJs.Audio());
+        } catch(e) {
+          __putMessage('Disables audio because this browser does not seems to support WebAudio.');
+        }
 
         window.onkeydown = function(e) { nes.handleKeyDown(e) };
         window.onkeyup = function(e) { nes.handleKeyUp(e) };

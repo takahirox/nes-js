@@ -30,6 +30,10 @@ function Nes() {
 
   this.state = this.STATES.POWER_OFF;
 
+  //
+
+  this.audioEnabled = false;
+
   // for requestAnimationFrame()
 
   var self = this;
@@ -108,6 +112,7 @@ Object.assign(Nes.prototype, {
    */
   setAudio: function(audio) {
     this.apu.setAudio(audio);
+    this.audioEnabled = true;
   },
 
   /**
@@ -167,7 +172,9 @@ Object.assign(Nes.prototype, {
     this.ppu.runCycle();
     this.ppu.runCycle();
     this.ppu.runCycle();
-    this.apu.runCycle();
+
+    if(this.audioEnabled === true)
+      this.apu.runCycle();
   },
 
   /**
