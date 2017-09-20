@@ -1,4 +1,8 @@
-function __10to16(num, figure, noPrefix) {
+function Utility() {
+
+}
+
+Utility.convertDecToHexString = function(num, figure, noPrefix) {
   var str = num.toString(16);
   var base = '';
   var prefix = (noPrefix == null) ? '0x' : '';
@@ -12,4 +16,4 @@ function __10to16(num, figure, noPrefix) {
 };
 
 
-export {__10to16};
+export {Utility};

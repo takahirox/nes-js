@@ -1,6 +1,6 @@
 import {Memory} from './Memory.js';
 import {Mapper, MapperFactory} from './Mapper.js';
-import {__10to16} from './Utility.js';
+import {Utility} from './Utility.js';
 
 
 /**
@@ -349,31 +349,31 @@ Object.assign(RomHeader.prototype, {
 
     buffer += '0x ';
     for(var i = 0; i < this.getSize(); i++) {
-      buffer += __10to16(this.load(i), 2, true) + ' ';
+      buffer += Utility.convertDecToHexString(this.load(i), 2, true) + ' ';
     }
     buffer += '\n\n';
 
     buffer += 'Signature: ' + this.getSignature() + '\n';
-    buffer += 'Magic Number: ' + __10to16(this.getMagicNumber(), 2) + '\n';
+    buffer += 'Magic Number: ' + Utility.convertDecToHexString(this.getMagicNumber(), 2) + '\n';
     buffer += 'PRG-ROM banks num: ' +
-                __10to16(this.getPRGROMBanksNum(), 2) + '\n';
+                Utility.convertDecToHexString(this.getPRGROMBanksNum(), 2) + '\n';
     buffer += 'CHR-ROM banks num: ' +
-                __10to16(this.getCHRROMBanksNum(), 2) + '\n';
-    buffer += 'Control1: ' + __10to16(this.getControlByte1(), 2) + '\n';
-    buffer += 'Control2: ' + __10to16(this.getControlByte2(), 2) + '\n';
-    buffer += 'RAM banks num: ' + __10to16(this.getRAMBanksNum(), 2) + '\n';
-    buffer += 'Unused field: ' + __10to16(this.getUnusedField(), 14) + '\n';
+                Utility.convertDecToHexString(this.getCHRROMBanksNum(), 2) + '\n';
+    buffer += 'Control1: ' + Utility.convertDecToHexString(this.getControlByte1(), 2) + '\n';
+    buffer += 'Control2: ' + Utility.convertDecToHexString(this.getControlByte2(), 2) + '\n';
+    buffer += 'RAM banks num: ' + Utility.convertDecToHexString(this.getRAMBanksNum(), 2) + '\n';
+    buffer += 'Unused field: ' + Utility.convertDecToHexString(this.getUnusedField(), 14) + '\n';
     buffer += '\n';
     buffer += 'In control bytes\n';
-    buffer += 'Mirroring type: ' + __10to16(this.getMirroringType()) +
+    buffer += 'Mirroring type: ' + Utility.convertDecToHexString(this.getMirroringType()) +
                 '(' + this.getMirroringTypeAsStrings() + ')\n';
     buffer += 'Battery-backed RAM: ' +
-                 __10to16(this.getBatteryBackedRAM()) + '\n';
+                 Utility.convertDecToHexString(this.getBatteryBackedRAM()) + '\n';
     buffer += '512-byte trainer: ' +
-                __10to16(this.getTrainer512Bytes()) + '\n';
+                Utility.convertDecToHexString(this.getTrainer512Bytes()) + '\n';
     buffer += 'Four screen mirroring: ' +
-                 __10to16(this.getFourScreenMirroring()) + '\n';
-    buffer += 'Mapper number: ' + __10to16(this.getMapperNum(), 2) +
+                 Utility.convertDecToHexString(this.getFourScreenMirroring()) + '\n';
+    buffer += 'Mapper number: ' + Utility.convertDecToHexString(this.getMapperNum(), 2) +
                 '(' + this.rom.mapperFactory.getName(this.getMapperNum()) + ')';
     return buffer;
   }

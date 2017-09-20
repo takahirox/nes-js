@@ -1,4 +1,4 @@
-import {__10to16} from './Utility.js';
+import {Utility} from './Utility.js';
 
 
 /**
@@ -156,7 +156,7 @@ Object.assign(Register.prototype, {
    *
    */
   dump: function() {
-    return __10to16(this.load(), this.getWidth() / 4);
+    return Utility.convertDecToHexString(this.load(), this.getWidth() / 4);
   }
 });
 

@@ -1,6 +1,6 @@
 import {Register8bit, Register16bit} from './Register.js';
 import {Memory} from './Memory.js';
-import {__10to16} from './Utility.js';
+import {Utility} from './Utility.js';
 
 /**
  * RP2A03
@@ -966,12 +966,12 @@ Object.assign(Ppu.prototype, {
           if(skipZero)
             buffer += '...\n';
         }
-        buffer += __10to16(i-offset, 4) + ' ';
+        buffer += Utility.convertDecToHexString(i-offset, 4) + ' ';
         previousIsZeroLine = true;
       }
 
       var value = this.load(i);
-      buffer += __10to16(value, 2, true) + ' ';
+      buffer += Utility.convertDecToHexString(value, 2, true) + ' ';
       if(value != 0)
         previousIsZeroLine = false;
 

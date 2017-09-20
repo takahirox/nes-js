@@ -1,6 +1,6 @@
 import {Register8bit, Register16bit} from './Register.js';
 import {Memory} from './Memory.js';
-import {__10to16} from './Utility.js';
+import {Utility} from './Utility.js';
 
 /**
  * Ricoh 6502
@@ -1323,7 +1323,7 @@ Object.assign(Cpu.prototype, {
         break;
 
       default:
-        throw new Error('Cpu.operate: Invalid instruction, pc=' + __10to16(this.pc.load() - 1) + ' opc=' + __10to16(opc, 2) + ' name=' + op.instruction.name);
+        throw new Error('Cpu.operate: Invalid instruction, pc=' + Utility.convertDecToHexString(this.pc.load() - 1) + ' opc=' + Utility.convertDecToHexString(opc, 2) + ' name=' + op.instruction.name);
         break;
     }
   },
@@ -1353,8 +1353,8 @@ Object.assign(Cpu.prototype, {
         buffer += '...\n';
       skipZero = false;
 
-      str += __10to16(pc - rom.getHeaderSize(), 4) + ' ';
-      str += __10to16(opc, 2) + ' ';
+      str += Utility.convertDecToHexString(pc - rom.getHeaderSize(), 4) + ' ';
+      str += Utility.convertDecToHexString(opc, 2) + ' ';
       str += op.instruction.name + ' ';
       str += this.dumpMemoryAddressingMode(op,
                                            rom,
@@ -1386,7 +1386,7 @@ Object.assign(Cpu.prototype, {
     var op = this.decode(opc);
 
     buffer += 'p:'  + this.p.dump()  + ' ';
-    buffer += 'pc:' + this.pc.dump() + '(' + __10to16(opc, 2) + ')' + ' ';
+    buffer += 'pc:' + this.pc.dump() + '(' + Utility.convertDecToHexString(opc, 2) + ')' + ' ';
     buffer += 'sp:' + this.sp.dump() + ' ';
     buffer += 'a:'  + this.a.dump()  + ' ';
     buffer += 'x:'  + this.x.dump()  + ' ';
@@ -1417,7 +1417,7 @@ Object.assign(Cpu.prototype, {
 
     switch(op.mode) {
       case this.ADDRESSINGS.IMMEDIATE:
-        buffer += '#' + __10to16(mem.load(pc, true), 2);
+        buffer += '#' + Utility.convertDecToHexString(mem.load(pc, true), 2);
         break;
 
       case this.ADDRESSINGS.RELATIVE:
@@ -1430,103 +1430,103 @@ Object.assign(Cpu.prototype, {
 
       case this.ADDRESSINGS.ABSOLUTE:
         var address = mem.load2Bytes(pc, true);
-        buffer += __10to16(address, 4);
+        buffer += Utility.convertDecToHexString(address, 4);
         if(ramDump) {
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ABSOLUTE_X:
         var address = mem.load2Bytes(pc, true);
-        buffer += __10to16(address, 4) + ',X ';
+        buffer += Utility.convertDecToHexString(address, 4) + ',X ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xffff;
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ABSOLUTE_Y:
         var address = mem.load2Bytes(pc, true);
-        buffer += __10to16(address, 4) + ',Y ';
+        buffer += Utility.convertDecToHexString(address, 4) + ',Y ';
         if(ramDump) {
           address += this.y.load();
           address = address & 0xffff;
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.ZERO_PAGE:
         var address = mem.load(pc, true);
-        buffer += __10to16(address, 2);
+        buffer += Utility.convertDecToHexString(address, 2);
         if(ramDump) {
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ZERO_PAGE_X:
         var address = mem.load(pc, true);
-        buffer += __10to16(address, 2) + ',X ';
+        buffer += Utility.convertDecToHexString(address, 2) + ',X ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xff;
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ZERO_PAGE_Y:
         var address = mem.load(pc, true);
-        buffer += __10to16(address, 2) + ',Y ';
+        buffer += Utility.convertDecToHexString(address, 2) + ',Y ';
         if(ramDump) {
           address += this.y.load();
           address = address & 0xff;
-          buffer += '(' + __10to16(mem.load(address, true), 2) + ')';
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDIRECT:
         var address = mem.load2Bytes(pc, true);
-        buffer += __10to16(address, 4);
+        buffer += Utility.convertDecToHexString(address, 4);
         if(ramDump) {
           var address2 = mem.load2Bytes(address, true);
           buffer += '(';
-          buffer += __10to16(address2, 4);
-          buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
+          buffer += Utility.convertDecToHexString(address2, 4);
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_INDIRECT_X:
         var address = mem.load(pc, true);
-        buffer += '(' + __10to16(address, 2) + ',X) ';
+        buffer += '(' + Utility.convertDecToHexString(address, 2) + ',X) ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xffff;
           var address2 = mem.load2Bytes(address, true);
           buffer += '(';
-          buffer += __10to16(address2, 4);
-          buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
+          buffer += Utility.convertDecToHexString(address2, 4);
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_INDIRECT_Y:
         var address = mem.load(pc, true);
-        buffer += '(' + __10to16(address, 2) + '),Y ';
+        buffer += '(' + Utility.convertDecToHexString(address, 2) + '),Y ';
         if(ramDump) {
           var address2 = mem.load2BytesFromZeropage(address, true);
           address2 += this.y.load();
           address2 = address2 & 0xffff;
           buffer += '(';
-          buffer += __10to16(address2, 4);
-          buffer += '(' + __10to16(mem.load(address2, true), 2) + ')';
+          buffer += Utility.convertDecToHexString(address2, 4);
+          buffer += '(' + Utility.convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.ACCUMULATOR:
         if(ramDump) {
-          buffer += 'A(' + __10to16(this.a.load(), 2) + ')';
+          buffer += 'A(' + Utility.convertDecToHexString(this.a.load(), 2) + ')';
         }
         break;
 

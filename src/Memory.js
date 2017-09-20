@@ -1,4 +1,4 @@
-import {__10to16} from './Utility.js';
+import {Utility} from './Utility.js';
 
 
 /**
@@ -77,12 +77,12 @@ Object.assign(Memory.prototype, {
           if(skipZero)
             buffer += '...\n';
         }
-        buffer += __10to16(i-offset, 4) + ' ';
+        buffer += Utility.convertDecToHexString(i-offset, 4) + ' ';
         previousIsZeroLine = true;
       }
 
       var value = this._loadForDump(i);
-      buffer += __10to16(value, 2, true) + ' ';
+      buffer += Utility.convertDecToHexString(value, 2, true) + ' ';
       if(value != 0)
         previousIsZeroLine = false;
 
