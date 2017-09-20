@@ -68,18 +68,34 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return __10to16; });
-function __10to16(num, figure, noPrefix) {
-  var str = num.toString(16);
-  var base = '';
-  var prefix = (noPrefix == null) ? '0x' : '';
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Utility; });
+function Utility() {
 
-  if(figure != null) {
-    for(var i = 0; i < figure; i++)
-      base += '0';
-    return prefix + (base + str).substr(-1*figure);
-  }
-  return prefix + str;
+}
+
+/**
+ *
+ */
+Utility.convertDecToHexString = function(num, width, noPrefix) {
+  var str = num.toString(16);
+
+  var prefix = '';
+
+  if(num < 0)
+    prefix += '-';
+
+  if(noPrefix !== true)
+    prefix += '0x';
+
+  if(width === undefined)
+    return prefix + str;
+
+  var base = '';
+
+  for(var i = 0; i < width; i++)
+    base += '0';
+
+  return prefix + (base + str).substr(-1 * width);
 };
 
 
@@ -252,7 +268,7 @@ Object.assign(Register.prototype, {
    *
    */
   dump: function() {
-    return Object(__WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* __10to16 */])(this.load(), this.getWidth() / 4);
+    return __WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* Utility */].convertDecToHexString(this.load(), this.getWidth() / 4);
   }
 });
 
@@ -396,12 +412,12 @@ Object.assign(Memory.prototype, {
           if(skipZero)
             buffer += '...\n';
         }
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* __10to16 */])(i-offset, 4) + ' ';
+        buffer += __WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* Utility */].convertDecToHexString(i-offset, 4) + ' ';
         previousIsZeroLine = true;
       }
 
       var value = this._loadForDump(i);
-      buffer += Object(__WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* __10to16 */])(value, 2, true) + ' ';
+      buffer += __WEBPACK_IMPORTED_MODULE_0__Utility_js__["a" /* Utility */].convertDecToHexString(value, 2, true) + ' ';
       if(value != 0)
         previousIsZeroLine = false;
 
@@ -519,6 +535,10 @@ function Nes() {
 
   this.state = this.STATES.POWER_OFF;
 
+  //
+
+  this.audioEnabled = false;
+
   // for requestAnimationFrame()
 
   var self = this;
@@ -597,6 +617,7 @@ Object.assign(Nes.prototype, {
    */
   setAudio: function(audio) {
     this.apu.setAudio(audio);
+    this.audioEnabled = true;
   },
 
   /**
@@ -656,7 +677,9 @@ Object.assign(Nes.prototype, {
     this.ppu.runCycle();
     this.ppu.runCycle();
     this.ppu.runCycle();
-    this.apu.runCycle();
+
+    if(this.audioEnabled === true)
+      this.apu.runCycle();
   },
 
   /**
@@ -2077,7 +2100,7 @@ Object.assign(Cpu.prototype, {
         break;
 
       default:
-        throw new Error('Cpu.operate: Invalid instruction, pc=' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.pc.load() - 1) + ' opc=' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(opc, 2) + ' name=' + op.instruction.name);
+        throw new Error('Cpu.operate: Invalid instruction, pc=' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.pc.load() - 1) + ' opc=' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(opc, 2) + ' name=' + op.instruction.name);
         break;
     }
   },
@@ -2107,8 +2130,8 @@ Object.assign(Cpu.prototype, {
         buffer += '...\n';
       skipZero = false;
 
-      str += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(pc - rom.getHeaderSize(), 4) + ' ';
-      str += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(opc, 2) + ' ';
+      str += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(pc - rom.getHeaderSize(), 4) + ' ';
+      str += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(opc, 2) + ' ';
       str += op.instruction.name + ' ';
       str += this.dumpMemoryAddressingMode(op,
                                            rom,
@@ -2140,7 +2163,7 @@ Object.assign(Cpu.prototype, {
     var op = this.decode(opc);
 
     buffer += 'p:'  + this.p.dump()  + ' ';
-    buffer += 'pc:' + this.pc.dump() + '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(opc, 2) + ')' + ' ';
+    buffer += 'pc:' + this.pc.dump() + '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(opc, 2) + ')' + ' ';
     buffer += 'sp:' + this.sp.dump() + ' ';
     buffer += 'a:'  + this.a.dump()  + ' ';
     buffer += 'x:'  + this.x.dump()  + ' ';
@@ -2171,7 +2194,7 @@ Object.assign(Cpu.prototype, {
 
     switch(op.mode) {
       case this.ADDRESSINGS.IMMEDIATE:
-        buffer += '#' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(pc, true), 2);
+        buffer += '#' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(pc, true), 2);
         break;
 
       case this.ADDRESSINGS.RELATIVE:
@@ -2184,103 +2207,103 @@ Object.assign(Cpu.prototype, {
 
       case this.ADDRESSINGS.ABSOLUTE:
         var address = mem.load2Bytes(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 4);
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 4);
         if(ramDump) {
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ABSOLUTE_X:
         var address = mem.load2Bytes(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 4) + ',X ';
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 4) + ',X ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xffff;
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ABSOLUTE_Y:
         var address = mem.load2Bytes(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 4) + ',Y ';
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 4) + ',Y ';
         if(ramDump) {
           address += this.y.load();
           address = address & 0xffff;
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.ZERO_PAGE:
         var address = mem.load(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 2);
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 2);
         if(ramDump) {
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ZERO_PAGE_X:
         var address = mem.load(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 2) + ',X ';
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 2) + ',X ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xff;
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_ZERO_PAGE_Y:
         var address = mem.load(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 2) + ',Y ';
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 2) + ',Y ';
         if(ramDump) {
           address += this.y.load();
           address = address & 0xff;
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address, true), 2) + ')';
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address, true), 2) + ')';
         }
         break;
 
       case this.ADDRESSINGS.INDIRECT:
         var address = mem.load2Bytes(pc, true);
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 4);
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 4);
         if(ramDump) {
           var address2 = mem.load2Bytes(address, true);
           buffer += '(';
-          buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address2, 4);
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address2, true), 2) + ')';
+          buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address2, 4);
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_INDIRECT_X:
         var address = mem.load(pc, true);
-        buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 2) + ',X) ';
+        buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 2) + ',X) ';
         if(ramDump) {
           address += this.x.load();
           address = address & 0xffff;
           var address2 = mem.load2Bytes(address, true);
           buffer += '(';
-          buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address2, 4);
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address2, true), 2) + ')';
+          buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address2, 4);
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.INDEXED_INDIRECT_Y:
         var address = mem.load(pc, true);
-        buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address, 2) + '),Y ';
+        buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address, 2) + '),Y ';
         if(ramDump) {
           var address2 = mem.load2BytesFromZeropage(address, true);
           address2 += this.y.load();
           address2 = address2 & 0xffff;
           buffer += '(';
-          buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(address2, 4);
-          buffer += '(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(mem.load(address2, true), 2) + ')';
+          buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(address2, 4);
+          buffer += '(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(mem.load(address2, true), 2) + ')';
           buffer += ')';
         }
         break;
 
       case this.ADDRESSINGS.ACCUMULATOR:
         if(ramDump) {
-          buffer += 'A(' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.a.load(), 2) + ')';
+          buffer += 'A(' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.a.load(), 2) + ')';
         }
         break;
 
@@ -3409,12 +3432,12 @@ Object.assign(Ppu.prototype, {
           if(skipZero)
             buffer += '...\n';
         }
-        buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(i-offset, 4) + ' ';
+        buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(i-offset, 4) + ' ';
         previousIsZeroLine = true;
       }
 
       var value = this.load(i);
-      buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(value, 2, true) + ' ';
+      buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(value, 2, true) + ' ';
       if(value != 0)
         previousIsZeroLine = false;
 
@@ -5471,6 +5494,10 @@ Object.assign(Joypad.prototype, {
 function Rom(arrayBuffer) {
   __WEBPACK_IMPORTED_MODULE_0__Memory_js__["a" /* Memory */].call(this, arrayBuffer);
   this.header = new RomHeader(this);
+
+  if(this.isNes() === false)
+    throw new Error('This rom doesn\'t seem iNES format.');
+
   this.mapperFactory = new __WEBPACK_IMPORTED_MODULE_1__Mapper_js__["a" /* MapperFactory */]();
   this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
 }
@@ -5811,31 +5838,31 @@ Object.assign(RomHeader.prototype, {
 
     buffer += '0x ';
     for(var i = 0; i < this.getSize(); i++) {
-      buffer += Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.load(i), 2, true) + ' ';
+      buffer += __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.load(i), 2, true) + ' ';
     }
     buffer += '\n\n';
 
     buffer += 'Signature: ' + this.getSignature() + '\n';
-    buffer += 'Magic Number: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getMagicNumber(), 2) + '\n';
+    buffer += 'Magic Number: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getMagicNumber(), 2) + '\n';
     buffer += 'PRG-ROM banks num: ' +
-                Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getPRGROMBanksNum(), 2) + '\n';
+                __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getPRGROMBanksNum(), 2) + '\n';
     buffer += 'CHR-ROM banks num: ' +
-                Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getCHRROMBanksNum(), 2) + '\n';
-    buffer += 'Control1: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getControlByte1(), 2) + '\n';
-    buffer += 'Control2: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getControlByte2(), 2) + '\n';
-    buffer += 'RAM banks num: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getRAMBanksNum(), 2) + '\n';
-    buffer += 'Unused field: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getUnusedField(), 14) + '\n';
+                __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getCHRROMBanksNum(), 2) + '\n';
+    buffer += 'Control1: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getControlByte1(), 2) + '\n';
+    buffer += 'Control2: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getControlByte2(), 2) + '\n';
+    buffer += 'RAM banks num: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getRAMBanksNum(), 2) + '\n';
+    buffer += 'Unused field: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getUnusedField(), 14) + '\n';
     buffer += '\n';
     buffer += 'In control bytes\n';
-    buffer += 'Mirroring type: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getMirroringType()) +
+    buffer += 'Mirroring type: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getMirroringType()) +
                 '(' + this.getMirroringTypeAsStrings() + ')\n';
     buffer += 'Battery-backed RAM: ' +
-                 Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getBatteryBackedRAM()) + '\n';
+                 __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getBatteryBackedRAM()) + '\n';
     buffer += '512-byte trainer: ' +
-                Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getTrainer512Bytes()) + '\n';
+                __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getTrainer512Bytes()) + '\n';
     buffer += 'Four screen mirroring: ' +
-                 Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getFourScreenMirroring()) + '\n';
-    buffer += 'Mapper number: ' + Object(__WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* __10to16 */])(this.getMapperNum(), 2) +
+                 __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getFourScreenMirroring()) + '\n';
+    buffer += 'Mapper number: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getMapperNum(), 2) +
                 '(' + this.rom.mapperFactory.getName(this.getMapperNum()) + ')';
     return buffer;
   }
@@ -5871,7 +5898,7 @@ Object.assign(MapperFactory.prototype, {
     1:  {'name': 'MMC1',      class: MMC1Mapper},
     2:  {'name': 'UNROM',     class: UNROMMapper},
     3:  {'name': 'CNROM',     class: CNROMMapper},
-    4:  {'name': 'MMC3',      class: MMC3Mapper},
+    //4:  {'name': 'MMC3',      class: MMC3Mapper},
     76: {'name': 'Mapper76',  class: Mapper76}
   },
 
