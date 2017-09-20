@@ -9,6 +9,10 @@ import {Utility} from './Utility.js';
 function Rom(arrayBuffer) {
   Memory.call(this, arrayBuffer);
   this.header = new RomHeader(this);
+
+  if(this.isNes() === false)
+    throw new Error('This rom doesn\'t seem iNES format.');
+
   this.mapperFactory = new MapperFactory();
   this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
 }
