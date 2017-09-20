@@ -1,6 +1,0 @@
-sprite
-scroll
-vblank
-interrupt
-joypad(io)
-sound
