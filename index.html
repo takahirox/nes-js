@@ -23,7 +23,7 @@
         var reader = new FileReader();
 
         reader.onload = function(e) {
-          __putMessage('loading done.');
+          __putMessage('Loading done.');
           __run(e.target.result);
         };
 
@@ -36,7 +36,7 @@
         reader.readAsArrayBuffer(file);
 
         __putMessage('')
-        __putMessage('loading rom image...')
+        __putMessage('Loading rom image...')
       }
 
       /**
@@ -49,7 +49,7 @@
         request.responseType = 'arraybuffer';
 
         request.onload = function() {
-          __putMessage('loading done.');
+          __putMessage('Loading done.');
           __run(request.response);
         };
 
@@ -61,7 +61,7 @@
         request.send(null);
 
         __putMessage('')
-        __putMessage('loading rom image...')
+        __putMessage('Loading rom image...')
         __ROMloaded();
       }
 
@@ -131,14 +131,17 @@
       function __run(arrayBuffer) {
         var rom = new NesJs.Rom(arrayBuffer);
 
+        __putMessage('');
+        __putMessage('Rom Header info');
         __putMessage(rom.header.dump());
 
         if(!rom.isNes()) {
-          __putMessage('this doesn\'t seem iNES format.');
+          __putMessage('This doesn\'t seem iNES format.');
           return;
         }
 
-        __putMessage('this seems iNES format.');
+        __putMessage('');
+        __putMessage('This seems iNES format.');
 
         var nes = new NesJs.Nes();
 
@@ -153,6 +156,7 @@
         try {
           nes.setAudio(new NesJs.Audio());
         } catch(e) {
+          __putMessage('');
           __putMessage('Disables audio because this browser does not seems to support WebAudio.');
         }
 
@@ -160,6 +164,8 @@
         window.onkeyup = function(e) { nes.handleKeyUp(e) };
 
         __nes = nes; // for debug on console.
+
+        __putMessage('');
 
         __putMessage('bootup.');
         nes.bootup();
@@ -271,8 +277,8 @@
         <option value="./roms/The Invasion.nes">The Invasion</option>
         <option value="./roms/mguard.nes">mguard</option>
       </select>
-      <button id="loadROMButton" onclick="__loadRom()">load rom</button>
-      push this button or drag and drop your own rom into this window to load rom image.
+      <button id="loadROMButton" onclick="__loadRom()">load rom</button><br />
+      Select rom from the list or drag and drop your own rom into this window to start.
     </p>
 
     <p>
