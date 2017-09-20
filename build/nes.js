@@ -68,48 +68,9 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Utility; });
-function Utility() {
-
-}
-
-/**
- *
- */
-Utility.convertDecToHexString = function(num, width, noPrefix) {
-  var str = num.toString(16);
-
-  var prefix = '';
-
-  if(num < 0)
-    prefix += '-';
-
-  if(noPrefix !== true)
-    prefix += '0x';
-
-  if(width === undefined)
-    return prefix + str;
-
-  var base = '';
-
-  for(var i = 0; i < width; i++)
-    base += '0';
-
-  return prefix + (base + str).substr(-1 * width);
-};
-
-
-
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Register8bit; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Register16bit; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Utility_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Utility_js__ = __webpack_require__(1);
 
 
 
@@ -327,12 +288,51 @@ Register16bit.prototype = Object.assign(Object.create(Register.prototype), {
 
 
 /***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Utility; });
+function Utility() {
+
+}
+
+/**
+ *
+ */
+Utility.convertDecToHexString = function(num, width, noPrefix) {
+  var str = num.toString(16);
+
+  var prefix = '';
+
+  if(num < 0)
+    prefix += '-';
+
+  if(noPrefix !== true)
+    prefix += '0x';
+
+  if(width === undefined)
+    return prefix + str;
+
+  var base = '';
+
+  for(var i = 0; i < width; i++)
+    base += '0';
+
+  return prefix + (base + str).substr(-1 * width);
+};
+
+
+
+
+
+/***/ }),
 /* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Memory; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Utility_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Utility_js__ = __webpack_require__(1);
 
 
 
@@ -772,9 +772,9 @@ Object.assign(Nes.prototype, {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Cpu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Memory_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(1);
 
 
 
@@ -2461,9 +2461,9 @@ CpuStatusRegister.prototype = Object.assign(Object.create(__WEBPACK_IMPORTED_MOD
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Ppu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Memory_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(1);
 
 
 
@@ -3903,7 +3903,7 @@ Object.assign(Sprite.prototype, {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Apu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
 
 
 
@@ -5362,7 +5362,7 @@ ApuFrameRegister.prototype = Object.assign(Object.create(__WEBPACK_IMPORTED_MODU
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Joypad; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
 
 
 
@@ -5482,7 +5482,7 @@ Object.assign(Joypad.prototype, {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Rom; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Memory_js__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Mapper_js__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Utility_js__ = __webpack_require__(1);
 
 
 
@@ -5879,6 +5879,10 @@ Object.assign(RomHeader.prototype, {
 "use strict";
 /* unused harmony export Mapper */
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return MapperFactory; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
+
+
+
 /**
  *
  */
@@ -5999,12 +6003,12 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
 function MMC1Mapper(rom) {
   Mapper.call(this, rom);
 
-  this.controlRegister = new Register8bit();  // register 0
-  this.chrBank0Register = new Register8bit(); // register 1
-  this.chrBank1Register = new Register8bit(); // register 2
-  this.prgBankRegister = new Register8bit();  // register 3
+  this.controlRegister = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();  // register 0
+  this.chrBank0Register = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */](); // register 1
+  this.chrBank1Register = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */](); // register 2
+  this.prgBankRegister = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();  // register 3
 
-  this.latch = new Register8bit();
+  this.latch = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
 
   this.registerWriteCount = 0;
 
@@ -6139,7 +6143,7 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function UNROMMapper(rom) {
   Mapper.call(this, rom);
-  this.reg = new Register8bit();
+  this.reg = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
 }
 
 UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -6167,7 +6171,7 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function CNROMMapper(rom) {
   Mapper.call(this, rom);
-  this.reg = new Register8bit();
+  this.reg = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
 }
 
 CNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -6257,13 +6261,13 @@ MMC3Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function Mapper76(rom) {
   Mapper.call(this, rom);
-  this.addrReg = new Register8bit();
-  this.chrReg0 = new Register8bit();
-  this.chrReg1 = new Register8bit();
-  this.chrReg2 = new Register8bit();
-  this.chrReg3 = new Register8bit();
-  this.prgReg0 = new Register8bit();
-  this.prgReg1 = new Register8bit();
+  this.addrReg = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.chrReg0 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.chrReg1 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.chrReg2 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.chrReg3 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.prgReg0 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+  this.prgReg1 = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
 }
 
 Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
