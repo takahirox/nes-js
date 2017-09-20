@@ -17,7 +17,7 @@ Object.assign(MapperFactory.prototype, {
     1:  {'name': 'MMC1',      class: MMC1Mapper},
     2:  {'name': 'UNROM',     class: UNROMMapper},
     3:  {'name': 'CNROM',     class: CNROMMapper},
-    4:  {'name': 'MMC3',      class: MMC3Mapper},
+    //4:  {'name': 'MMC3',      class: MMC3Mapper},
     76: {'name': 'Mapper76',  class: Mapper76}
   },
 
