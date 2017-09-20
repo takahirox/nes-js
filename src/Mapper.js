@@ -1,3 +1,6 @@
+import {Register8bit} from './Register.js';
+
+
 /**
  *
  */
