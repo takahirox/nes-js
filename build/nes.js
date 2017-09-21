@@ -5489,7 +5489,11 @@ Object.assign(Joypad.prototype, {
 
 
 /**
- *
+ * Expects NES ROM arraybuffer consists of the three segments
+ * in the following order.
+ *   - Header (16bytes)
+ *   - Program ROM data(Program ROM banks num * 0x4000 bytes)
+ *   - Character ROM data(Character ROM banks num * 0x2000 bytes)
  */
 function Rom(arrayBuffer) {
   __WEBPACK_IMPORTED_MODULE_0__Memory_js__["a" /* Memory */].call(this, arrayBuffer);
@@ -5498,8 +5502,7 @@ function Rom(arrayBuffer) {
   if(this.isNes() === false)
     throw new Error('This rom doesn\'t seem iNES format.');
 
-  this.mapperFactory = new __WEBPACK_IMPORTED_MODULE_1__Mapper_js__["a" /* MapperFactory */]();
-  this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
+  this.mapper = (new __WEBPACK_IMPORTED_MODULE_1__Mapper_js__["a" /* MapperFactory */]()).create(this.header.getMapperNum(), this);
 }
 
 //
@@ -5520,27 +5523,44 @@ Rom.prototype = Object.assign(Object.create(__WEBPACK_IMPORTED_MODULE_0__Memory_
 
   MIRRORINGS: Rom.MIRRORINGS,
 
-  //
+  // load/store methods called by CPU.
 
   /**
+   * CPU memory address:
+   * 0x0000 - 0x1FFF: Character ROM access
+   * 0x8000 - 0xFFFF: Program ROM access
    *
+   * To access wide range ROM data with limited CPU memory address space
+   * Mapper maps CPU memory address to ROM's.
+   * In general writing control registers in Mapper via .store() switches bank.
    */
   load: function(address) {
+    var addressInRom = this.getHeaderSize();
+
     if(address < 0x2000) {
-      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-      return this.data[this.mapper.mapForChrRom(address) + offset];
+
+      // Character ROM access
+
+      addressInRom += this.header.getPRGROMBanksNum() * 0x4000;
+      addressInRom += this.mapper.mapForChrRom(address);
     } else {
-      var offset = -0x8000 + this.getHeaderSize();
-      return this.data[this.mapper.map(address) + offset];
+
+      // Program ROM access
+
+      addressInRom += this.mapper.map(address);
     }
+
+    return this.data[addressInRom];
   },
 
   /**
-   *
+   * In general writing with ROM address space updates control registers in Mapper.
    */
   store: function(address, value) {
     this.mapper.store(address, value);
   },
+
+  //
 
   /**
    *
@@ -5863,7 +5883,7 @@ Object.assign(RomHeader.prototype, {
     buffer += 'Four screen mirroring: ' +
                  __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getFourScreenMirroring()) + '\n';
     buffer += 'Mapper number: ' + __WEBPACK_IMPORTED_MODULE_2__Utility_js__["a" /* Utility */].convertDecToHexString(this.getMapperNum(), 2) +
-                '(' + this.rom.mapperFactory.getName(this.getMapperNum()) + ')';
+                '(' + (new __WEBPACK_IMPORTED_MODULE_1__Mapper_js__["a" /* MapperFactory */]()).getName(this.getMapperNum()) + ')';
     return buffer;
   }
 });
@@ -5897,6 +5917,8 @@ function MapperFactory() {
 Object.assign(MapperFactory.prototype, {
   isMapperFactory: true,
 
+  //
+
   MAPPERS: {
     0:  {'name': 'NROM',      class: NROMMapper},
     1:  {'name': 'MMC1',      class: MMC1Mapper},
@@ -5906,15 +5928,7 @@ Object.assign(MapperFactory.prototype, {
     76: {'name': 'Mapper76',  class: Mapper76}
   },
 
-  /**
-   *
-   */
-  getMapperParam: function(number) {
-    if(this.MAPPERS[number] === undefined)
-      throw new Error('unsupport No.' + number + ' Mapper');
-
-    return this.MAPPERS[number];
-  },
+  // public methods
 
   /**
    *
@@ -5928,6 +5942,18 @@ Object.assign(MapperFactory.prototype, {
    */
   getName: function(number) {
     return this.getMapperParam(number).name;
+  },
+
+  // private method
+
+  /**
+   *
+   */
+  getMapperParam: function(number) {
+    if(this.MAPPERS[number] === undefined)
+      throw new Error('unsupport No.' + number + ' Mapper');
+
+    return this.MAPPERS[number];
   }
 });
 
@@ -5944,21 +5970,23 @@ Object.assign(Mapper.prototype, {
   isMapper: true,
 
   /**
-   *
+   * Maps CPU memory address 0x8000 - 0xFFFF to the offset
+   * in Program segment of Rom for Program ROM access
    */
   map: function(address) {
-    return address;
+    return address - 0x8000;
   },
 
   /**
-   *
+   * Maps CPU memory address 0x0000 - 0x1FFF to the offset
+   * in Character segment of Rom for Character ROM access
    */
   mapForChrRom: function(address) {
     return address;
   },
 
   /**
-   *
+   * In general, updates control registers in Mapper
    */
   store: function(address, value) {
   },
@@ -5993,7 +6021,7 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
     if(this.prgBankNum === 1 && address >= 0xC000)
       address -= 0x4000;
 
-    return address;
+    return address - 0x8000;
   }
 });
 
@@ -6053,7 +6081,7 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
         break;
     }
 
-    return bank * 0x4000 + offset + 0x8000;
+    return bank * 0x4000 + offset;
   },
 
   /**
@@ -6155,7 +6183,7 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
   map: function(address) {
     var bank = (address < 0xC000) ? this.reg.load() : this.prgBankNum - 1;
     var offset = address & 0x3FFF;
-    return 0x4000 * bank + offset + 0x8000;
+    return 0x4000 * bank + offset;
   },
 
   /**
@@ -6298,7 +6326,7 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
         break;
     }
 
-    return bank * 0x2000 + offset + 0x8000;
+    return bank * 0x2000 + offset;
   },
 
   /**
