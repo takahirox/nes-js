@@ -4,7 +4,11 @@ import {Utility} from './Utility.js';
 
 
 /**
- *
+ * Expects NES ROM arraybuffer consists of the three segments
+ * in the following order.
+ *   - Header (16bytes)
+ *   - Program ROM data(Program ROM banks num * 0x4000 bytes)
+ *   - Character ROM data(Character ROM banks num * 0x2000 bytes)
  */
 function Rom(arrayBuffer) {
   Memory.call(this, arrayBuffer);
@@ -13,8 +17,7 @@ function Rom(arrayBuffer) {
   if(this.isNes() === false)
     throw new Error('This rom doesn\'t seem iNES format.');
 
-  this.mapperFactory = new MapperFactory();
-  this.mapper = this.mapperFactory.create(this.header.getMapperNum(), this);
+  this.mapper = (new MapperFactory()).create(this.header.getMapperNum(), this);
 }
 
 //
@@ -35,27 +38,44 @@ Rom.prototype = Object.assign(Object.create(Memory.prototype), {
 
   MIRRORINGS: Rom.MIRRORINGS,
 
-  //
+  // load/store methods called by CPU.
 
   /**
+   * CPU memory address:
+   * 0x0000 - 0x1FFF: Character ROM access
+   * 0x8000 - 0xFFFF: Program ROM access
    *
+   * To access wide range ROM data with limited CPU memory address space
+   * Mapper maps CPU memory address to ROM's.
+   * In general writing control registers in Mapper via .store() switches bank.
    */
   load: function(address) {
+    var addressInRom = this.getHeaderSize();
+
     if(address < 0x2000) {
-      var offset = this.header.getPRGROMBanksNum() * 0x4000 + this.getHeaderSize();
-      return this.data[this.mapper.mapForChrRom(address) + offset];
+
+      // Character ROM access
+
+      addressInRom += this.header.getPRGROMBanksNum() * 0x4000;
+      addressInRom += this.mapper.mapForChrRom(address);
     } else {
-      var offset = -0x8000 + this.getHeaderSize();
-      return this.data[this.mapper.map(address) + offset];
+
+      // Program ROM access
+
+      addressInRom += this.mapper.map(address);
     }
+
+    return this.data[addressInRom];
   },
 
   /**
-   *
+   * In general writing with ROM address space updates control registers in Mapper.
    */
   store: function(address, value) {
     this.mapper.store(address, value);
   },
+
+  //
 
   /**
    *
@@ -378,7 +398,7 @@ Object.assign(RomHeader.prototype, {
     buffer += 'Four screen mirroring: ' +
                  Utility.convertDecToHexString(this.getFourScreenMirroring()) + '\n';
     buffer += 'Mapper number: ' + Utility.convertDecToHexString(this.getMapperNum(), 2) +
-                '(' + this.rom.mapperFactory.getName(this.getMapperNum()) + ')';
+                '(' + (new MapperFactory()).getName(this.getMapperNum()) + ')';
     return buffer;
   }
 });

@@ -15,6 +15,8 @@ function MapperFactory() {
 Object.assign(MapperFactory.prototype, {
   isMapperFactory: true,
 
+  //
+
   MAPPERS: {
     0:  {'name': 'NROM',      class: NROMMapper},
     1:  {'name': 'MMC1',      class: MMC1Mapper},
@@ -24,15 +26,7 @@ Object.assign(MapperFactory.prototype, {
     76: {'name': 'Mapper76',  class: Mapper76}
   },
 
-  /**
-   *
-   */
-  getMapperParam: function(number) {
-    if(this.MAPPERS[number] === undefined)
-      throw new Error('unsupport No.' + number + ' Mapper');
-
-    return this.MAPPERS[number];
-  },
+  // public methods
 
   /**
    *
@@ -46,6 +40,18 @@ Object.assign(MapperFactory.prototype, {
    */
   getName: function(number) {
     return this.getMapperParam(number).name;
+  },
+
+  // private method
+
+  /**
+   *
+   */
+  getMapperParam: function(number) {
+    if(this.MAPPERS[number] === undefined)
+      throw new Error('unsupport No.' + number + ' Mapper');
+
+    return this.MAPPERS[number];
   }
 });
 
@@ -62,21 +68,23 @@ Object.assign(Mapper.prototype, {
   isMapper: true,
 
   /**
-   *
+   * Maps CPU memory address 0x8000 - 0xFFFF to the offset
+   * in Program segment of Rom for Program ROM access
    */
   map: function(address) {
-    return address;
+    return address - 0x8000;
   },
 
   /**
-   *
+   * Maps CPU memory address 0x0000 - 0x1FFF to the offset
+   * in Character segment of Rom for Character ROM access
    */
   mapForChrRom: function(address) {
     return address;
   },
 
   /**
-   *
+   * In general, updates control registers in Mapper
    */
   store: function(address, value) {
   },
@@ -111,7 +119,7 @@ NROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
     if(this.prgBankNum === 1 && address >= 0xC000)
       address -= 0x4000;
 
-    return address;
+    return address - 0x8000;
   }
 });
 
@@ -171,7 +179,7 @@ MMC1Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
         break;
     }
 
-    return bank * 0x4000 + offset + 0x8000;
+    return bank * 0x4000 + offset;
   },
 
   /**
@@ -273,7 +281,7 @@ UNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
   map: function(address) {
     var bank = (address < 0xC000) ? this.reg.load() : this.prgBankNum - 1;
     var offset = address & 0x3FFF;
-    return 0x4000 * bank + offset + 0x8000;
+    return 0x4000 * bank + offset;
   },
 
   /**
@@ -416,7 +424,7 @@ Mapper76.prototype = Object.assign(Object.create(Mapper.prototype), {
         break;
     }
 
-    return bank * 0x2000 + offset + 0x8000;
+    return bank * 0x2000 + offset;
   },
 
   /**
