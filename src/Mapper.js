@@ -22,7 +22,7 @@ Object.assign(MapperFactory.prototype, {
     1:  {'name': 'MMC1',      class: MMC1Mapper},
     2:  {'name': 'UNROM',     class: UNROMMapper},
     3:  {'name': 'CNROM',     class: CNROMMapper},
-    //4:  {'name': 'MMC3',      class: MMC3Mapper},
+    4:  {'name': 'MMC3',      class: MMC3Mapper},
     76: {'name': 'Mapper76',  class: Mapper76}
   },
 
@@ -323,6 +323,29 @@ CNROMMapper.prototype = Object.assign(Object.create(Mapper.prototype), {
  */
 function MMC3Mapper(rom) {
   Mapper.call(this, rom);
+
+  this.register0 = new Register8bit();
+  this.register1 = new Register8bit();
+  this.register2 = new Register8bit();
+  this.register3 = new Register8bit();
+  this.register4 = new Register8bit();
+  this.register5 = new Register8bit();
+  this.register6 = new Register8bit();
+  this.register7 = new Register8bit();
+
+  this.programRegister0 = new Register8bit();
+  this.programRegister1 = new Register8bit();
+
+  this.characterRegister0 = new Register8bit();
+  this.characterRegister1 = new Register8bit();
+  this.characterRegister2 = new Register8bit();
+  this.characterRegister3 = new Register8bit();
+  this.characterRegister4 = new Register8bit();
+  this.characterRegister5 = new Register8bit();
+
+  this.irqCounter = 0;
+  this.irqCounterReload = false;
+  this.irqEnabled = true;  // @TODO: check if default is true
 }
 
 MMC3Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
@@ -332,51 +355,169 @@ MMC3Mapper.prototype = Object.assign(Object.create(Mapper.prototype), {
    *
    */
   map: function(address) {
-    // TODO: Fix me
+    address = address & 0xFFFF;  // just in case
 
-    return address;
+    var offset = address & 0x1FFF;
+    var bank = 0;
+
+    if(address >= 0x8000 && address < 0xA000) {
+      bank = this.register0.isBitSet(6) === true ? this.prgBankNum * 2 - 2 : this.programRegister0.load();
+    } else if(address >= 0xA000 && address < 0xC000) {
+      bank = this.programRegister1.load();
+    } else if(address >= 0xC000 && address < 0xE000) {
+      bank = this.register0.isBitSet(6) === true ? this.programRegister0.load() : this.prgBankNum * 2 - 2;
+    } else {
+      bank = this.prgBankNum * 2 - 1;
+    }
+
+    return bank * 0x2000 + offset;
   },
 
   /**
    *
    */
   mapForChrRom: function(address) {
-    // TODO: Fix me
+    address = address & 0x1FFF;  // just in case
 
-    return address;
+    var offset = address & 0x03FF;
+    var bank = 0;
+
+    if(this.register0.isBitSet(7) === true) {
+      if(address >= 0x0000 && address < 0x0400) {
+        bank = this.characterRegister2.load();
+      } else if(address >= 0x0400 && address < 0x0800) {
+        bank = this.characterRegister3.load();
+      } else if(address >= 0x0800 && address < 0x0C00) {
+        bank = this.characterRegister4.load();
+      } else if(address >= 0x0C00 && address < 0x1000) {
+        bank = this.characterRegister5.load();
+      } else if(address >= 0x1000 && address < 0x1400) {
+        bank = this.characterRegister0.load() & 0xFE;
+      } else if(address >= 0x1400 && address < 0x1800) {
+        bank = this.characterRegister0.load() | 1;
+      } else if(address >= 0x1800 && address < 0x1C00) {
+        bank = this.characterRegister1.load() & 0xFE;
+      } else {
+        bank = this.characterRegister1.load() | 1;
+      }
+    } else {
+      if(address >= 0x0000 && address < 0x0400) {
+        bank = this.characterRegister0.load() & 0xFE;
+      } else if(address >= 0x0400 && address < 0x0800) {
+        bank = this.characterRegister0.load() | 1;
+      } else if(address >= 0x0800 && address < 0x0C00) {
+        bank = this.characterRegister1.load() & 0xFE;
+      } else if(address >= 0x0C00 && address < 0x1000) {
+        bank = this.characterRegister1.load() | 1;
+      } else if(address >= 0x1000 && address < 0x1400) {
+        bank = this.characterRegister2.load();
+      } else if(address >= 0x1400 && address < 0x1800) {
+        bank = this.characterRegister3.load();
+      } else if(address >= 0x1800 && address < 0x1C00) {
+        bank = this.characterRegister4.load();
+      } else {
+        bank = this.characterRegister5.load();
+      }
+    }
+
+    return bank * 0x400 + offset;
   },
 
   /**
    *
    */
   store: function(address, value) {
-    // TODO: Fix me
-
     address = address & 0xFFFF;  // just in case
 
     if(address >= 0x8000 && address < 0xA000) {
-      if(address & 1 === 0) {
-
+      if((address & 1) === 0) {
+        this.register0.store(value);
       } else {
+        this.register1.store(value);
 
+        switch(this.register0.loadBits(0, 3)) {
+          case 0:
+            this.characterRegister0.store(value & 0xFE);
+            break;
+
+          case 1:
+            this.characterRegister1.store(value & 0xFE);
+            break;
+
+          case 2:
+            this.characterRegister2.store(value);
+            break;
+
+          case 3:
+            this.characterRegister3.store(value);
+            break;
+
+          case 4:
+            this.characterRegister4.store(value);
+            break;
+
+          case 5:
+            this.characterRegister5.store(value);
+            break;
+
+          case 6:
+            this.programRegister0.store(value & 0x3F);
+            break;
+
+          case 7:
+            this.programRegister1.store(value & 0x3F);
+            break;
+        }
       }
     } else if(address >= 0xA000 && address < 0xC000) {
-      if(address & 1 === 0) {
-
+      if((address & 1) === 0) {
+        this.register2.store(value);
       } else {
-
+        this.register3.store(value);
       }
     } else if(address >= 0xC000 && address < 0xE000) {
-      if(address & 1 === 0) {
-
+      if((address & 1) === 0) {
+        this.register4.store(value);
       } else {
-
+        this.register5.store(value);
       }
+
+      this.irqCounterReload = true;
     } else {
-      if(address & 1 === 0) {
-
+      if((address & 1) === 0) {
+        this.register6.store(value);
+        this.irqEnabled = false;
       } else {
+        this.register7.store(value);
+        this.irqEnabled = true;
+      }
+    }
+  },
 
+  /**
+   *
+   */
+  getMirroringType: function() {
+    return this.register2.isBitSet(0) === true ? this.rom.MIRRORINGS.HORIZONTAL : this.rom.MIRRORINGS.VERTICAL;
+  },
+
+  /**
+   *
+   */
+  driveIrqCounter: function(cpu) {
+    if(this.irqCounterReload === true) {
+      this.irqCounter = this.register4.load();
+      this.irqCounterReload = false;
+    } else {
+      if(this.irqEnabled === true) {
+        if(this.irqCounter > 0) {
+          this.irqCounter--;
+
+          if(this.irqCounter === 0) {
+            cpu.interrupt(cpu.INTERRUPTS.IRQ);
+            this.irqCounterReload = true;
+          }
+        }
       }
     }
   }

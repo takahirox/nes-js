@@ -724,6 +724,15 @@ Object.assign(Ppu.prototype, {
           this.cpu.interrupt(this.cpu.INTERRUPTS.NMI);
       }
     }
+
+    // @TODO: check this driving IRQ counter for MMC3Mapper timing is correct
+
+    if(this.rom.mapper.isMMC3Mapper === true) {
+      if(this.cycle === 340 && this.scanLine <= 240 &&
+          this.ppumask.isBackgroundVisible() === true &&
+          this.ppumask.isSpritesVisible() === true)
+        this.rom.mapper.driveIrqCounter(this.cpu);
+    }
   },
 
   /**
