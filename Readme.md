@@ -20,6 +20,7 @@ This is JavaScript NES(Famicom) emulator which runs on browser.
 - Renders with Canvas
 - Audio support with WebAudio
 - Runs on browser
+- Gamepad API support
 
 ## Browser
 
