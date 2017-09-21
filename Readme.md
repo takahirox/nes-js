@@ -6,6 +6,8 @@ This is JavaScript NES(Famicom) emulator which runs on browser.
 
 [Demo](http://takahirox.github.io/nes-js/index.html)
 
+[Demo with Three.js](http://takahirox.github.io/nes-js/index2.html) (It has a performance issue!)
+
 ## Screenshot
 
 ![Screen shot](https://github.com/takahirox/takahirox.github.io/blob/master/images/nesemu.png)
