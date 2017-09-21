@@ -10,7 +10,9 @@ This is JavaScript NES(Famicom) emulator which runs on browser.
 
 ## Screenshot
 
-![Screen shot](https://github.com/takahirox/takahirox.github.io/blob/master/images/nesemu.png)
+![Screen shot](https://github.com/takahirox/assets/blob/master/nes-js/screenshot.png)
+
+![Screen shot with Three.js](https://github.com/takahirox/takahirox.github.io/blob/master/images/nesemu.png)
 
 ## Features
 
