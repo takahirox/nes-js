@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -472,11 +472,131 @@ Object.assign(Memory.prototype, {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Joypad; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
+
+
+
+/**
+ * Standard joypad implementation.
+ * Refer to https://wiki.nesdev.com/w/index.php/Standard_controller
+ */
+function Joypad() {
+  this.register = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
+
+  this.latch = 0;
+  this.currentButton = 0;
+
+  this.buttonNum = this.getButtonsNum();
+
+  this.buttons = [];  // if buttons are being pressed.
+                      // index is corresponded to Joypad.BUTTONS'
+  for(var i = 0; i < this.buttonNum; i++)
+    this.buttons[i] = false;
+}
+
+//
+
+Joypad.BUTTONS = {
+  A:      0,
+  B:      1,
+  SELECT: 2,
+  START:  3,
+  UP:     4,
+  DOWN:   5,
+  LEFT:   6,
+  RIGHT:  7
+};
+
+//
+
+Object.assign(Joypad.prototype, {
+  isJoypad: true,
+
+  //
+
+  /**
+   *
+   */
+  getButtonsNum: function() {
+    var num = 0;
+    for (var key in Joypad.BUTTONS) {
+      num++;
+    }
+    return num;
+  },
+
+  //
+
+  /**
+   *
+   */
+  pressButton: function(type) {
+    this.buttons[type] = true;
+  },
+
+  /**
+   *
+   */
+  releaseButton: function(type) {
+    this.buttons[type] = false;
+  },
+
+  //
+
+  /**
+   *
+   */
+  loadRegister: function() {
+    var button = this.latch === 1 ? 0 : this.currentButton++;
+
+    // 1: a button is being pressed or after eight reads
+    // 0: otherwise
+    var value = (button >= this.buttonNum || this.buttons[button]) ? 1 : 0;
+
+    return value;
+  },
+
+  /**
+   *
+   */
+  storeRegister: function(value) {
+    this.register.store(value);
+
+    value = value & 1;
+
+    if (value === 1)
+      this.currentButton = 0;
+
+    this.latch = value;
+  },
+
+  // dump
+
+  /**
+   *
+   */
+  dump: function() {
+
+  }
+});
+
+
+
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_Nes_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_Nes_js__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__src_Rom_js__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__src_Audio_js__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__src_Display_js__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__src_Joypad_js__ = __webpack_require__(3);
+
 
 
 
@@ -488,22 +608,22 @@ NesJs.Nes = __WEBPACK_IMPORTED_MODULE_0__src_Nes_js__["a" /* Nes */];
 NesJs.Rom = __WEBPACK_IMPORTED_MODULE_1__src_Rom_js__["a" /* Rom */];
 NesJs.Audio = __WEBPACK_IMPORTED_MODULE_2__src_Audio_js__["a" /* Audio */];
 NesJs.Display = __WEBPACK_IMPORTED_MODULE_3__src_Display_js__["a" /* Display */];
-NesJs.Joypad = Joypad;
+NesJs.Joypad = __WEBPACK_IMPORTED_MODULE_4__src_Joypad_js__["a" /* Joypad */];
 
 if(window !== undefined)
   window.NesJs = NesJs;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Nes; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Cpu_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Ppu_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Apu_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Joypad_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Cpu_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Ppu_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Apu_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Joypad_js__ = __webpack_require__(3);
 
 
 
@@ -768,7 +888,7 @@ Object.assign(Nes.prototype, {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2457,7 +2577,7 @@ CpuStatusRegister.prototype = Object.assign(Object.create(__WEBPACK_IMPORTED_MOD
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3908,7 +4028,7 @@ Object.assign(Sprite.prototype, {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5359,124 +5479,6 @@ ApuFrameRegister.prototype = Object.assign(Object.create(__WEBPACK_IMPORTED_MODU
    */
   disabledIrq: function() {
     return this.isBitSet(this.IRQ_BIT);
-  }
-});
-
-
-
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Joypad; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Register_js__ = __webpack_require__(0);
-
-
-
-/**
- * Standard joypad implementation.
- * Refer to https://wiki.nesdev.com/w/index.php/Standard_controller
- */
-function Joypad() {
-  this.register = new __WEBPACK_IMPORTED_MODULE_0__Register_js__["b" /* Register8bit */]();
-
-  this.latch = 0;
-  this.currentButton = 0;
-
-  this.buttonNum = this.getButtonsNum();
-
-  this.buttons = [];  // if buttons are being pressed.
-                      // index is corresponded to Joypad.BUTTONS'
-  for(var i = 0; i < this.buttonNum; i++)
-    this.buttons[i] = false;
-}
-
-//
-
-Joypad.BUTTONS = {
-  A:      0,
-  B:      1,
-  SELECT: 2,
-  START:  3,
-  UP:     4,
-  DOWN:   5,
-  LEFT:   6,
-  RIGHT:  7
-};
-
-//
-
-Object.assign(Joypad.prototype, {
-  isJoypad: true,
-
-  //
-
-  /**
-   *
-   */
-  getButtonsNum: function() {
-    var num = 0;
-    for (var key in Joypad.BUTTONS) {
-      num++;
-    }
-    return num;
-  },
-
-  //
-
-  /**
-   *
-   */
-  pressButton: function(type) {
-    this.buttons[type] = true;
-  },
-
-  /**
-   *
-   */
-  releaseButton: function(type) {
-    this.buttons[type] = false;
-  },
-
-  //
-
-  /**
-   *
-   */
-  loadRegister: function() {
-    var button = this.latch === 1 ? 0 : this.currentButton++;
-
-    // 1: a button is being pressed or after eight reads
-    // 0: otherwise
-    var value = (button >= this.buttonNum || this.buttons[button]) ? 1 : 0;
-
-    return value;
-  },
-
-  /**
-   *
-   */
-  storeRegister: function(value) {
-    this.register.store(value);
-
-    value = value & 1;
-
-    if (value === 1)
-      this.currentButton = 0;
-
-    this.latch = value;
-  },
-
-  // dump
-
-  /**
-   *
-   */
-  dump: function() {
-
   }
 });
 
