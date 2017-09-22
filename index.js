@@ -9,6 +9,7 @@ NesJs.Nes = Nes;
 NesJs.Rom = Rom;
 NesJs.Audio = Audio;
 NesJs.Display = Display;
+NesJs.Joypad = Joypad;
 
 if(window !== undefined)
   window.NesJs = NesJs;
