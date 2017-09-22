@@ -2,6 +2,7 @@ import {Nes} from './src/Nes.js';
 import {Rom} from './src/Rom.js';
 import {Audio} from './src/Audio.js';
 import {Display} from './src/Display.js';
+import {Joypad} from './src/Joypad.js';
 
 function NesJs() {}
 
