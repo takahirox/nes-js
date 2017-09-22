@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        font-family: Monospace;
+        background-color: #fff;
+        color: #000;
+        margin: 0px;
+        overflow: hidden;
+      }
+      #info {
+        color: #000;
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        display:block;
+      }
+      #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+    </style>
+
+    <script type="text/javascript" src="build/nes.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r87/build/three.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r87/examples/js/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r87/examples/js/vr/WebVR.js"></script>
+
+    <!-- CRT effect shader from https://github.com/hizzlekizzle/quark-shaders/tree/master/CRT-Simple.shader -->
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+      uniform vec2 tDiffuseSize;
+      varying vec2 vUv;
+      varying vec2 one;
+      varying float mod_factor;
+
+      #define PI 3.141592653589
+
+      void main() {
+        vUv = uv;
+        one = 1.0 / tDiffuseSize.xy;
+        mod_factor = uv.x * uv.x;
+        vec3 pos = position;
+        pos.z += sin(uv.x * PI) * 0.5 + sin(uv.y * PI) * 0.5;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
+      }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+      uniform sampler2D tDiffuse;
+      uniform vec2 tDiffuseSize;
+      varying vec2 vUv;
+      varying vec2 one;
+      varying float mod_factor;
+
+      #define inputGamma  2.4
+      #define outputGamma 2.2
+      #define TEX2D(c) pow(texture2D(tDiffuse, (c)), vec4(inputGamma))
+
+      vec4 scanlineWeights(float distance, vec4 color) {
+        vec4 wid = 2.0 + 2.0 * pow(color, vec4(4.0));
+        vec4 weights = vec4(distance / 0.3);
+        return 1.4 * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
+      }
+
+      void main() {
+        vec2 xy = vUv;
+
+        vec2 ratio_scale = xy * tDiffuseSize.xy - vec2(0.5);
+        vec2 uv_ratio = fract(ratio_scale);
+
+        xy.y = (floor(ratio_scale.y) + 0.5) / tDiffuseSize.y;
+
+        vec4 col = TEX2D(xy);
+        vec4 col2 = TEX2D(xy + vec2(0.0, one.y));
+
+        vec4 weights = scanlineWeights(uv_ratio.y, col);
+        vec4 weights2 = scanlineWeights(1.0 - uv_ratio.y, col2);
+        vec3 mul_res = (col * weights + col2 * weights2).rgb;
+
+        vec3 dotMaskWeights = mix(
+          vec3(1.0, 0.7, 1.0),
+          vec3(0.7, 1.0, 0.7),
+          floor(mod(mod_factor, 2.0))
+        );
+
+        mul_res *= dotMaskWeights;
+
+        gl_FragColor = vec4(pow(mul_res, vec3(1.0 / outputGamma)), 1.0);
+      }
+    </script>
+    <script type="text/javascript">
+      var nes;
+
+      /**
+       *
+       */
+      function init() {
+        WEBVR.checkAvailability().catch( function(message) {
+          document.body.appendChild(WEBVR.getMessageContainer(message));
+        });
+
+        var url = './roms/Sgt. Helmet - Training Day (2013)(The Mojon Twins)[!].nes';
+
+        var request = new XMLHttpRequest();
+        request.responseType = 'arraybuffer';
+
+        request.onload = function() {
+          initNes(request.response);
+        };
+
+        request.onerror = function(e) {
+        };
+
+        request.open('GET', url, true);
+        request.send(null);
+      }
+
+      /**
+       *
+       */
+      function initNes(buffer) {
+	var canvas = document.createElement('canvas')
+
+        nes = new NesJs.Nes();
+
+        nes.setRom(new NesJs.Rom(buffer));
+        nes.setDisplay(new NesJs.Display(canvas));
+	nes.setAudio(new NesJs.Audio());
+
+        window.onkeydown = function(e) { nes.handleKeyDown(e); };
+        window.onkeyup = function(e) { nes.handleKeyUp(e); };
+
+        nes.bootup();
+        nes.run();
+
+        start(canvas);
+      }
+
+      /**
+       *
+       */
+      function start(canvas) {
+
+        canvas.width = canvas.height = 256;
+
+        var scene, camera, screen, renderer;
+
+        function initScene() {
+
+          scene = new THREE.Scene();
+          scene.background = new THREE.Color( 0xffffff );
+
+	  var light = new THREE.DirectionalLight( 0xffffff );
+	  light.position.set( 20, 20, 20 );
+	  scene.add( light );
+
+          var gridHelper = new THREE.PolarGridHelper( 100, 20 );
+          gridHelper.position.y = -15;
+          scene.add( gridHelper );
+
+          camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+
+          var geometry = new THREE.PlaneBufferGeometry( 16, 15, 50, 50 );
+          var material = new THREE.ShaderMaterial( {
+            uniforms: {
+              tDiffuse: { value: new THREE.Texture( canvas ) },
+              tDiffuseSize: { value: new THREE.Vector2( canvas.width, canvas.height ) }
+            },
+            vertexShader: document.getElementById( 'vertexShader' ).textContent,
+            fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+          } );
+
+          material.uniforms.tDiffuse.value.needsUpdate = true;
+
+          screen = new THREE.Mesh( geometry, material );
+          screen.position.z = -15;
+          scene.add( screen );
+
+          var box = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(19, 19, 5),
+            new THREE.MeshStandardMaterial( {color: 0xFFFFFF, roughness: 0.8, metalness: 0.0 } ),
+          );
+
+          box.position.z = -17.5;
+
+          var box2 = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(18, 18, 10),
+            new THREE.MeshStandardMaterial( {color: 0xDDDDDD, roughness: 0.9, metalness: 0.0 } ),
+          );
+
+          box2.position.z = -25;
+
+          scene.add( box );
+          scene.add( box2 );
+
+          renderer = new THREE.WebGLRenderer( { antialias: true } );
+          renderer.setSize( window.innerWidth, window.innerHeight );
+
+          var controls = new THREE.OrbitControls( camera, renderer.domElement );
+          controls.enableKeys = false;
+
+          document.body.appendChild( renderer.domElement );
+
+          renderer.vr.enabled = true;
+
+          WEBVR.getVRDisplay( function ( display ) {
+
+            renderer.vr.setDevice( display );
+            document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) );
+
+          } );
+
+        }
+
+        function animate() {
+
+          requestAnimationFrame( animate );
+          screen.material.uniforms.tDiffuse.value.needsUpdate = true;
+          renderer.render( scene, camera );
+
+        }
+
+        function onWindowResize() {
+
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize( window.innerWidth, window.innerHeight );
+
+        }
+
+        initScene();
+        animate();
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+      }
+    </script>
+  </head>
+  <body onload="init()">
+  </body>
+</html>
