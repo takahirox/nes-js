@@ -24,7 +24,7 @@
     <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r87/build/three.min.js"></script>
     <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r87/examples/js/controls/OrbitControls.js"></script>
 
-    <!-- shader from https://github.com/hizzlekizzle/quark-shaders/tree/master/CRT-Simple.shader -->
+    <!-- CRT effect shader from https://github.com/hizzlekizzle/quark-shaders/tree/master/CRT-Simple.shader -->
 
     <script id="vertexShader" type="x-shader/x-vertex">
       uniform vec2 tDiffuseSize;
@@ -87,19 +87,19 @@
       }
     </script>
     <script type="text/javascript">
-      var __nes;
+      var nes;
 
       /**
        *
        */
-      function __init() {
+      function init() {
         var url = './roms/Sgt. Helmet - Training Day (2013)(The Mojon Twins)[!].nes';
 
         var request = new XMLHttpRequest();
         request.responseType = 'arraybuffer';
 
         request.onload = function() {
-          __run(request.response);
+          initNes(request.response);
         };
 
         request.onerror = function(e) {
@@ -112,10 +112,10 @@
       /**
        *
        */
-      function __run(buffer) {
+      function initNes(buffer) {
 	var canvas = document.createElement('canvas')
 
-        var nes = new NesJs.Nes();
+        nes = new NesJs.Nes();
 
         nes.setRom(new NesJs.Rom(buffer));
         nes.setDisplay(new NesJs.Display(canvas));
@@ -124,24 +124,20 @@
         window.onkeydown = function(e) { nes.handleKeyDown(e); };
         window.onkeyup = function(e) { nes.handleKeyUp(e); };
 
-        __nes = nes; // for debug on console.
-
         nes.bootup();
         nes.run();
 
-        __start(canvas);
+        start(canvas);
       }
 
       /**
        *
        */
-      function __start(canvas) {
+      function start(canvas) {
 
         canvas.width = canvas.height = 256;
 
-        var scene, camera, renderer;
-        var geometry, material, mesh;
-        var controls;
+        var scene, camera, screen, renderer;
 
         function initScene() {
 
@@ -149,7 +145,7 @@
           scene.background = new THREE.Color( 0xffffff );
 
 	  var light = new THREE.DirectionalLight( 0xffffff );
-	  light.position.set(20, 20, 20);
+	  light.position.set( 20, 20, 20 );
 	  scene.add( light );
 
           var gridHelper = new THREE.PolarGridHelper( 100, 20 );
@@ -159,11 +155,11 @@
           camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
           camera.position.z = 15;
 
-          geometry = new THREE.PlaneBufferGeometry( 16, 15, 50, 50 );
-          material = new THREE.ShaderMaterial( {
+          var geometry = new THREE.PlaneBufferGeometry( 16, 15, 50, 50 );
+          var material = new THREE.ShaderMaterial( {
             uniforms: {
               tDiffuse: { value: new THREE.Texture( canvas ) },
-              tDiffuseSize: { value: new THREE.Vector2( 256, 256 ) }
+              tDiffuseSize: { value: new THREE.Vector2( canvas.width, canvas.height ) }
             },
             vertexShader: document.getElementById( 'vertexShader' ).textContent,
             fragmentShader: document.getElementById( 'fragmentShader' ).textContent
@@ -171,8 +167,8 @@
 
           material.uniforms.tDiffuse.value.needsUpdate = true;
 
-          mesh = new THREE.Mesh( geometry, material );
-          scene.add( mesh );
+          screen = new THREE.Mesh( geometry, material );
+          scene.add( screen );
 
           var box = new THREE.Mesh(
             new THREE.BoxBufferGeometry(19, 19, 5),
@@ -194,7 +190,7 @@
           renderer = new THREE.WebGLRenderer( { antialias: true } );
           renderer.setSize( window.innerWidth, window.innerHeight );
 
-          controls = new THREE.OrbitControls( camera, renderer.domElement );
+          var controls = new THREE.OrbitControls( camera, renderer.domElement );
           controls.enableKeys = false;
 
           document.body.appendChild( renderer.domElement );
@@ -204,16 +200,27 @@
         function animate() {
 
           requestAnimationFrame( animate );
-          material.uniforms.tDiffuse.value.needsUpdate = true;
+          screen.material.uniforms.tDiffuse.value.needsUpdate = true;
           renderer.render( scene, camera );
+
+        }
+
+        function onWindowResize() {
+
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize( window.innerWidth, window.innerHeight );
 
         }
 
         initScene();
         animate();
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
       }
     </script>
   </head>
-  <body onload="__init()">
+  <body onload="init()">
   </body>
 </html>
