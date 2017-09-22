@@ -488,6 +488,7 @@ NesJs.Nes = __WEBPACK_IMPORTED_MODULE_0__src_Nes_js__["a" /* Nes */];
 NesJs.Rom = __WEBPACK_IMPORTED_MODULE_1__src_Rom_js__["a" /* Rom */];
 NesJs.Audio = __WEBPACK_IMPORTED_MODULE_2__src_Audio_js__["a" /* Audio */];
 NesJs.Display = __WEBPACK_IMPORTED_MODULE_3__src_Display_js__["a" /* Display */];
+NesJs.Joypad = Joypad;
 
 if(window !== undefined)
   window.NesJs = NesJs;
