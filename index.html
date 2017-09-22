@@ -3,72 +3,14 @@
   <head>
     <script type="text/javascript" src="build/nes.js"></script>
     <script type="text/javascript">
-      var __nes;
+      var nes;
+
+      // buttons status update methods
 
       /**
        *
        */
-      function __dragOverHandler(e) {
-        e.preventDefault();
-      }
-
-      /**
-       *
-       */
-      function __dropRomImage(e) {
-        e.preventDefault();
-
-        var file = e.dataTransfer.files[0];
-
-        var reader = new FileReader();
-
-        reader.onload = function(e) {
-          __putMessage('Loading done.');
-          __run(e.target.result);
-        };
-
-        reader.onerror = function(e) {
-          for(var key in reader.error) {
-            __putMessage(key + '=' + reader.error[key]);
-          }
-        };
-
-        reader.readAsArrayBuffer(file);
-
-        __putMessage('')
-        __putMessage('Loading rom image...')
-      }
-
-      /**
-       *
-       */
-      function __loadRom() {
-        var url = document.getElementById('romList').selectedOptions[0].value;
-
-        var request = new XMLHttpRequest();
-        request.responseType = 'arraybuffer';
-
-        request.onload = function() {
-          __putMessage('Loading done.');
-          __run(request.response);
-        };
-
-        request.onerror = function(e) {
-          __putMessage('failed to load.');
-        };
-
-        request.open('GET', url, true);
-        request.send(null);
-
-        __putMessage('')
-        __putMessage('Loading rom image...')
-        __ROMloaded();
-      }
-
-      /**
-       *
-       */
-      function __init() {
+      function init() {
         document.getElementById('loadROMButton').disabled = false;
         document.getElementById('dumpROMButton').disabled = true;
         document.getElementById('dumpRegButton').disabled = true;
@@ -83,7 +25,7 @@
       /**
        *
        */
-      function __ROMloaded() {
+      function ROMloaded() {
         document.getElementById('loadROMButton').disabled = true;
         document.getElementById('dumpROMButton').disabled = true;
         document.getElementById('dumpRegButton').disabled = true;
@@ -98,7 +40,7 @@
       /**
        *
        */
-      function __NESran() {
+      function NESran() {
         document.getElementById('loadROMButton').disabled = true;
         document.getElementById('dumpROMButton').disabled = true;
         document.getElementById('dumpRegButton').disabled = true;
@@ -113,7 +55,7 @@
       /**
        *
        */
-      function __NESstopped() {
+      function NESstopped() {
         document.getElementById('loadROMButton').disabled = true;
         document.getElementById('dumpROMButton').disabled = false;
         document.getElementById('dumpRegButton').disabled = false;
@@ -125,23 +67,51 @@
         document.getElementById('resumeButton').disabled = false;
       }
 
+      // 
+
       /**
        *
        */
-      function __run(arrayBuffer) {
+      function loadRom() {
+        var url = document.getElementById('romList').selectedOptions[0].value;
+
+        var request = new XMLHttpRequest();
+        request.responseType = 'arraybuffer';
+
+        request.onload = function() {
+          putMessage('Loading done.');
+          run(request.response);
+        };
+
+        request.onerror = function(e) {
+          putMessage('failed to load.');
+        };
+
+        request.open('GET', url, true);
+        request.send(null);
+
+        putMessage('')
+        putMessage('Loading rom image...')
+        ROMloaded();
+      }
+
+      /**
+       *
+       */
+      function run(buffer) {
         try {
-          var rom = new NesJs.Rom(arrayBuffer);
+          var rom = new NesJs.Rom(buffer);
         } catch(e) {
-          __putMessage('');
-          __putMessage(e.toString());
+          putMessage('');
+          putMessage(e.toString());
           return;
         }
 
-        __putMessage('');
-        __putMessage('Rom Header info');
-        __putMessage(rom.header.dump());
+        putMessage('');
+        putMessage('Rom Header info');
+        putMessage(rom.header.dump());
 
-        var nes = new NesJs.Nes();
+        nes = new NesJs.Nes();
 
         nes.addEventListener('fps', function(fps) {
           document.getElementById('fps').innerText = fps.toFixed(2);
@@ -154,119 +124,159 @@
         try {
           nes.setAudio(new NesJs.Audio());
         } catch(e) {
-          __putMessage('');
-          __putMessage('Disables audio because this browser does not seems to support WebAudio.');
+          putMessage('');
+          putMessage('Disables audio because this browser does not seems to support WebAudio.');
         }
 
-        window.onkeydown = function(e) { nes.handleKeyDown(e) };
-        window.onkeyup = function(e) { nes.handleKeyUp(e) };
+        window.onkeydown = function(e) { nes.handleKeyDown(e); };
+        window.onkeyup = function(e) { nes.handleKeyUp(e); };
 
-        __nes = nes; // for debug on console.
+        putMessage('');
 
-        __putMessage('');
-
-        __putMessage('bootup.');
+        putMessage('bootup.');
         nes.bootup();
 
-        __putMessage('runs.');
-        __NESran();
+        putMessage('runs.');
+        NESran();
         nes.run();
       }
 
-      /**
-       *
-       */
-      function __pushDumpROM() {
-        __putMessage(__nes.dumpRom());
-      }
+      // put message methods
 
       /**
        *
        */
-      function __pushDumpReg() {
-        __putMessage(__nes.dumpCpu());
-        __putMessage(__nes.dumpPpu());
-      }
-
-      /**
-       *
-       */
-      function __pushDumpRAM() {
-        __putMessage(__nes.dumpRam());
-      }
-
-      /**
-       *
-       */
-      function __pushDumpVRAM() {
-        __putMessage(__nes.dumpVRam());
-      }
-
-      /**
-       *
-       */
-      function __pushDumpSPRRAM() {
-        __putMessage(__nes.dumpSprRam());
-      }
-
-      /**
-       *
-       */
-      function __pushStopButton() {
-        __nes.stop();
-        __putMessage('stopped.');
-        __NESstopped();
-      }
-
-      /**
-       *
-       */
-      function __pushStepButton() {
-        __nes.runStep();
-        __putMessage(__nes.dumpCpu());
-      }
-
-      /**
-       *
-       */
-      function __pushResumeButton() {
-        __nes.resume();
-        __putMessage('resumed.');
-        __NESran();
-      }
-
-      /**
-       *
-       */
-      function __pushPadButton(key) {
-        if(! __nes)
-          return;
-        __nes.pad1.pressButton(parseInt(key.split('_')[1]));
-      }
-
-      /**
-       *
-       */
-      function __releasePadButton(key) {
-        if(! __nes)
-          return;
-        __nes.pad1.releaseButton(parseInt(key.split('_')[1]));
-      }
-
-      /**
-       *
-       */
-      function __putMessage(str) {
+      function putMessage(str) {
         var area = document.getElementById('dump');
         area.firstChild.appendData(str + '\n');
         area.scrollTop = area.scrollHeight;
       }
 
-      window.addEventListener('drop', __dropRomImage, false);
-      window.addEventListener('dragover', __dragOverHandler, false);
+      // push button handlers
+
+      /**
+       *
+       */
+      function pushDumpROM() {
+        putMessage(nes.dumpRom());
+      }
+
+      /**
+       *
+       */
+      function pushDumpReg() {
+        putMessage(nes.dumpCpu());
+        putMessage(nes.dumpPpu());
+      }
+
+      /**
+       *
+       */
+      function pushDumpRAM() {
+        putMessage(nes.dumpRam());
+      }
+
+      /**
+       *
+       */
+      function pushDumpVRAM() {
+        putMessage(nes.dumpVRam());
+      }
+
+      /**
+       *
+       */
+      function pushDumpSPRRAM() {
+        putMessage(nes.dumpSprRam());
+      }
+
+      /**
+       *
+       */
+      function pushStopButton() {
+        nes.stop();
+        putMessage('stopped.');
+        NESstopped();
+      }
+
+      /**
+       *
+       */
+      function pushStepButton() {
+        nes.runStep();
+        putMessage(nes.dumpCpu());
+      }
+
+      /**
+       *
+       */
+      function pushResumeButton() {
+        nes.resume();
+        putMessage('resumed.');
+        NESran();
+      }
+
+      // press/release pad button handlers
+
+      /**
+       *
+       */
+      function pressPadButton(key) {
+        if(nes === undefined)
+          return;
+
+        nes.pad1.pressButton(key);
+      }
+
+      /**
+       *
+       */
+      function releasePadButton(key) {
+        if(nes === undefined)
+          return;
+
+        nes.pad1.releaseButton(key);
+      }
+
+      // drag/drop handlers
+
+      /**
+       *
+       */
+      function dragOverHandler(e) {
+        e.preventDefault();
+      }
+
+      /**
+       *
+       */
+      function dropHandler(e) {
+        e.preventDefault();
+
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+          putMessage('Loading done.');
+          run(e.target.result);
+        };
+
+        reader.onerror = function(e) {
+          for(var key in reader.error) {
+            putMessage(key + '=' + reader.error[key]);
+          }
+        };
+
+        reader.readAsArrayBuffer(e.dataTransfer.files[0]);
+
+        putMessage('')
+        putMessage('Loading rom image...')
+      }
+
+      window.addEventListener('drop', dropHandler, false);
+      window.addEventListener('dragover', dragOverHandler, false);
     </script>
   </head>
-  <body onload="__init()">
+  <body onload="init()">
     <p>
       <select id="romList">
         <option value="./roms/nestest.nes">nestest</option>
@@ -275,7 +285,7 @@
         <option value="./roms/The Invasion.nes">The Invasion</option>
         <option value="./roms/mguard.nes">mguard</option>
       </select>
-      <button id="loadROMButton" onclick="__loadRom()">load rom</button><br />
+      <button id="loadROMButton" onclick="loadRom()">load rom</button><br />
       Select rom from the list or drag and drop your own rom into this window to start.
     </p>
 
@@ -289,8 +299,8 @@
       <table>
         <tr>
           <td></td>
-          <td><button id="pad1_4" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">U</button></td>
+          <td><button id="pad1_4" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.UP)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.UP)">U</button></td>
           <td></td>
           <td></td>
           <td></td>
@@ -298,11 +308,11 @@
           <td></td>
         </tr>
         <tr>
-          <td><button id="pad1_6" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">L</button></td>
+          <td><button id="pad1_6" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.LEFT)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.LEFT)">L</button></td>
           <td></td>
-          <td><button id="pad1_7" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">R</button></td>
+          <td><button id="pad1_7" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.RIGHT)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.RIGHT)">R</button></td>
           <td></td>
           <td></td>
           <td></td>
@@ -310,31 +320,31 @@
         </tr>
         <tr>
           <td></td>
-          <td><button id="pad1_5" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">D</button></td>
+          <td><button id="pad1_5" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.DOWN)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.DOWN)">D</button></td>
           <td></td>
-          <td><button id="pad1_2" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">SELECT</button></td>
-          <td><button id="pad1_3" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">START</button></td>
-          <td><button id="pad1_1" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">B</button></td>
-          <td><button id="pad1_0" onmousedown="__pushPadButton(this.id)"
-                onclick="__releasePadButton(this.id)">A</button></td>
+          <td><button id="pad1_2" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.SELECT)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.SELECT)">SELECT</button></td>
+          <td><button id="pad1_3" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.START)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.START)">START</button></td>
+          <td><button id="pad1_1" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.B)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.B)">B</button></td>
+          <td><button id="pad1_0" onmousedown="pressPadButton(NesJs.Joypad.BUTTONS.A)"
+                onclick="releasePadButton(NesJs.Joypad.BUTTONS.A)">A</button></td>
         </tr>
       </table>
     </div>
 
     <p>
       <div>
-        <button id="dumpROMButton" onclick="__pushDumpROM()">dump ROM</button>
-        <button id="dumpRegButton" onclick="__pushDumpReg()">dump CPU/PPU reg</button>
-        <button id="dumpRAMButton" onclick="__pushDumpRAM()">dump CPU RAM</button>
-        <button id="dumpVRAMButton" onclick="__pushDumpVRAM()">dump PPU VRAM</button>
-        <button id="dumpSPRRAMButton" onclick="__pushDumpSPRRAM()">dump PPU SPRRAM</button>
-        <button id="stopButton" onclick="__pushStopButton()">stop</button>
-        <button id="stepButton" onclick="__pushStepButton()">step</button>
-        <button id="resumeButton" onclick="__pushResumeButton()">resume</button>
+        <button id="dumpROMButton" onclick="pushDumpROM()">dump ROM</button>
+        <button id="dumpRegButton" onclick="pushDumpReg()">dump CPU/PPU reg</button>
+        <button id="dumpRAMButton" onclick="pushDumpRAM()">dump CPU RAM</button>
+        <button id="dumpVRAMButton" onclick="pushDumpVRAM()">dump PPU VRAM</button>
+        <button id="dumpSPRRAMButton" onclick="pushDumpSPRRAM()">dump PPU SPRRAM</button>
+        <button id="stopButton" onclick="pushStopButton()">stop</button>
+        <button id="stepButton" onclick="pushStepButton()">step</button>
+        <button id="resumeButton" onclick="pushResumeButton()">resume</button>
       </div>
       <textarea id="dump" cols="128" rows="16" readonly="readonly"> </textarea>
     </p>
