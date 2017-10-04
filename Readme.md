@@ -10,6 +10,8 @@ This is JavaScript NES(Famicom) emulator which runs on browser.
 
 [WebVR Demo with Three.js](http://takahirox.github.io/nes-js/index3.html) (It has a serious performance issue!)
 
+[AR Demo with Three.js and jsartoolkit5](http://takahirox.github.io/nes-js/index4.html) (It has a performance issue!)
+
 ## Screenshot
 
 ![Screen shot](https://github.com/takahirox/assets/blob/master/nes-js/screenshot.png)
@@ -126,4 +128,7 @@ T.B.D.
 
 ## Links
 - Nes Dev
-  - http://wiki.nesdev.com/w/index.php/Nesdev_Wiki
+  - [Nes Dev Wiki](http://wiki.nesdev.com/w/index.php/Nesdev_Wiki)
+- VR/AR
+  - [Three.js](https://github.com/mrdoob/three.js)
+  - [jsartoolkit5](https://github.com/artoolkit/jsartoolkit5)
